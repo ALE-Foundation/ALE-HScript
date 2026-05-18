@@ -87,13 +87,8 @@ class Interp
 
                 var result = null;
 
-                try
-                {
-                    for (stmt in stmts)
-                        result = execute(stmt);
-                } catch (signal:ReturnSignal) {
-                    throw signal;
-                }
+                for (stmt in stmts)
+                    result = execute(stmt);
 
                 scope = previous;
 

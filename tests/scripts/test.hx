@@ -1,4 +1,4 @@
 function oso():Dynamic
-    return {x: 10, y: () -> 'donde'};
+    {x: 10, y: () -> 'donde'};
 
-trace(oso().y());
+trace(oso());
