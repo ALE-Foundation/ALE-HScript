@@ -45,16 +45,24 @@ class ClassParser extends Parser
 
                 while (!isEnd() && peek() != TRightBrace)
                 {
-                    result.push(switch (peek())
+                    final expr:Expr = switch (peek())
                     {
                         case TVar, TFunction:
                             parseExpr();
+
+                        case TSemicolon:
+                            advance();
+
+                            null;
 
                         default:
                             error();
 
                             null;
-                    });
+                    };
+
+                    if (expr != null)
+                        result.push(expr);
                 }
 
                 expect(TRightBrace);

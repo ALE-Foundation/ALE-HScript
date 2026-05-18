@@ -30,6 +30,8 @@ class Script
 
     public function execute():Dynamic
     {
+        var result = null;
+
         var time:Float = Timer.stamp();
         
         final tokens = new Lexer(content).tokenize();
@@ -43,8 +45,8 @@ class Script
         parserTime = (Timer.stamp() - time) * 1000;
 
         time = Timer.stamp();
-
-        final result = interp.execute(expr);
+        
+        result = interp.execute(expr);
 
         interpTime = (Timer.stamp() - time) * 1000;
 

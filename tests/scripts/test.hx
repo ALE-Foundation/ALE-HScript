@@ -1,4 +1,5 @@
-function oso():Dynamic
-    {x: 10, y: () -> 'donde'};
+import pack.Oso;
 
-trace(oso());
+final oso:Oso = new Oso();
+
+trace(oso);
