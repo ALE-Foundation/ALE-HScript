@@ -353,7 +353,7 @@ class Interp
         return Type.resolveClass(path);
     }
 
-    function createInstance(cls:Dynamic, ?args:Array<Dynamic>):Class<Dynamic>
+    function createInstance(cls:Dynamic, ?args:Array<Dynamic>):Dynamic
     {
         args ??= [];
 
