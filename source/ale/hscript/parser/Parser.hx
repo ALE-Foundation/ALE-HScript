@@ -67,6 +67,71 @@ class Parser
     {
         return switch (advance())
         {
+            case TLeftBrace:
+                index--;
+
+                final start:Int = index;
+
+                try
+                {
+                    advance();
+
+                    final result:Map<String, Expr> = [];
+
+                    var shouldContinue = peek() != TRightBrace;
+
+                    while (!isEnd() && shouldContinue)
+                    {
+                        final key:String = switch (advance())
+                        {
+                            case TIdent(n):
+                                n;
+
+                            default:
+                                error();
+
+                                null;
+                        }
+
+                        expect(TColon);
+
+                        result[key] = parseExpr();
+
+                        shouldContinue = switch (peek())
+                        {
+                            case TComma:
+                                advance();
+
+                                true;
+
+                            default:
+                                false;
+                        }
+                    }
+
+                    expect(TRightBrace);
+
+                    EStruct(result);
+                } catch(_) {
+                    index = start;
+                    
+                    advance();
+
+                    final result:Array<Expr> = [];
+
+                    while (!isEnd() && peek() != TRightBrace)
+                    {
+                        final res:Expr = parseExpr();
+
+                        if (res != null)
+                            result.push(res);
+                    }
+
+                    expect(TRightBrace);
+
+                    EBlock(result);
+                }
+
             case TLeftBracket:
                 final values:Array<Expr> = [];
 
@@ -175,6 +240,8 @@ class Parser
 
             case TReturn:
                 final res = parseExpr();
+
+                expect(TSemicolon);
 
                 EReturn(res);
 
@@ -287,13 +354,15 @@ class Parser
 
                 parseOptionalType();
 
-                final value:Dynamic = switch (advance())
+                final value:Dynamic = switch (peek())
                 {
                     case TEqual:
+                        advance();
+
                         parseExpr();
 
                     default:
-                        null;
+                        Expr.ENull;
                 }
 
                 expect(TSemicolon);
@@ -306,7 +375,7 @@ class Parser
                     case TArrow:
                         advance();
 
-                        EFunction(null, [{name: name}], parseBlock());
+                        EFunction(null, [{name: name}], parseExpr());
 
                     default:
                         var pathVer:String = name;
@@ -368,7 +437,18 @@ class Parser
 
                     expect(TArrow);
 
-                    EFunction(null, args, parseBlock());
+                    final result:Expr = parseExpr();
+
+                    EFunction(null, args,
+                        switch (result)
+                        {
+                            case EBlock(_):
+                                result;
+                            
+                            default:
+                                EReturn(result);
+                        }
+                    );
                 } catch(_) {
                     index = start;
 
@@ -405,12 +485,7 @@ class Parser
 
                 parseOptionalType();
 
-                EFunction(name, args, parseBlock());
-
-            case TLeftBrace:
-                index--;
-
-                parseBlock();
+                EFunction(name, args, parseExpr());
 
             case TNew:
                 ENew(parseType(), parseArguments());
@@ -485,36 +560,10 @@ class Parser
                 );
 
             default:
+                advance();
+
                 left;
         }
-    }
-
-    function parseBlock():Expr
-    {
-        final result:Array<Expr> = [];
-
-        switch (peek())
-        {
-            case TLeftBrace:
-                expect(TLeftBrace);
-
-                while (!isEnd() && peek() != TRightBrace)
-                {
-                    final res:Expr = parseExpr();
-
-                    if (res != null)
-                        result.push(res);
-                }
-
-                expect(TRightBrace);
-
-            default:
-                result.push(parseExpr());
-
-                expect(TSemicolon);
-        }
-
-        return EBlock(result);
     }
 
     function parseArguments():Array<Expr>
@@ -600,6 +649,37 @@ class Parser
 
         switch (advance())
         {
+            case TLeftBrace:
+                var shouldContinue:Bool = true;
+
+                while (!isEnd() && shouldContinue)
+                {
+                    switch (advance())
+                    {
+                        case TIdent(_):
+
+                        default:
+                            error();
+
+                            null;
+                    }
+
+                    parseOptionalType();
+
+                    shouldContinue = switch (peek())
+                    {
+                        case TComma:
+                            advance();
+
+                            true;
+
+                        default:
+                            false;
+                    }
+                }
+
+                expect(TRightBrace);
+
             case TIdent(name):
                 typeName += name;
 
@@ -688,7 +768,7 @@ class Parser
             case TEqual, TPlusEqual, TMinusEqual, TStarEqual, TSlashEqual, TPercentEqual, TDoubleLessEqual, TDoubleGreaterEqual, TTripleGreaterEqual, TAmpersandEqual, TPipeEqual, TCaretEqual:
                 ASSIGNMENT;
 
-            case TQuestion, TColon:
+            case TQuestion:
                 TERNARY;
 
             case TDoublePipe:

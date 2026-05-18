@@ -30,6 +30,8 @@ enum Expr
 
     ESet(obj:Expr, value:Expr, ?returnNew:Bool);
 
+    EStruct(values:Map<String, Expr>);
+
     EBinOp(left:Expr, op:Token, right:Expr);
     ETernOp(condition:Expr, trueCase:Expr, falseCase:Expr);
     EPrefix(op:Token, right:Expr);

@@ -1,5 +1,4 @@
-final maFunc = (val1:String, val2:Float) -> {
-    return [val1 => val2];
-};
+function oso():Dynamic
+    return {x: 10, y: () -> 'donde'};
 
-trace(maFunc('oso', 3));
+trace(oso().y());

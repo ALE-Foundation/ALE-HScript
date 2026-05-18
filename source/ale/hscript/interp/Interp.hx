@@ -92,7 +92,7 @@ class Interp
                     for (stmt in stmts)
                         result = execute(stmt);
                 } catch (signal:ReturnSignal) {
-                    result = signal.value;
+                    throw signal;
                 }
 
                 scope = previous;
@@ -124,6 +124,14 @@ class Interp
                 else
                     null;
 
+            case EStruct(map):
+                final result:Dynamic = {};
+
+                for (key in map.keys())
+                    Reflect.setField(result, key, execute(map[key]));
+
+                result;
+
             case EVar(name, value):
                 scope.define(name, execute(value));
 
@@ -135,7 +143,21 @@ class Interp
                         for (i => arg in args)
                             newScope.define(arg.name, params[i] ?? execute(arg.value));
 
-                        execute(block, newScope);
+                        final previous = scope;
+
+                        scope = newScope;
+
+                        var result = null;
+
+                        try {
+                            execute(block);
+                        } catch (signal:ReturnSignal) {
+                            result = signal.value;
+                        }
+
+                        scope = previous;
+
+                        return result;
                     }
                 );
 
