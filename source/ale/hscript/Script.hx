@@ -1,8 +1,8 @@
 package ale.hscript;
 
-import ale.hscript.lexer.Lexer;
-import ale.hscript.parser.Parser;
-import ale.hscript.interp.Interp;
+import ale.hscript.lexer.*;
+import ale.hscript.parser.*;
+import ale.hscript.interp.*;
 
 import haxe.Exception;
 import haxe.Timer;
@@ -11,7 +11,7 @@ class Script
 {
     public final content:String;
 
-    public final interp:Interp;
+    // public final interp:Interp;
 
     public function new(?script:String, ?name:String)
     {
@@ -21,7 +21,7 @@ class Script
 
         content = isFile ? Config.FILE_READER(path) : script;
 
-        interp = new Interp(name ?? (isFile ? path : Config.INTERP_NAME));
+        // interp = new Interp(name ?? (isFile ? path : Config.INTERP_NAME));
     }
 
     public var lexerTime:Float = 0;
@@ -40,6 +40,7 @@ class Script
 
         time = Timer.stamp();
 
+        /*
         final expr = new Parser(tokens).parse();
 
         parserTime = (Timer.stamp() - time) * 1000;
@@ -49,8 +50,9 @@ class Script
         result = interp.execute(expr);
 
         interpTime = (Timer.stamp() - time) * 1000;
+        */
 
-        return result;
+        return null;
     }
 
     public function safeExecute():Dynamic
@@ -59,7 +61,7 @@ class Script
         {
             return execute();
         } catch(error:Exception) {
-            Config.ERROR_HANDLER(interp.name + ': ' + error.message);
+            // Config.ERROR_HANDLER(interp.name + ': ' + error.message);
         }
 
         return null;

@@ -1,5 +1,1 @@
-import pack.Oso;
-
-final oso:Oso = new Oso();
-
-trace(oso.val);
+var oso:String = "oso";

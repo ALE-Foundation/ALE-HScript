@@ -2,9 +2,11 @@ package ale.hscript.lexer;
 
 class TokenUtil
 {
-    public static final symbolFromString:Map<String, Token> = [
+    public static final symbolFromString:Map<String, TokenType> = [
         '>' => TGreater,
         '<' => TLess,
+
+        '=' => TEqual,
 
         '~' => TTilde,
 
@@ -26,7 +28,7 @@ class TokenUtil
         '$' => TDollar
     ];
 
-    public static final keywordFromString:Map<String, Token> = [
+    public static final keywordFromString:Map<String, TokenType> = [
         'null' => TNull,
         'true' => TTrue,
         'false' => TFalse,
@@ -61,7 +63,7 @@ class TokenUtil
         'as' => TAs
     ];
 
-    public static final ops:Array<Token> = [
+    public static final ops:Array<TokenType> = [
         TPlus,
         TMinus,
         TStar,
@@ -115,7 +117,7 @@ class TokenUtil
         TArrow
     ];
 
-    public static final binOps:Array<Token> = [
+    public static final binOps:Array<TokenType> = [
         TPlus,
         TMinus,
         TStar,
@@ -160,7 +162,7 @@ class TokenUtil
         TTripleGreaterEqual
     ];
 
-    public static final assignOps:Array<Token> = [
+    public static final assignOps:Array<TokenType> = [
         TPlusEqual,
         TMinusEqual,
         TStarEqual,

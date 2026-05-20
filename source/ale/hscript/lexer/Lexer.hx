@@ -1,5 +1,9 @@
 package ale.hscript.lexer;
 
+import ale.hscript.utils.PosData;
+
+using StringTools;
+
 class Lexer
 {
     final content:String;
@@ -8,26 +12,46 @@ class Lexer
         this.content = content;
 
     var index:Int = 0;
+    var line:Int = 1;
+    var column:Int = 1;
 
-    inline function isEnd():Bool
-        return index >= content.length;
+    function getPos():PosData
+        return {
+            index: index,
+            line: line,
+            column: column
+        };
 
-    inline function peek(offset:Int = 0):Int
-        return StringTools.fastCodeAt(content, index + offset);
+    function peek():Int
+        return content.fastCodeAt(index);
 
-    inline function advance():Int
-        return StringTools.fastCodeAt(content, index++);
+    function peekString():String
+        return content.charAt(index);
 
-    inline function match(char:String):Bool
+    function advance():Int
     {
-        if (peek() != StringTools.fastCodeAt(char, 0))
-            return false;
+        var char = peek();
 
         index++;
 
-        return true;
+        if (char == '\n'.code)
+        {
+            line++;
+
+            column = 1;
+        } else {
+            column++;
+        }
+
+        return char;
     }
 
+    function advanceString():String
+        return String.fromCharCode(advance());
+
+    function isEnd():Bool
+        return index > content.length - 1;
+    
     inline function isDigit(char:Int):Bool
         return char >= '0'.code && char <= '9'.code;
 
@@ -37,199 +61,71 @@ class Lexer
     inline function isIdent(char:Int):Bool
         return isIdentStart(char) || isDigit(char);
 
-    function readIdent():String
-    {
-        final start = index;
-
-        while (!isEnd() && isIdent(peek()))
-            index++;
-
-        return content.substring(start, index);
-    }
-
-    function readString():String
-    {
-        final quote = advance();
-
-        final start = index;
-
-        while (!isEnd() && peek() != quote)
-            index++;
-
-        final str = content.substring(start, index);
-
-        if (!isEnd())
-            index++;
-
-        return str;
-    }
-
-    function readNumber():Float
-    {
-        final start = index;
-
-        while (!isEnd() && isDigit(peek()))
-            index++;
-
-        if (!isEnd() && peek() == '.'.code)
-        {
-            index++;
-
-            while (!isEnd() && isDigit(peek()))
-                index++;
-        }
-
-        return Std.parseFloat(content.substring(start, index));
-    }
-
-    function readOperator():Token
-    {
-        switch (advance())
-        {
-            case '?'.code:
-                if (match('.'))
-                    return TQuestionDot;
-
-                return TQuestion;
-
-            case '!'.code:
-                if (match('='))
-                    return TExclamationEqual;
-
-                return TExclamation;
-
-            case '='.code:
-                if (match('='))
-                    return TDoubleEqual;
-
-                if (match('>'))
-                    return TMapArrow;
-
-                return TEqual;
-
-            case '+'.code:
-                if (match('+'))
-                    return TDoublePlus;
-
-                if (match('='))
-                    return TPlusEqual;
-
-                return TPlus;
-
-            case '-'.code:
-                if (match('-'))
-                    return TDoubleMinus;
-
-                if (match('='))
-                    return TMinusEqual;
-
-                if (match('>'))
-                    return TArrow;
-
-                return TMinus;
-
-            case '*'.code:
-                if (match('='))
-                    return TStarEqual;
-
-                return TStar;
-
-            case '/'.code:
-                if (match('='))
-                    return TSlashEqual;
-
-                return TSlash;
-
-            case '%'.code:
-                if (match('='))
-                    return TPercentEqual;
-
-                return TPercent;
-
-            case '>'.code:
-                if (match('='))
-                    return TGreaterEqual;
-
-                return TGreater;
-
-            case '<'.code:
-                if (match('='))
-                    return TLessEqual;
-
-                return TLess;
-
-            case '&'.code:
-                if (match('&'))
-                    return TDoubleAmpersand;
-
-                return TAmpersand;
-
-            case '|'.code:
-                if (match('|'))
-                    return TDoublePipe;
-
-                return TPipe;
-
-            default:
-                throw 'Unexpected Character: ' + content.charAt(index);
-
-                return null;
-        }
-    }
-
     public function tokenize():Array<Token>
     {
         final result:Array<Token> = [];
 
         while (!isEnd())
         {
-            final cur = peek();
-
-            final curString:String = content.charAt(index);
-
-            switch (curString)
-            {
-                case ' ', '\n', '\r', '\t':
-                {
-                    index++;
-
-                    continue;
-                }
-
-                case '"', '\'':
-                {
-                    result.push(TString(readString()));
-
-                    continue;
-                }
-            }
-
-            if (TokenUtil.symbolFromString.exists(curString))
-            {
-                index++;
-
-                result.push(TokenUtil.symbolFromString[curString]);
-
-                continue;
-            }
+            final cur:Int = peek();
+            
+            final start = getPos();
 
             if (isIdentStart(cur))
             {
-                final ident = readIdent();
+                var res:String = '';
 
-                result.push(TokenUtil.keywordFromString[ident] ?? TIdent(ident));
+                while (isIdent(peek()))
+                    res += advanceString();
+
+                result.push({
+                    type: TIdent,
+                    value: res,
+                    position: {
+                        start: start,
+                        end: getPos()
+                    }
+                });
 
                 continue;
             }
 
-            if (isDigit(cur))
+            if (cur == '\''.code || cur == '"'.code)
             {
-                result.push(TNumber(readNumber()));
+                advance();
 
+                var res:String = '';
+
+                while (peek() != cur)
+                    res += advanceString();
+
+                advance();
+
+                result.push({
+                    type: TokenUtil.keywordFromString[res] ?? TString,
+                    value: res,
+                    position: {
+                        start: start,
+                        end: getPos()
+                    }
+                });
+                
                 continue;
             }
 
-            result.push(readOperator());
+            switch (cur)
+            {
+                case ' '.code, '\t'.code, '\n'.code, '\r'.code:
+                    advance();
+
+                default:
+                    result.push({
+                        type: TokenUtil.symbolFromString[advanceString()],
+                        position: {
+                            start: start
+                        }
+                    });
+            }
         }
 
         return result;
