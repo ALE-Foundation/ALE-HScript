@@ -1,1 +1,1 @@
-var oso:String = "oso";
+final oso:String = 'oso';

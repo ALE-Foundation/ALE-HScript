@@ -1,5 +1,6 @@
 package ale.hscript.parser;
 
+import ale.hscript.lexer.TokenType;
 import ale.hscript.lexer.TokenUtil;
 import ale.hscript.lexer.Token;
 
@@ -34,7 +35,7 @@ class Parser
         return false;
     }
 
-    function expect(val:Token)
+    function expect(val:TokenType)
         if (advance() != val)
             throw 'Expected Token: ' + val + ', got ' + peekLast();
 

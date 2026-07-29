@@ -2,12 +2,12 @@ package ale.hscript.lexer;
 
 enum TokenType
 {
-    TIdent;
+    TIdent(id:String);
     
     // Literals
 
-    TString;
-    TNumber;
+    TString(str:String);
+    TNumber(num:Float);
         
     // Symbol
 

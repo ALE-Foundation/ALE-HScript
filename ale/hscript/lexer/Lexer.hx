@@ -79,8 +79,7 @@ class Lexer
                     res += advanceString();
 
                 result.push({
-                    type: TIdent,
-                    value: res,
+                    type: TokenUtil.keywordFromString[res] ?? TIdent(res),
                     position: {
                         start: start,
                         end: getPos()
@@ -102,8 +101,7 @@ class Lexer
                 advance();
 
                 result.push({
-                    type: TokenUtil.keywordFromString[res] ?? TString,
-                    value: res,
+                    type: TString(res),
                     position: {
                         start: start,
                         end: getPos()
