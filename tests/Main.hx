@@ -8,6 +8,7 @@ class Main
 {
 	static function main()
 	{
-		final script:Script = new Script('test').execute();
+		final script:Script = new Script('test');
+		script.execute();
 	}
 }

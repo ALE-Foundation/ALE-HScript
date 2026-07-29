@@ -22,9 +22,9 @@ class Script
 
     public function execute():Dynamic
     {
-        var result = null;
-
-        return result;
+        new Lexer(content).tokenize();
+        
+        return null;
     }
 
     public function safeExecute():Dynamic
