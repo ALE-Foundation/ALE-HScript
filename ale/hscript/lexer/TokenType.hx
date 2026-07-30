@@ -23,12 +23,20 @@ enum TokenType
     TLBrace;
     TRBrace;
 
+    TTripleDot;
+
     // Keywords
 
     TFinal;
     TVar;
     TFunction;
     TReturn;
+
+    TIf;
+    TElse;
+    TFor;
+    TDo;
+    TWhile;
 
     TFalse;
     TTrue;

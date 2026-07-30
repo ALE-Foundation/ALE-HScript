@@ -51,7 +51,17 @@ class Lexer
                     TComma;
 
                 case '.'.code:
-                    TDot;
+                    if (peek() == '.'.code)
+                    {
+                        advance();
+
+                        if (peek() == '.'.code)
+                            TTripleDot;
+                        else
+                            TDot;
+                    } else {
+                        TDot;
+                    }
 
                 case '{'.code:
                     TLBrace;
@@ -105,17 +115,14 @@ class Lexer
             {
                 var usedPoint:Bool = false;
 
-                while (isDigitStart(peek()))
+                while (isDigit(peek()) || (peek() == '.'.code && !usedPoint))
                 {
                     if (peek() == '.'.code)
-                        if (usedPoint)
-                            throw 'Invalid Number';
-                        else
-                            usedPoint = true;
+                        usedPoint = true;
 
                     advance();
                 }
-                
+
                 result.push({
                     type: TNumber(Std.parseFloat(source.substr(start, index - start))),
                     pos: {
