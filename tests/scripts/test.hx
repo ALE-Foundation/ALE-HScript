@@ -1,8 +1,4 @@
-function myFunc(str:String = 'oso'):Dynamic
+function onUpdate(elapsed:Float)
 {
-    trace(str);
-
-    return str.length;
+    
 }
-
-trace(myFunc('donde'));

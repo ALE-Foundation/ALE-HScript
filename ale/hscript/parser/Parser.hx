@@ -102,7 +102,7 @@ class Parser
     {
         var res = parsePrimitive();
 
-        while (true)
+        while (!end())
         {
             switch (peek().type)
             {
