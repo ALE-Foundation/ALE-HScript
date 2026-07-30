@@ -7,7 +7,9 @@ class TokenUtil
         'final' => TFinal,
         'var' => TVar,
         'function' => TFunction,
-        'return' => TReturn
+        'return' => TReturn,
+        'false' => TFalse,
+        'true' => TTrue
     ];
 
     static function tokensToTokenTypes(tokens:Array<Token>):Array<TokenType>

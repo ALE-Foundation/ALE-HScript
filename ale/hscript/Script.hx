@@ -24,6 +24,19 @@ class Script
         interp = new Interp(name);
     }
 
+    public function get(id:String)
+        return interp.scope.variables.get(id);
+
+    public function call(id:String, ?args:Array<Dynamic>)
+    {
+        final func:Dynamic = get(id);
+
+        if (func != null)
+            return Reflect.callMethod(null, func, args ?? []);
+
+        return null;
+    }
+
     public function execute():Dynamic      
         return interp.execute(new Parser(new Lexer(content).tokenize()).parse());
 

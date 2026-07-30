@@ -169,6 +169,12 @@ class Parser
             case TNumber(num):
                 fastAdvanceExpr(ENumber(num), cur);
 
+            case TFalse:
+                fastAdvanceExpr(EFalse, cur);
+
+            case TTrue:
+                fastAdvanceExpr(ETrue, cur);
+                
             default:
                 advance();
 

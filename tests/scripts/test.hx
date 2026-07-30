@@ -1,4 +1,1 @@
-function onUpdate(elapsed:Float)
-{
-    
-}
+trace(true);

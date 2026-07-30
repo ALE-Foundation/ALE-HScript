@@ -15,4 +15,7 @@ enum ExprType
 
     EString(str:String);
     ENumber(num:Float);
+
+    EFalse;
+    ETrue;
 }

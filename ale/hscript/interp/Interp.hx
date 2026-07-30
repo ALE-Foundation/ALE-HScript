@@ -93,6 +93,12 @@ class Interp
             case EReturn(value):
                 throw new ReturnSignal(executeExpr(value));
 
+            case EFalse:
+                false;
+
+            case ETrue:
+                true;
+
             default:
                 null;
         }
