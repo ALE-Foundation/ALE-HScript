@@ -1,3 +1,4 @@
-var sahur = 10;
+function myFunc(str:String):Dynamic
+    return str.length;
 
-trace(10.1, sahur, 20.20, 1239);
+trace(myFunc('donde'));

@@ -37,9 +37,9 @@ class Parser
     {
         final cur:Token = peek();
 
-        return switch (cur.type)
+        final res:Expr = switch (cur.type)
         {
-            case TFinal:
+            case TFinal, TVar:
                 advance();
 
                 final id:String = switch (advance().type)
@@ -66,14 +66,13 @@ class Parser
 
                 fastExpr(EVar(id, value), cur);
 
-            case TSemiColon:
-                advance();
-
-                null;
-
             default:
                 parseExpr();
         };
+        
+        semicolon();
+
+        return res;
     }
 
     function parseExpr():Expr
@@ -193,6 +192,9 @@ class Parser
             type: type,
             pos: token.pos
         };
+
+    inline function semicolon():Void
+        expect(TSemiColon);
 
     
     function expect(type:TokenType):Void

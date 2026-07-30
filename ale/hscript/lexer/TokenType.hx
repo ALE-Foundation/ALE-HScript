@@ -23,4 +23,5 @@ enum TokenType
     // Keywords
 
     TFinal;
+    TVar;
 }

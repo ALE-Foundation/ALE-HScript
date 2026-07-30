@@ -4,7 +4,8 @@ package ale.hscript.lexer;
 class TokenUtil
 {
     static final stringToTokenType:Map<String, TokenType> = [
-        'final' => TFinal
+        'final' => TFinal,
+        'var' => TVar
     ];
 
     static function tokensToTokenTypes(tokens:Array<Token>):Array<TokenType>
