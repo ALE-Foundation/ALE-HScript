@@ -8,5 +8,6 @@ enum ExprType
 
     ECall(object:Expr, arguments:Array<Expr>);
 
-    EString(id:String);
+    EString(str:String);
+    ENumber(num:Float);
 }

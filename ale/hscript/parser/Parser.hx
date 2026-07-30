@@ -107,6 +107,9 @@ class Parser
             case TString(str):
                 fastAdvanceExpr(EString(str), cur);
 
+            case TNumber(num):
+                fastAdvanceExpr(ENumber(num), cur);
+
             default:
                 advance();
 

@@ -3,7 +3,7 @@ package ale.hscript.lexer;
 enum TokenType
 {
     TBool(value:Bool);
-    TValue(value:Float);
+    TNumber(value:Float);
     TString(value:String);
     TIdent(value:String);
     
@@ -18,6 +18,7 @@ enum TokenType
     TRParen;
 
     TComma;
+    TDot;
 
     // Keywords
 

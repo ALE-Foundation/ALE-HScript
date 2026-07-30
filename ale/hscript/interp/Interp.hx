@@ -44,6 +44,9 @@ class Interp
             case EString(str):
                 str;
 
+            case ENumber(num):
+                num;
+
             case ECall(object, args):
                 Reflect.callMethod(null, executeExpr(object), args.map(arg -> executeExpr(arg)));
 

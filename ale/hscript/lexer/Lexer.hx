@@ -50,6 +50,9 @@ class Lexer
                 case ','.code:
                     TComma;
 
+                case '.'.code:
+                    TDot;
+
                 default:
                     null;
             });
@@ -88,6 +91,32 @@ class Lexer
                 });
 
                 advance();
+
+                continue;
+            }
+
+            if (isDigitStart(cur))
+            {
+                var usedPoint:Bool = false;
+
+                while (isDigitStart(peek()))
+                {
+                    if (peek() == '.'.code)
+                        if (usedPoint)
+                            throw 'Invalid Number';
+                        else
+                            usedPoint = true;
+
+                    advance();
+                }
+                
+                result.push({
+                    type: TNumber(Std.parseFloat(source.substr(start, index - start))),
+                    pos: {
+                        start: startPos,
+                        end: fastPosData()
+                    }
+                });
 
                 continue;
             }
@@ -161,6 +190,9 @@ class Lexer
 
     inline function isDigit(c:Int):Bool
         return c >= '0'.code && c <= '9'.code;
+
+    inline function isDigitStart(c:Int):Bool
+        return isDigit(c) || c == '.'.code;
     
 
     inline function fastPosData():PosData
