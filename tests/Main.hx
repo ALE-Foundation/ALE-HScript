@@ -10,6 +10,6 @@ class Main
 	{
 		final script:Script = new Script('test');
 		
-		trace(script.safeExecute());
+		trace(script.execute());
 	}
 }
