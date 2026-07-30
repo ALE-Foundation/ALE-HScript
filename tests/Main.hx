@@ -9,6 +9,7 @@ class Main
 	static function main()
 	{
 		final script:Script = new Script('test');
-		script.execute();
+		
+		trace(script.safeExecute());
 	}
 }
