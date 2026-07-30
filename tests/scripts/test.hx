@@ -1,3 +1,1 @@
-final oso:String = 'oso';
-
-trace(oso, 'donde');
+trace(10.1, 10.2, 20.20, 1239);
