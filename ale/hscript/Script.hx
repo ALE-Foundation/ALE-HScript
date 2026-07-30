@@ -22,7 +22,7 @@ class Script
 
     public function execute():Dynamic
     {
-        new Lexer(content).tokenize();
+        new Parser(new Lexer(content).tokenize()).parse();
         
         return null;
     }

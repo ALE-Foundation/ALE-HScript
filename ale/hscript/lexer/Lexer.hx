@@ -54,6 +54,30 @@ class Lexer
                 continue;
             }
 
+            if (cur == '\''.code || cur == '"'.code)
+            {
+                advance();
+                
+                final start:Int = start + 1;
+
+                final startPos:PosData = fastPosData();
+
+                while (peek() != cur)
+                    advance();
+
+                result.push({
+                    type: TString(source.substr(start, index - start)),
+                    pos: {
+                        start: startPos,
+                        end: fastPosData()
+                    }
+                });
+
+                advance();
+
+                continue;
+            }
+
             if (isIdentStart(cur))
             {
                 advance();
@@ -142,8 +166,4 @@ class Lexer
             type: type,
             pos: fastPos()
         }
-
-
-    private function _tokensToTokenTypes(tokens:Array<Token>):Array<TokenType>
-        return tokens.map(token -> token.type);
 }
