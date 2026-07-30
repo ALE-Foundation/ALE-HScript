@@ -37,6 +37,8 @@ class Parser
     {
         final cur:Token = peek();
 
+        var requiresSemicolon:Bool = true;
+
         final res:Expr = switch (cur.type)
         {
             case TFinal, TVar:
@@ -55,28 +57,85 @@ class Parser
 
                 parseOptionalType();
 
-                var value:Expr = null;
+                fastExpr(EVar(id, parseOptionalValue()), cur);
 
-                if (peek().type == TEqual)
+            case TFunction:
+                advance();
+
+                final id:String = switch (advance().type)
                 {
-                    advance();
+                    case TIdent(id):
+                        id;
 
-                    value = parseExpr();
-                }
+                    default:
+                        expectedError(TIdent(null), cur.type);
 
-                fastExpr(EVar(id, value), cur);
+                        null;
+                };
+
+                final arguments:Array<FunctionArgument> = parseFunctionArguments();
+
+                parseOptionalType();
+
+                final isBlock:Bool = peek().type == TLBrace;
+
+                var val:Expr = parseExpr();
+
+                if (isBlock)
+                    requiresSemicolon = false;
+                else
+                    val = fastExpr(EBlock([val]), cur);
+
+                fastExpr(EFunction(id, arguments, val), cur);
 
             default:
                 parseExpr();
         };
-        
-        semicolon();
+
+        if (requiresSemicolon)
+            semicolon();
 
         return res;
     }
 
     function parseExpr():Expr
-        return parsePrimitive();
+    {
+        var res = parsePrimitive();
+
+        while (true)
+        {
+            switch (peek().type)
+            {
+                case TDot:
+                    advance();
+
+                    res = {
+                        type: EField(res, switch (advance().type)
+                        {
+                            case TIdent(id):
+                                id;
+
+                            default:
+                                expectedError(TIdent(null), last().type);
+
+                                null;
+                        }),
+                        pos: res.pos
+                    }
+
+                case TLParen:
+                    res = {
+                        type: ECall(res, parseCallArguments()),
+                        pos: res.pos
+                    };
+
+                default:
+                    break;
+            }
+        }
+
+        return res;
+    }
 
     function parsePrimitive():Expr
     {
@@ -84,24 +143,25 @@ class Parser
 
         return switch (cur.type)
         {
+            case TReturn:
+                advance();
+
+                fastExpr(EReturn(parseExpr()), cur);
+
+            case TLBrace:
+                advance();
+
+                final block:Array<Expr> = [];
+
+                while (peek().type != TRBrace)
+                    block.push(parseStatement());
+
+                expect(TRBrace);
+
+                fastExpr(EBlock(block), cur);
+
             case TIdent(id):
-                var res:Expr = fastAdvanceExpr(EField(null, id), cur);
-
-                switch (peek().type)
-                {
-                    case TLParen:
-                        res = {
-                            type: ECall(res, parseCallArguments()),
-                            pos: {
-                                start: cur.pos.start,
-                                end: last().pos.end ?? last().pos.start
-                            }
-                        };
-
-                    default:
-                }
-
-                res;
+                fastAdvanceExpr(EField(null, id), cur);
 
             case TString(str):
                 fastAdvanceExpr(EString(str), cur);
@@ -160,7 +220,7 @@ class Parser
 
         expect(TLParen);
 
-        while (peek().type != TRParen && !end())
+        while (!end() && peek().type != TRParen)
         {
             result.push(parseExpr());
 
@@ -177,6 +237,61 @@ class Parser
         expect(TRParen);
 
         return result;
+    }
+
+    function parseFunctionArguments():Array<FunctionArgument>
+    {
+        final result:Array<FunctionArgument> = [];
+        
+        expect(TLParen);
+
+        while (!end() && peek().type != TRParen)
+        {
+            final cur:Token = peek();
+
+            final id:String = switch (advance().type)
+            {
+                case TIdent(id):
+                    id;
+
+                default:
+                    expectedError(TIdent(null), cur.type);
+
+                    null;
+            };
+
+            parseOptionalType();
+
+            result.push({
+                id: id,
+                value: parseOptionalValue()
+            });
+
+            switch (peek().type)
+            {
+                case TComma:
+                    advance();
+
+                default:
+                    break;
+            }
+        }
+
+        expect(TRParen);
+
+        return result;
+    }
+
+    function parseOptionalValue():Expr
+    {
+        if (peek().type == TEqual)
+        {
+            advance();
+
+            return parseExpr();
+        }
+
+        return null;
     }
     
 

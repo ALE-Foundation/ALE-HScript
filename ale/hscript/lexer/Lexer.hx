@@ -53,6 +53,12 @@ class Lexer
                 case '.'.code:
                     TDot;
 
+                case '{'.code:
+                    TLBrace;
+
+                case '}'.code:
+                    TRBrace;
+
                 default:
                     null;
             });

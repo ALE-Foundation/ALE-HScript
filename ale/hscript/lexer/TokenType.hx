@@ -20,8 +20,13 @@ enum TokenType
     TComma;
     TDot;
 
+    TLBrace;
+    TRBrace;
+
     // Keywords
 
     TFinal;
     TVar;
+    TFunction;
+    TReturn;
 }

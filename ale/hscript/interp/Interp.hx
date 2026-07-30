@@ -21,25 +21,59 @@ class Interp
 
     public function execute(exprs:Array<Expr>):Dynamic
     {
-        var result:Dynamic = null;
-
-        for (expr in exprs)
+        try
         {
-            final res:Dynamic = executeExpr(expr);
+            var result:Dynamic = null;
 
-            if (res != null)
-                result = res;
+            for (expr in exprs)
+            {
+                final res:Dynamic = executeExpr(expr);
+
+                if (res != null)
+                    result = res;
+            }
+
+            return result;
+        } catch(signal:ReturnSignal) {
+            return signal.value;
         }
-
-        return result;
     }
 
-    public function executeExpr(expr:Expr):Dynamic
+    public function executeExpr(expr:Expr, ?newScope:Scope):Dynamic
     {
         return switch (expr.type)
         {
             case EVar(id, value):
                 scope.define(id, executeExpr(value));
+
+            case EFunction(id, arguments, block):
+                scope.define(id, Reflect.makeVarArgs((args:Array<Dynamic>) -> {
+                    var funcScope = new Scope(scope);
+
+                    for (index => arg in arguments)
+                        funcScope.define(arguments[index].id, args[index] ?? executeExpr(arguments[index].value));
+
+                    try
+                    {
+                        executeExpr(block, funcScope);
+
+                        return null;
+                    } catch(signal:ReturnSignal) {
+                        return signal.value;
+                    }
+                }));
+
+            case EBlock(exprs):
+                final oldScope:Scope = scope;
+
+                scope = newScope ?? new Scope(scope);
+
+                for (expr in exprs)
+                    executeExpr(expr);
+
+                scope = oldScope;
+
+                null;
 
             case EString(str):
                 str;
@@ -55,6 +89,9 @@ class Interp
                     scope.get(id);
                 else
                     Reflect.getProperty(executeExpr(object), id);
+
+            case EReturn(value):
+                throw new ReturnSignal(executeExpr(value));
 
             default:
                 null;

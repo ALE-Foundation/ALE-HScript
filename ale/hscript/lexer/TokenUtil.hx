@@ -5,7 +5,9 @@ class TokenUtil
 {
     static final stringToTokenType:Map<String, TokenType> = [
         'final' => TFinal,
-        'var' => TVar
+        'var' => TVar,
+        'function' => TFunction,
+        'return' => TReturn
     ];
 
     static function tokensToTokenTypes(tokens:Array<Token>):Array<TokenType>
