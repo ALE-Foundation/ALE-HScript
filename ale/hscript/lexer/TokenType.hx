@@ -14,6 +14,11 @@ enum TokenType
     TColon;
     TSemiColon;
 
+    TLParen;
+    TRParen;
+
+    TComma;
+
     // Keywords
 
     TFinal;

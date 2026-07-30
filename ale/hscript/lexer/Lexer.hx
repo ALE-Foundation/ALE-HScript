@@ -30,20 +30,29 @@ class Lexer
 
             final startPos:PosData = fastPosData();
 
-            final symbolToken:Token = switch (cur)
+            final symbolToken:Token = fastToken(switch (cur)
             {
                 case '='.code:
-                    fastToken(TEqual);
+                    TEqual;
 
                 case ':'.code:
-                    fastToken(TColon);
+                    TColon;
 
                 case ';'.code:
-                    fastToken(TSemiColon);
+                    TSemiColon;
+
+                case '('.code:
+                    TLParen;
+
+                case ')'.code:
+                    TRParen;
+
+                case ','.code:
+                    TComma;
 
                 default:
                     null;
-            }
+            });
 
             if (symbolToken != null)
             {
@@ -63,7 +72,12 @@ class Lexer
                 final startPos:PosData = fastPosData();
 
                 while (peek() != cur)
+                {
                     advance();
+                    
+                    if (index >= length)
+                        throw 'Unterminated String';
+                }
 
                 result.push({
                     type: TString(source.substr(start, index - start)),
@@ -162,8 +176,13 @@ class Lexer
         };
 
     inline function fastToken(type:TokenType):Token
+    {
+        if (type == null)
+            return null;
+
         return {
             type: type,
             pos: fastPos()
         }
+    }
 }
