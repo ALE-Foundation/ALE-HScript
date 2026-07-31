@@ -23,15 +23,18 @@ class Parser
         final result:Array<Expr> = [];
 
         while (index < length)
-        {
-            final res:Expr = parseStatement();
-
-            if (res != null)
-                result.push(res);
-        }
+            result.push(parseStatement());
 
         return result;
     }
+
+
+    function requiresSemicolon(expr:ExprType):Bool
+        return switch (expr)
+        {
+            default:
+                true;
+        }
 
     
     function parseStatement():Expr
@@ -48,15 +51,13 @@ class Parser
                 parseOptionalType();
 
                 fastExpr(EVar(id, parseOptionalValue()), cur);
-
-            case TSemiColon:
-                advance();
-
-                null;
                 
             default:
                 parseExpr();
         }
+
+        if (requiresSemicolon(res.type))
+            semicolon();
 
         return res;
     }
@@ -140,9 +141,9 @@ class Parser
 
     function expect(type:TokenType, ?token:Token)
         if (check(type))
-            error(type, token);
-        else
             advance();
+        else
+            error(type, token);
 
     function expectIdent():String
         return switch (advance().type)
