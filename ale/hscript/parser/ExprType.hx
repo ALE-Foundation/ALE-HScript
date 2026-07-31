@@ -18,6 +18,10 @@ enum ExprType
     ENumber(num:Float);
     EArray(members:Array<Expr>);
 
+    EType(module:String);
+
+    ENew(cls:Expr, args:Array<Expr>);
+
     EIf(condition:Expr, expr:Expr, ?elseExpr:Expr);
     EWhile(condition:Expr, expr:Expr);
     EDoWhile(condition:Expr, expr:Expr);

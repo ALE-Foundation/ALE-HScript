@@ -164,6 +164,13 @@ class Parser
 
                 fastExpr(EIf(condition, expr, elseExpr), cur);
 
+            case TNew:
+                advance();
+
+                final type:Expr = parseType();
+
+                fastExpr(ENew(type, parseCallArguments()), cur);
+
             case TLBrace:
                 advance();
 
@@ -249,8 +256,12 @@ class Parser
             parseType();
         }
 
-    function parseType()
+    function parseType():Expr
     {
+        final module:StringBuf = new StringBuf();
+
+        final token:Token = peek();
+
         switch (advance().type)
         {
             case TLBrace:
@@ -268,12 +279,14 @@ class Parser
 
                 expect(TRBrace);
 
-            case TIdent(_):
+            case TIdent(name):
+                module.add(name);
+
                 while (!end() && check(TDot))
                 {
                     advance();
 
-                    expectIdent();
+                    module.add('.' + expectIdent());
                 }
 
             case TLParen:
@@ -323,6 +336,8 @@ class Parser
 
             default:
         }
+
+        return fastExpr(EType(module.toString()), token);
     }
 
     function parseOptionalValue():Dynamic

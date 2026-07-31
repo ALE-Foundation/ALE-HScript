@@ -8,6 +8,8 @@ class TokenUtil
         'var' => TVar,
         'function' => TFunction,
 
+        'new' => TNew,
+
         'for' => TFor,
         'if' => TIf,
         'while' => TWhile,

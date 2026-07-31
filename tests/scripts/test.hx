@@ -1,7 +1,6 @@
-// Basic Types
+// Types
 
-// null
+var oso:Date = new StringBuf();
+oso.add('donde tu ta');
 
-var oso:Null<Dynamic> = 10;
-
-trace(oso);
+trace(oso.length);

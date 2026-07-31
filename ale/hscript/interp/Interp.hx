@@ -60,6 +60,12 @@ class Interp
             case EArray(exprs):
                 exprs.map(expr -> eval(expr));
 
+            case EType(module):
+                scope.get(module) ?? Type.resolveClass(module);
+
+            case ENew(cls, args):
+                Type.createInstance(eval(cls), args.map(arg -> eval(arg)));
+
             case EFunction(id, arguments, block):
                 scope.define(id, Reflect.makeVarArgs((args:Array<Dynamic>) -> {
                     var funcScope = new Scope(scope);
