@@ -17,14 +17,14 @@ class Interp
 
         scope = new Scope();
 
-        for (vrb in Config.VARIABLES.keys())
-            scope.define(vrb, Config.VARIABLES[vrb]);
-
         for (cls in Config.IMPORTS)
             scope.define(Type.getClassName(cls).split('.').pop(), cls);
         
         for (tpd in Config.TYPEDEFS.keys())
             scope.define(tpd, Config.TYPEDEFS[tpd]);
+
+        for (vrb in Config.VARIABLES.keys())
+            scope.define(vrb, Config.VARIABLES[vrb]);
     }
 
     public function execute(exprs:Array<Expr>):Dynamic
