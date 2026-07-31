@@ -9,7 +9,6 @@ enum ExprType
     EField(object:Null<Expr>, property:String);
 
     ECall(object:Expr, arguments:Array<Expr>);
-    EReturn(value:Expr);
 
     EFunction(id:String, arguments:Array<FunctionArgument>, block:Expr);
 
@@ -19,6 +18,12 @@ enum ExprType
     ENumber(num:Float);
 
     EIf(condition:Expr, expr:Expr, ?elseExpr:Expr);
+    EWhile(condition:Expr, expr:Expr);
+    EDoWhile(condition:Expr, expr:Expr);
+
+    EReturn(value:Expr);
+    EContinue;
+    EBreak;
 
     EBinOp(op:TokenType, left:Expr, right:Expr);
     EUnOp(op:TokenType, left:Expr);

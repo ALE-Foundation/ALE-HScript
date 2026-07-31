@@ -1,5 +1,6 @@
-if (false)
+while (true)
 {
-
-} else
     trace('oso');
+
+    break;
+}

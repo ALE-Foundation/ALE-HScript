@@ -7,13 +7,16 @@ class TokenUtil
         'final' => TFinal,
         'var' => TVar,
         'function' => TFunction,
-        'return' => TReturn,
 
         'for' => TFor,
         'if' => TIf,
         'while' => TWhile,
         'do' => TDo,
         'else' => TElse,
+
+        'return' => TReturn,
+        'continue' => TContinue,
+        'break' => TBreak,
 
         'false' => TFalse,
         'true' => TTrue,

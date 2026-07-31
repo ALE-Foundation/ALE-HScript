@@ -32,7 +32,7 @@ class Parser
     function requiresSemicolon(expr:ExprType):Bool
         return switch (expr)
         {
-            case EIf(_, _, _), EBlock(_):
+            case EWhile(_, _), EIf(_, _, _), EBlock(_):
                 false;
 
             default:
@@ -54,7 +54,44 @@ class Parser
                 parseOptionalType();
 
                 fastExpr(EVar(id, parseOptionalValue()), cur);
-                
+
+            case TWhile:
+                advance();
+
+                expect(TLParen);
+
+                final condition:Expr = parseExpr();
+
+                expect(TRParen);
+
+                fastExpr(EWhile(condition, parseStatement()), cur);
+
+            case TDo:
+                advance();
+
+                final expr:Expr = parseStatement();
+
+                expect(TWhile);
+
+                expect(TLParen);
+
+                final condition:Expr = parseExpr();
+
+                expect(TRParen);
+
+                fastExpr(EDoWhile(condition, expr), cur);
+
+            case TReturn:
+                advance();
+
+                fastExpr(EReturn(parseExpr()), cur);
+
+            case TBreak:
+                fastAdvanceExpr(EBreak, cur);
+
+            case TContinue:
+                fastAdvanceExpr(EContinue, cur);
+
             default:
                 parseExpr();
         }

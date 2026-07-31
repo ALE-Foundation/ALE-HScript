@@ -79,7 +79,36 @@ class Interp
                     eval(expr);
                 else if (elseExpr != null)
                     eval(elseExpr);
-                
+                else
+                    null;
+
+            case EWhile(condition, expr):
+                while (eval(condition))
+                {
+                    try
+                    {
+                        eval(expr);
+                    } catch (c:ContinueSignal) {
+                        continue;
+                    } catch (b:BreakSignal) {
+                        break;
+                    }
+                }
+
+                null;
+
+            case EDoWhile(condition, expr):
+                do {
+                    try
+                    {
+                        eval(expr);
+                    } catch (c:ContinueSignal) {
+                        continue;
+                    } catch (b:BreakSignal) {
+                        break;
+                    }
+                } while(eval(condition));
+
                 null;
 
             case EBlock(exprs):
@@ -93,6 +122,12 @@ class Interp
                 scope = oldScope;
 
                 null;
+
+            case EContinue:
+                throw new ContinueSignal();
+
+            case EBreak:
+                throw new BreakSignal();
 
             case EString(str):
                 str;

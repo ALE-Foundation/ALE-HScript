@@ -54,7 +54,10 @@ enum TokenType
     TFinal;
     TVar;
     TFunction;
+    
     TReturn;
+    TContinue;
+    TBreak;
 
     TIf;
     TElse;
