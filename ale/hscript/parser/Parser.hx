@@ -64,6 +64,30 @@ class Parser
 
     function parseExpr():Expr
     {
+        return parsePostfix();
+    }
+
+    function parsePostfix():Expr
+    {
+        var expr:Expr = parsePrefix();
+
+        while (!end())
+        {
+            switch (peek().type)
+            {
+                case TLParen:
+                    expr = fastExpr(ECall(expr, parseCallArguments()), last());
+
+                default:
+                    return expr;
+            }
+        }
+
+        return expr;
+    }
+
+    function parsePrefix():Expr
+    {
         return parsePrimitive();
     }
 
@@ -73,15 +97,49 @@ class Parser
 
         return switch (cur.type)
         {
+            case TIdent(id):
+                fastAdvanceExpr(EField(null, id), cur);
+
             case TString(str):
                 fastAdvanceExpr(EString(str), cur);
 
             case TNumber(num):
                 fastAdvanceExpr(ENumber(num), cur);
 
+            case TTrue:
+                fastAdvanceExpr(ETrue, cur);
+
+            case TFalse:
+                fastAdvanceExpr(EFalse, cur);
+
+            case TNull:
+                fastAdvanceExpr(ENull, cur);
+
             default:
                 null;
         }
+    }
+
+
+    function parseCallArguments():Array<Expr>
+    {
+        final result:Array<Expr> = [];
+
+        expect(TLParen);
+
+        while (!end() && !check(TRParen))
+        {
+            result.push(parseExpr());
+
+            if (check(TComma))
+                advance();
+            else
+                break;
+        }
+
+        expect(TRParen);
+
+        return result;
     }
 
 
@@ -171,6 +229,9 @@ class Parser
 
     inline function next():Token
         return source[index + 1];
+
+    inline function end():Bool
+        return index >= length;
 
     inline function check(type:TokenType):Bool
         return peek().type == type;

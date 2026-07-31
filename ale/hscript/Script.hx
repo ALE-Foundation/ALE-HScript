@@ -13,15 +13,15 @@ class Script
 
     public final interp:Interp;
 
-    public function new(?script:String, ?name:String)
+    public function new(script:String, ?name:String)
     {
-        final path:String = Config.SCRIPT_PATH + script + Config.SCRIPT_EXTENSION;
+        final path:String = Config.SCRIPT_PATH + script + Config.EXTENSION;
 
         final isFile:Bool = Config.FILE_CHECKER != null && Config.FILE_CHECKER(path);
 
         content = isFile ? Config.FILE_READER(path) : script;
 
-        interp = new Interp(name);
+        interp = new Interp(name ?? script);
     }
 
     public function get(id:String)

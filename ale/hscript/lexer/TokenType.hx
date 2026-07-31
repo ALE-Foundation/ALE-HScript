@@ -64,4 +64,5 @@ enum TokenType
 
     TFalse;
     TTrue;
+    TNull;
 }

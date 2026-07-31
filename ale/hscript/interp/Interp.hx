@@ -3,7 +3,7 @@ package ale.hscript.interp;
 import ale.hscript.parser.ExprUtil;
 import ale.hscript.parser.Expr;
 
-import haxe.Log;
+import ale.hscript.Config;
 
 class Interp
 {
@@ -17,7 +17,14 @@ class Interp
 
         scope = new Scope();
 
-        scope.define('trace', Reflect.makeVarArgs((args:Array<Dynamic>) -> Log.trace(args.join(', '), null)));
+        for (vrb in Config.VARIABLES.keys())
+            scope.define(vrb, Config.VARIABLES[vrb]);
+        
+        for (tpd in Config.TYPEDEFS.keys())
+            scope.define(tpd, Config.TYPEDEFS[tpd]);
+
+        for (cls in Config.IMPORTS)
+            scope.define(Type.getClassName(cls).split('.').pop(), cls);
     }
 
     public function execute(exprs:Array<Expr>):Dynamic
@@ -94,7 +101,16 @@ class Interp
                 num;
 
             case ECall(object, args):
-                Reflect.callMethod(null, eval(object), args.map(arg -> eval(arg)));
+                final args:Array<Dynamic> = args.map(arg -> eval(arg));
+
+                args.push({
+                    methodName: '',
+                    lineNumber: expr.pos.start.line,
+                    fileName: name + Config.EXTENSION,
+                    className: name.split('/').pop()
+                });
+
+                Reflect.callMethod(null, eval(object), args);
 
             case EField(object, id):
                 if (object == null)
@@ -110,6 +126,9 @@ class Interp
 
             case ETrue:
                 true;
+
+            case ENull:
+                null;
 
             case EBinOp(op, left, right):
                 final l:Dynamic = eval(left) ?? 0;

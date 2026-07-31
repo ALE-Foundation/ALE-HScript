@@ -5,6 +5,8 @@ import sys.FileSystem;
 import sys.io.File;
 #end
 
+import haxe.PosInfos;
+import haxe.Rest;
 import haxe.Log;
 
 class Defaults
@@ -31,12 +33,17 @@ class Defaults
     ];
     public static final ABSTRACTS:Array<String> = [];
     public static final TYPEDEFS:Map<String, Class<Dynamic>> = [];
-    public static final VARIABLES:Map<String, Dynamic> = [];
+    public static final VARIABLES:Map<String, Dynamic> = [
+        'trace' => Reflect.makeVarArgs(args -> {
+            final position = args.pop();
 
-    public static final SCRIPT_EXTENSION:String = '.hx';
+            Log.trace(position.fileName + ':' + position.lineNumber + ': ' + args, null);
+        })
+    ];
+
+    public static final EXTENSION:String = '.hx';
+
     public static final SCRIPT_PATH:String = 'scripts/';
-
-    public static final MODULE_EXTENSION:String = '.hx';
     public static final MODULE_PATH:String = 'classes/';
 
     public static final INTERP_NAME:String = 'ALEHScript.hx';

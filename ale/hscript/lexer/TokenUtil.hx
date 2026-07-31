@@ -16,7 +16,8 @@ class TokenUtil
         'else' => TElse,
 
         'false' => TFalse,
-        'true' => TTrue
+        'true' => TTrue,
+        'null' => TNull
     ];
 
     static function tokensToTokenTypes(tokens:Array<Token>):Array<TokenType>
