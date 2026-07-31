@@ -16,6 +16,7 @@ enum ExprType
 
     EString(str:String);
     ENumber(num:Float);
+    EArray(members:Array<Expr>);
 
     EIf(condition:Expr, expr:Expr, ?elseExpr:Expr);
     EWhile(condition:Expr, expr:Expr);

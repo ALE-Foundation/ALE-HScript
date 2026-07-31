@@ -170,6 +170,25 @@ class Parser
                 expect(TRBrace);
 
                 fastExpr(EBlock(exprs), cur);
+
+            case TLBracket:
+                advance();
+
+                final members:Array<Expr> = [];
+
+                while (!end() && !check(TRBracket))
+                {
+                    members.push(parseExpr());
+
+                    if (check(TComma))
+                        advance();
+                    else
+                        break;
+                }
+
+                expect(TRBracket);
+
+                fastExpr(EArray(members), cur);
             
             case TIdent(id):
                 fastAdvanceExpr(EField(null, id), cur);
@@ -229,10 +248,75 @@ class Parser
     {
         switch (advance().type)
         {
+            case TLBrace:
+                while (!end() && !check(TRBrace))
+                {
+                    expectIdent();
+
+                    parseOptionalType();
+
+                    if (check(TComma))
+                        advance();
+                    else
+                        break;
+                }
+
+                expect(TRBrace);
+
             case TIdent(_):
+                while (!end() && check(TDot))
+                {
+                    advance();
+
+                    expectIdent();
+                }
+
+            case TLParen:
+                var count:Int = 0;
+
+                while (!end() && !check(TRParen))
+                {
+                    if (count > 0 && advance().type != TComma)
+                        error(TComma, last());
+
+                    parseType();
+
+                    count++;
+                }
+
+                expect(TRParen);
+
+                expect(TArrow);
+
+                parseType();
 
             default:
-                error(TIdent(null), last());
+                error(null, last());
+        }
+
+        switch (peek().type)
+        {
+            case TLess:
+                advance();
+
+                while (!end() && !check(TGreater))
+                {
+                    parseType();
+
+                    if (check(TComma))
+                        advance();
+                    else
+                        break;
+                }
+
+                expect(TGreater);
+
+            case TArrow:
+                advance();
+
+                parseType();
+
+            default:
         }
     }
 

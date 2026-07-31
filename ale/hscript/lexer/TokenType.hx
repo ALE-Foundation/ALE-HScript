@@ -47,6 +47,8 @@ enum TokenType
     TSlash;
     TPercent;
 
+    TArrow;
+
     TNot;
 
     // Keywords

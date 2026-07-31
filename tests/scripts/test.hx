@@ -1,6 +1,1 @@
-while (true)
-{
-    trace('oso');
-
-    break;
-}
+var oso:{x:Oso, y:Void} = 10;
