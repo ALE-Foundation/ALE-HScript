@@ -136,7 +136,7 @@ class Interp
                 num;
 
             case ECall(object, args):
-                Reflect.callMethod(this, eval(object), args.map(arg -> eval(arg)));
+                Reflect.callMethod(null, eval(object), args.map(arg -> eval(arg)));
 
             case EField(object, id):
                 if (object == null)
