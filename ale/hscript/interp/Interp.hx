@@ -42,6 +42,9 @@ class Interp
 
     public function eval(expr:Expr, ?newScope:Scope):Dynamic
     {
+        if (expr == null)
+            return null;
+
         return switch (expr.type)
         {
             case EVar(id, value):

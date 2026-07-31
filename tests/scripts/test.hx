@@ -1,6 +1,1 @@
-final a = 10;
-
-if (a < 9)
-{
-    trace('oso');
-}
+final a:String = 10;
