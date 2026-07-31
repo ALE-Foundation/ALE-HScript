@@ -23,7 +23,7 @@ class Parser
         final result:Array<Expr> = [];
 
         while (index < length)
-            result.push(parseStatement());
+            result.push(parseSemicolonStatement());
 
         return result;
     }
@@ -32,19 +32,28 @@ class Parser
     function requiresSemicolon(expr:ExprType):Bool
         return switch (expr)
         {
-            case EWhile(_, _), EIf(_, _, _), EBlock(_):
+            case EBlock(_), EFunctionDecl(_, _), EFunction(_, _):
                 false;
 
             default:
                 true;
         }
 
+
+    function parseSemicolonStatement():Expr
+    {
+        final res:Expr = parseStatement();
+
+        semicolon(res.type);
+
+        return res;
+    }
     
     function parseStatement():Expr
     {
         final cur:Token = peek();
 
-        final res:Expr = switch (cur.type)
+        return switch (cur.type)
         {
             case TVar, TFinal:
                 advance();
@@ -55,51 +64,30 @@ class Parser
 
                 fastExpr(EVar(id, parseOptionalValue()), cur);
 
-            case TWhile:
+            case TFunction:
                 advance();
 
-                expect(TLParen);
+                final id:String = expectIdent();
 
-                final condition:Expr = parseExpr();
+                final args:Array<FunctionArgument> = parseFunctionArguments();
 
-                expect(TRParen);
+                parseOptionalType();
 
-                fastExpr(EWhile(condition, parseStatement()), cur);
-
-            case TDo:
-                advance();
-
-                final expr:Expr = parseStatement();
-
-                expect(TWhile);
-
-                expect(TLParen);
-
-                final condition:Expr = parseExpr();
-
-                expect(TRParen);
-
-                fastExpr(EDoWhile(condition, expr), cur);
+                fastExpr(EFunctionDecl(id, fastExpr(EFunction(args, parseBody()), cur)), cur);
 
             case TReturn:
                 advance();
 
-                fastExpr(EReturn(parseExpr()), cur);
+                var res:Expr = null;
 
-            case TBreak:
-                fastAdvanceExpr(EBreak, cur);
+                if (!check(TSemiColon))
+                    res = parseExpr();
 
-            case TContinue:
-                fastAdvanceExpr(EContinue, cur);
+                fastExpr(EReturn(res), cur);
 
             default:
                 parseExpr();
         }
-
-        if (requiresSemicolon(res.type))
-            semicolon();
-
-        return res;
     }
 
     function parseExpr():Expr
@@ -142,27 +130,21 @@ class Parser
 
         return switch (cur.type)
         {
-            case TIf:
+            case TLParen:
+                final args:Array<FunctionArgument> = parseFunctionArguments();
+
+                expect(TArrow);
+
+                fastExpr(EFunction(args, parseBody(false)), cur);
+
+            case TFunction:
                 advance();
 
-                expect(TLParen);
+                final args:Array<FunctionArgument> = parseFunctionArguments();
 
-                final condition:Expr = parseExpr();
+                parseOptionalType();
 
-                expect(TRParen);
-
-                final expr:Expr = parseStatement();
-
-                var elseExpr:Expr = null;
-
-                if (!end() && check(TElse))
-                {
-                    advance();
-
-                    elseExpr = parseStatement();
-                }
-
-                fastExpr(EIf(condition, expr, elseExpr), cur);
+                fastExpr(EFunction(args, parseBody(false)), cur);
 
             case TNew:
                 advance();
@@ -177,7 +159,7 @@ class Parser
                 final exprs:Array<Expr> = [];
 
                 while (!end() && !check(TRBrace))
-                    exprs.push(parseStatement());
+                    exprs.push(parseSemicolonStatement());
 
                 expect(TRBrace);
 
@@ -191,7 +173,7 @@ class Parser
                 while (!end() && !check(TRBracket))
                 {
                     members.push(parseExpr());
-
+                                        
                     if (check(TComma))
                         advance();
                     else
@@ -225,6 +207,62 @@ class Parser
         }
     }
 
+
+    function parseBody(?stmt:Bool = true):Expr
+    {
+        var res:Expr = parseStatement();
+
+        if (!res.type.match(EBlock(_)))
+        {
+            if (!stmt && !res.type.match(EReturn(_)))
+                res = {
+                    type: EReturn(res),
+                    pos: res.pos
+                }
+
+            res = {
+                type: EBlock([res]),
+                pos: res.pos
+            };
+        }
+
+        if (stmt)
+            semicolon(res.type);
+
+        return res;
+    }
+
+    
+    function parseFunctionArguments():Array<FunctionArgument>
+    {
+        final result:Array<FunctionArgument> = [];
+
+        expect(TLParen);
+
+        while (!end() && !check(TRParen))
+        {
+            if (check(TQuestion))
+                advance();
+
+            final name:String = expectIdent();
+
+            parseOptionalType();
+
+            result.push({
+                id: name,
+                value: parseOptionalValue()
+            });
+
+            if (check(TComma))
+                advance();
+            else
+                break;
+        }
+
+        expect(TRParen);
+
+        return result;
+    }
 
     function parseCallArguments():Array<Expr>
     {
@@ -367,12 +405,17 @@ class Parser
     }
 
 
-    inline function semicolon()
-        expect(TSemiColon);
+    inline function semicolon(type:ExprType)
+        if (requiresSemicolon(type))
+            expect(TSemiColon);
 
 
-    function error(want:TokenType, got:Token)
-        throw 'Expected ' + want + ', got ' + (got.type ?? peek().type);
+    function error(want:TokenType, ?got:Token)
+    {
+        got ??= peek();
+
+        throw 'Expected ' + want + ', got ' + got.type;
+    }
 
 
     function expect(type:TokenType, ?token:Token)

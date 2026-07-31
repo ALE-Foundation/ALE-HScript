@@ -29,6 +29,7 @@ enum TokenType
     TEqual;
 
     TQuestionQuestion;
+    TQuestion;
 
     TOrOr;
     TAndAnd;

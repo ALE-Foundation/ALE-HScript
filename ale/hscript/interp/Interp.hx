@@ -65,9 +65,12 @@ class Interp
 
             case ENew(cls, args):
                 Type.createInstance(eval(cls), args.map(arg -> eval(arg)));
-
-            case EFunction(id, arguments, block):
-                scope.define(id, Reflect.makeVarArgs((args:Array<Dynamic>) -> {
+            
+            case EFunctionDecl(id, func):
+                scope.define(id, eval(func));
+            
+            case EFunction(arguments, block):
+                Reflect.makeVarArgs((args:Array<Dynamic>) -> {
                     var funcScope = new Scope(scope);
 
                     for (index => arg in arguments)
@@ -81,7 +84,7 @@ class Interp
                     } catch(signal:ReturnSignal) {
                         return signal.value;
                     }
-                }));
+                });
 
             case EIf(condition, expr, elseExpr):
                 if (eval(condition))

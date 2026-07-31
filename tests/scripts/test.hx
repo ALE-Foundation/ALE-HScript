@@ -1,6 +1,48 @@
 // Types
 
-var oso:Date = new StringBuf();
-oso.add('donde tu ta');
+// - Basic Types
 
-trace(oso.length);
+var oso:Date = Type.createInstance(StringBuf, []);
+oso.add('oso');
+
+// - - Bool
+
+trace(true);
+trace(false);
+
+// - - Int
+
+trace(1);
+trace(0);
+// trace(-1);
+// trace(0xFF0000);
+
+// - - Float
+
+trace(1.0);
+trace(0.0);
+// trace(-1.0);
+// trace(1e10);
+
+// - Class Instance
+
+// - Enum Instance
+
+// - Anonymous Structure
+
+// - Function Type
+
+function coolPrint(i:Int, ?s:String = 'sahur'):String
+{
+    trace('Cool Print', i, s);
+
+    return 'oso donde tu ta oso';
+}
+
+trace(coolPrint(1));
+
+var funnyFunc = function(oso:Dynamic):String return oso();
+
+trace(funnyFunc((?oso:String) -> 'tung'));
+
+trace(funnyFunc(function():String return 'sahur'));

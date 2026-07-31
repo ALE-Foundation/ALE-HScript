@@ -36,7 +36,7 @@ class Scope
     }
 
     public function get(id:String):Dynamic
-        return variables.exists(id) ? variables[id] : parent?.get(id);
+        return variables[id] ?? parent?.get(id);
 
     public function exists(id:String):Dynamic
         return variables.exists(id) || parent?.exists(id);

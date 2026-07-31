@@ -5,12 +5,13 @@ import ale.hscript.lexer.TokenType;
 enum ExprType
 {
     EVar(id:String, value:Expr);
+    EFunctionDecl(id:String, value:Expr);
 
     EField(object:Null<Expr>, property:String);
 
     ECall(object:Expr, arguments:Array<Expr>);
 
-    EFunction(id:String, arguments:Array<FunctionArgument>, block:Expr);
+    EFunction(arguments:Array<FunctionArgument>, block:Expr);
 
     EBlock(exprs:Array<Expr>);
 

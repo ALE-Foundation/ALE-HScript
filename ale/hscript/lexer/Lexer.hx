@@ -30,7 +30,7 @@ class Lexer
 
             if (cur == '/'.code)
             {
-                final next = index + 1 < length ? source.fastCodeAt(index + 1) : -1;
+                final next = next();
 
                 if (next == '/'.code)
                 {
@@ -104,6 +104,9 @@ class Lexer
                 case ']'.code:
                     TRBracket;
 
+                case '?'.code:
+                    TQuestion;
+
                 case '='.code:
                     TEqual;
 
@@ -114,7 +117,10 @@ class Lexer
                     TGreater;
 
                 case '-'.code:
-                    TMinus;
+                    if (match('>'.code))
+                        TArrow;
+                    else
+                        TMinus;
 
                 case '+'.code:
                     TPlus;
@@ -229,6 +235,19 @@ class Lexer
 
     inline function peek():Int
         return index < length ? source.fastCodeAt(index) : -1;
+
+    inline function next():Int
+        return index + 1 < length ? source.fastCodeAt(index + 1) : -1;
+
+    function match(c:Int):Bool
+    {
+        final res:Bool = next() == c;
+
+        if (res)
+            advance();
+
+        return res;
+    }
 
     function advance():Int
     {
