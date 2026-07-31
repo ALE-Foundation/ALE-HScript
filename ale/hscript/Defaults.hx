@@ -37,7 +37,7 @@ class Defaults
         'trace' => Reflect.makeVarArgs(args -> {
             final position = args.pop();
 
-            Log.trace(position.fileName + ':' + position.lineNumber + ': ' + args, null);
+            Log.trace(position.fileName + ':' + position.lineNumber + ': ' + args.join(','), null);
         })
     ];
 
