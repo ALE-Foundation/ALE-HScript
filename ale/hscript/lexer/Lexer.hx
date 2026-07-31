@@ -54,7 +54,7 @@ class Lexer
                     TLBrace;
 
                 case '}'.code:
-                    TRParen;
+                    TRBrace;
 
                 case '['.code:
                     TLBracket;

@@ -1,3 +1,5 @@
-var maTrace = trace;
+if (false)
+{
 
-maTrace('tung', 'tung', 'sahur');
+} else
+    trace('oso');

@@ -32,6 +32,9 @@ class Parser
     function requiresSemicolon(expr:ExprType):Bool
         return switch (expr)
         {
+            case EIf(_, _, _), EBlock(_):
+                false;
+
             default:
                 true;
         }
@@ -97,6 +100,40 @@ class Parser
 
         return switch (cur.type)
         {
+            case TIf:
+                advance();
+
+                expect(TLParen);
+
+                final condition:Expr = parseExpr();
+
+                expect(TRParen);
+
+                final expr:Expr = parseStatement();
+
+                var elseExpr:Expr = null;
+
+                if (!end() && check(TElse))
+                {
+                    advance();
+
+                    elseExpr = parseStatement();
+                }
+
+                fastExpr(EIf(condition, expr, elseExpr), cur);
+
+            case TLBrace:
+                advance();
+
+                final exprs:Array<Expr> = [];
+
+                while (!end() && !check(TRBrace))
+                    exprs.push(parseStatement());
+
+                expect(TRBrace);
+
+                fastExpr(EBlock(exprs), cur);
+            
             case TIdent(id):
                 fastAdvanceExpr(EField(null, id), cur);
 
@@ -136,7 +173,7 @@ class Parser
             else
                 break;
         }
-
+        
         expect(TRParen);
 
         return result;
