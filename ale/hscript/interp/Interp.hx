@@ -19,12 +19,12 @@ class Interp
 
         for (vrb in Config.VARIABLES.keys())
             scope.define(vrb, Config.VARIABLES[vrb]);
-        
-        for (tpd in Config.TYPEDEFS.keys())
-            scope.define(tpd, Config.TYPEDEFS[tpd]);
 
         for (cls in Config.IMPORTS)
             scope.define(Type.getClassName(cls).split('.').pop(), cls);
+        
+        for (tpd in Config.TYPEDEFS.keys())
+            scope.define(tpd, Config.TYPEDEFS[tpd]);
     }
 
     public function execute(exprs:Array<Expr>):Dynamic
