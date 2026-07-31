@@ -136,16 +136,7 @@ class Interp
                 num;
 
             case ECall(object, args):
-                final args:Array<Dynamic> = args.map(arg -> eval(arg));
-
-                args.push({
-                    methodName: '',
-                    lineNumber: expr.pos.start.line,
-                    fileName: name + Config.EXTENSION,
-                    className: name.split('/').pop()
-                });
-
-                Reflect.callMethod(null, eval(object), args);
+                Reflect.callMethod(null, eval(object), args.map(arg -> eval(arg)));
 
             case EField(object, id):
                 if (object == null)

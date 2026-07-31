@@ -34,11 +34,7 @@ class Defaults
     public static final ABSTRACTS:Array<String> = [];
     public static final TYPEDEFS:Map<String, Class<Dynamic>> = [];
     public static final VARIABLES:Map<String, Dynamic> = [
-        'trace' => Reflect.makeVarArgs(args -> {
-            final position = args.pop();
-
-            Log.trace(position.fileName + ':' + position.lineNumber + ': ' + args.join(','), null);
-        })
+        'trace' => Reflect.makeVarArgs(args -> Log.trace(args.join(', '), null))
     ];
 
     public static final EXTENSION:String = '.hx';

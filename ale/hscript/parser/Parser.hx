@@ -118,6 +118,11 @@ class Parser
                 case TLParen:
                     expr = fastExpr(ECall(expr, parseCallArguments()), last());
 
+                case TDot:
+                    advance();
+                    
+                    expr = fastExpr(EField(expr, expectIdent()), last());
+
                 default:
                     return expr;
             }

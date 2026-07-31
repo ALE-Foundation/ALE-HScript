@@ -1,1 +1,1 @@
-var oso:{x:Oso, y:Void} = 10;
+trace(Math.cos(0));
