@@ -23,7 +23,7 @@ jobs:
 
           - platform: Hashlink
             dependencies: 
-            build_postfix: --hl bin\bin.hl -cmd "hl bin\bin.hl"
+            build_postfix: --hl bin\bin.hl
 
           - platform: Lua
             dependencies: haxelib install hxluajit
