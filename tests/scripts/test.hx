@@ -1,1 +1,7 @@
-trace([0, 1, 'oso', 'donde', ['ta', 'oso']]);
+// Basic Types
+
+// null
+
+var oso:Null<Dynamic> = 10;
+
+trace(oso);

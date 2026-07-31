@@ -26,6 +26,48 @@ class Lexer
         {
             final cur:Int = peek();
 
+            final cur = peek();
+
+            if (cur == '/'.code)
+            {
+                final next = index + 1 < length ? source.fastCodeAt(index + 1) : -1;
+
+                if (next == '/'.code)
+                {
+                    advance();
+                    advance();
+
+                    while (peek() != '\n'.code && peek() != -1)
+                        advance();
+
+                    continue;
+                }
+
+                if (next == '*'.code)
+                {
+                    advance();
+                    advance();
+
+                    while (true)
+                    {
+                        if (peek() == -1)
+                            throw 'Unterminated comment';
+
+                        if (peek() == '*'.code && index + 1 < length && source.fastCodeAt(index + 1) == '/'.code)
+                        {
+                            advance();
+                            advance();
+
+                            break;
+                        }
+
+                        advance();
+                    }
+
+                    continue;
+                }
+            }
+
             final start:Int = index;
 
             final startPos:PosData = fastPosData();
