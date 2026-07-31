@@ -15,6 +15,49 @@ class Parser
         this.source = source;
 
         length = source.length;
+
+        trace(TokenUtil.tokensToTokenTypes(source));
+
+        setPrecedenceLevel(TEqual);
+
+        setPrecedenceLevel(TQuestionQuestion);
+        setPrecedenceLevel(TOrOr);
+
+        setPrecedenceLevel(TAndAnd);
+
+        setPrecedenceLevel(TEqualEqual);
+        setPrecedenceLevel(TNotEqual, true);
+
+        setPrecedenceLevel(TLess);
+        setPrecedenceLevel(TLessEqual, true);
+        setPrecedenceLevel(TGreater, true);
+        setPrecedenceLevel(TGreaterEqual, true);
+
+        setPrecedenceLevel(TPlus);
+        setPrecedenceLevel(TMinus, true);
+
+        setPrecedenceLevel(TStar);
+        setPrecedenceLevel(TSlash, true);
+        setPrecedenceLevel(TPercent, true);
+    }
+
+
+    function requiresSemicolon(expr:Expr):Bool
+    {
+        return switch (expr.type)
+        {
+            case EBlock(_):
+                false;
+
+            case EFunction(_, _, body):
+                !body.type.match(EBlock(_));
+
+            case EIf(_, thenExpr, elseExpr):
+                requiresSemicolon(thenExpr) || (elseExpr != null && requiresSemicolon(elseExpr));
+
+            default:
+                true;
+        }
     }
 
 
@@ -36,8 +79,6 @@ class Parser
     function parseStatement():Expr
     {
         final cur:Token = peek();
-
-        var requiresSemicolon:Bool = true;
 
         final res:Expr = switch (cur.type)
         {
@@ -77,12 +118,12 @@ class Parser
 
                 parseOptionalType();
 
-                final isBlock:Bool = peek().type == TLBrace;
+                final isBlock:Bool = check(TLBrace);
 
                 var val:Expr = parseExpr();
 
                 if (isBlock)
-                    requiresSemicolon = false;
+                    semicolon();
                 else
                     val = fastExpr(EBlock([val]), cur);
 
@@ -92,15 +133,40 @@ class Parser
                 parseExpr();
         };
 
-        if (requiresSemicolon)
+        if (res != null && requiresSemicolon(res))
+        {
+            trace(res);
+
             semicolon();
+        }
 
         return res;
     }
 
-    function parseExpr():Expr
+    function parseExpr(?minPrec:Int = 0):Expr
     {
-        var res = parsePrimitive();
+        var left:Expr = parsePostfix();
+
+        while (!end())
+        {
+            final op:Token = peek();
+
+            final prec:Int = precedence(op.type);
+
+            if (prec < minPrec)
+                break;
+
+            advance();
+
+            left = fastExpr(EBinOp(op.type, left, parseExpr(prec + associativity(op.type))), op);
+        }
+
+        return left;
+    }
+
+    function parsePostfix():Expr
+    {
+        var expr:Expr = parsePrefix();
 
         while (!end())
         {
@@ -109,8 +175,8 @@ class Parser
                 case TDot:
                     advance();
 
-                    res = {
-                        type: EField(res, switch (advance().type)
+                    expr = fastExpr(
+                        EField(expr, switch (advance().type)
                         {
                             case TIdent(id):
                                 id;
@@ -120,21 +186,40 @@ class Parser
 
                                 null;
                         }),
-                        pos: res.pos
-                    }
+                        last()
+                    );
 
                 case TLParen:
-                    res = {
-                        type: ECall(res, parseCallArguments()),
-                        pos: res.pos
-                    };
+                    expr = fastExpr(
+                        ECall(expr, parseCallArguments()),
+                        last()
+                    );
 
                 default:
-                    break;
+                    return expr;
             }
         }
 
-        return res;
+        return expr;
+    }
+
+    function parsePrefix():Expr
+    {
+        return switch (peek().type)
+        {
+            case TMinus:
+                advance();
+
+                fastExpr(EUnOp(TMinus, parseExpr(NEXT_PRECEDENCE)), last());
+
+            case TNot:
+                advance();
+
+                fastExpr(EUnOp(TNot, parseExpr(NEXT_PRECEDENCE)), last());
+
+            default:
+                parsePrimitive();
+        }
     }
 
     function parsePrimitive():Expr
@@ -143,10 +228,41 @@ class Parser
 
         return switch (cur.type)
         {
+            case TIf:
+                advance();
+
+                expect(TLParen);
+
+                final condition:Expr = parseExpr();
+
+                expect(TRParen);
+
+                final expr:Expr = parseStatement();
+
+                var elseExpr:Expr = null;
+
+                if (!end() && check(TElse))
+                {
+                    advance();
+
+                    elseExpr = parseStatement();
+                }
+
+                fastExpr(EIf(condition, expr, elseExpr), cur);
+
             case TReturn:
                 advance();
 
                 fastExpr(EReturn(parseExpr()), cur);
+
+            case TLParen:
+                advance();
+
+                final expr:Expr = parseExpr();
+
+                expect(TRParen);
+
+                expr;
 
             case TLBrace:
                 advance();
@@ -182,27 +298,58 @@ class Parser
         }
     }
 
+
+    function associativity(type:TokenType):Int
+    {
+        return switch (type)
+        {
+            case TEqual:
+                0;
+
+            default:
+                1;
+        }
+    }
+
+
+    var precedenceMap:Map<TokenType, Int> = [];
+    
+    var NEXT_PRECEDENCE(default, null):Int = 1;
+
+    inline function precedence(type:TokenType):Int
+        return precedenceMap[type] ?? -1;
+
+    function setPrecedenceLevel(type:TokenType, ?same:Bool = false)
+    {
+        final prec:Int = NEXT_PRECEDENCE - (same ? 1 : 0);
+        
+        if (NEXT_PRECEDENCE < prec + 1)
+            NEXT_PRECEDENCE = prec + 1;
+
+        precedenceMap[type] = prec;
+    }
+
     
     var index:Int = 0;
 
     inline function peek():Token
-        return source[index];
+        return end() ? null : source[index];
 
     inline function advance():Token
-        return source[index++];
+        return end() ? null : source[index++];
 
     inline function last():Token
-        return source[index - 1];
+        return end() ? null : source[index - 1];
 
-    inline function check(type:TokenType):Bool
-        return peek().type == type;
+    inline function next():Token
+        return end() ? null : source[index + 1];
 
     inline function end():Bool
         return index >= length;
 
 
     function parseOptionalType()
-        if (peek().type == TColon)
+        if (check(TColon))
         {
             advance();
 
@@ -290,7 +437,7 @@ class Parser
 
     function parseOptionalValue():Expr
     {
-        if (peek().type == TEqual)
+        if (check(TEqual))
         {
             advance();
 
@@ -317,9 +464,12 @@ class Parser
     inline function semicolon():Void
         expect(TSemiColon);
 
+
+    inline function check(type:TokenType):Bool
+        return peek().type == type;
     
     function expect(type:TokenType):Void
-        if (peek().type == type)
+        if (!end() && check(type))
             advance();
         else
             throw 'Expected ' + type + ', got ' + peek().type;

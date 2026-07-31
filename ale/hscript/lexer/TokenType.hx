@@ -9,21 +9,45 @@ enum TokenType
     
     // Symbols
 
-    TEqual;
-
     TColon;
     TSemiColon;
-
-    TLParen;
-    TRParen;
 
     TComma;
     TDot;
 
+    TLParen;
+    TRParen;
+
     TLBrace;
     TRBrace;
 
+    TLBracket;
+    TRBracket;
+
     TTripleDot;
+
+    TEqual;
+
+    TQuestionQuestion;
+
+    TOrOr;
+    TAndAnd;
+    TEqualEqual;
+    TNotEqual;
+
+    TGreater;
+    TGreaterEqual;
+    TLess;
+    TLessEqual;
+
+    TMinus;
+    TPlus;
+
+    TStar;
+    TSlash;
+    TPercent;
+
+    TNot;
 
     // Keywords
 

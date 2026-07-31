@@ -8,6 +8,13 @@ class TokenUtil
         'var' => TVar,
         'function' => TFunction,
         'return' => TReturn,
+
+        'for' => TFor,
+        'if' => TIf,
+        'while' => TWhile,
+        'do' => TDo,
+        'else' => TElse,
+
         'false' => TFalse,
         'true' => TTrue
     ];

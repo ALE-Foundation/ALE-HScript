@@ -1,5 +1,7 @@
 package ale.hscript.parser;
 
+import ale.hscript.lexer.TokenType;
+
 enum ExprType
 {
     EVar(id:String, value:Expr);
@@ -15,6 +17,11 @@ enum ExprType
 
     EString(str:String);
     ENumber(num:Float);
+
+    EIf(condition:Expr, expr:Expr, ?elseExpr:Expr);
+
+    EBinOp(op:TokenType, left:Expr, right:Expr);
+    EUnOp(op:TokenType, left:Expr);
 
     EFalse;
     ETrue;

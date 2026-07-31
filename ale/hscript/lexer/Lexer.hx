@@ -32,14 +32,17 @@ class Lexer
 
             final symbolToken:Token = fastToken(switch (cur)
             {
-                case '='.code:
-                    TEqual;
-
                 case ':'.code:
                     TColon;
 
                 case ';'.code:
                     TSemiColon;
+
+                case ','.code:
+                    TComma;
+
+                case '.'.code:
+                    TDot;
 
                 case '('.code:
                     TLParen;
@@ -47,28 +50,45 @@ class Lexer
                 case ')'.code:
                     TRParen;
 
-                case ','.code:
-                    TComma;
-
-                case '.'.code:
-                    if (peek() == '.'.code)
-                    {
-                        advance();
-
-                        if (peek() == '.'.code)
-                            TTripleDot;
-                        else
-                            TDot;
-                    } else {
-                        TDot;
-                    }
-
                 case '{'.code:
                     TLBrace;
 
                 case '}'.code:
-                    TRBrace;
+                    TRParen;
 
+                case '['.code:
+                    TLBracket;
+
+                case ']'.code:
+                    TRBracket;
+
+                case '='.code:
+                    TEqual;
+
+                case '<'.code:
+                    TLess;
+
+                case '>'.code:
+                    TGreater;
+
+                case '-'.code:
+                    TMinus;
+
+                case '+'.code:
+                    TPlus;
+
+                case '*'.code:
+                    TStar;
+
+                case '/'.code:
+                    TSlash;
+
+                case '%'.code:
+                    TPercent;
+
+                case '!'.code:
+                    TNot;
+                
                 default:
                     null;
             });
@@ -184,9 +204,8 @@ class Lexer
         return char;
     }
 
-
     inline function isLower(c:Int):Bool
-    return c >= 'a'.code && c <= 'z'.code;
+        return c >= 'a'.code && c <= 'z'.code;
 
     inline function isUpper(c:Int):Bool
         return c >= 'A'.code && c <= 'Z'.code;

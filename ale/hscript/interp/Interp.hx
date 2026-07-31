@@ -1,5 +1,6 @@
 package ale.hscript.interp;
 
+import ale.hscript.parser.ExprUtil;
 import ale.hscript.parser.Expr;
 
 import haxe.Log;
@@ -27,7 +28,7 @@ class Interp
 
             for (expr in exprs)
             {
-                final res:Dynamic = executeExpr(expr);
+                final res:Dynamic = eval(expr);
 
                 if (res != null)
                     result = res;
@@ -39,23 +40,23 @@ class Interp
         }
     }
 
-    public function executeExpr(expr:Expr, ?newScope:Scope):Dynamic
+    public function eval(expr:Expr, ?newScope:Scope):Dynamic
     {
         return switch (expr.type)
         {
             case EVar(id, value):
-                scope.define(id, executeExpr(value));
+                scope.define(id, eval(value));
 
             case EFunction(id, arguments, block):
                 scope.define(id, Reflect.makeVarArgs((args:Array<Dynamic>) -> {
                     var funcScope = new Scope(scope);
 
                     for (index => arg in arguments)
-                        funcScope.define(arguments[index].id, args[index] ?? executeExpr(arguments[index].value));
+                        funcScope.define(arguments[index].id, args[index] ?? eval(arguments[index].value));
 
                     try
                     {
-                        executeExpr(block, funcScope);
+                        eval(block, funcScope);
 
                         return null;
                     } catch(signal:ReturnSignal) {
@@ -63,13 +64,21 @@ class Interp
                     }
                 }));
 
+            case EIf(condition, expr, elseExpr):
+                if (eval(condition))
+                    eval(expr);
+                else if (elseExpr != null)
+                    eval(elseExpr);
+                
+                null;
+
             case EBlock(exprs):
                 final oldScope:Scope = scope;
 
                 scope = newScope ?? new Scope(scope);
 
                 for (expr in exprs)
-                    executeExpr(expr);
+                    eval(expr);
 
                 scope = oldScope;
 
@@ -82,22 +91,68 @@ class Interp
                 num;
 
             case ECall(object, args):
-                Reflect.callMethod(null, executeExpr(object), args.map(arg -> executeExpr(arg)));
+                Reflect.callMethod(null, eval(object), args.map(arg -> eval(arg)));
 
             case EField(object, id):
                 if (object == null)
                     scope.get(id);
                 else
-                    Reflect.getProperty(executeExpr(object), id);
+                    Reflect.getProperty(eval(object), id);
 
             case EReturn(value):
-                throw new ReturnSignal(executeExpr(value));
+                throw new ReturnSignal(eval(value));
 
             case EFalse:
                 false;
 
             case ETrue:
                 true;
+
+            case EBinOp(op, left, right):
+                final l:Dynamic = eval(left) ?? 0;
+                final r:Dynamic = eval(right) ?? 0;
+
+                untyped switch (op)
+                {
+                    case TPlus:
+                        l + r;
+
+                    case TStar:
+                        l * r;
+
+                    case TSlash:
+                        l / r;
+
+                    case TPercent:
+                        l % r;
+
+                    case TEqualEqual:
+                        l == r;
+
+                    case TNotEqual:
+                        l != r;
+
+                    case TLess:
+                        l < r;
+
+                    case TLessEqual:
+                        l <= r;
+
+                    case TGreater:
+                        l > r;
+
+                    case TGreaterEqual:
+                        l >= r;
+
+                    case TAndAnd:
+                        l && r;
+
+                    case TOrOr:
+                        l || r;
+
+                    default:
+                        null;
+                }
 
             default:
                 null;
