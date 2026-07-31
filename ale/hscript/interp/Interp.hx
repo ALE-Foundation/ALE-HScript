@@ -57,6 +57,9 @@ class Interp
             case EVar(id, value):
                 scope.define(id, eval(value));
 
+            case EArray(exprs):
+                exprs.map(expr -> eval(expr));
+
             case EFunction(id, arguments, block):
                 scope.define(id, Reflect.makeVarArgs((args:Array<Dynamic>) -> {
                     var funcScope = new Scope(scope);

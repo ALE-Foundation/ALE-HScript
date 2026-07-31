@@ -1,1 +1,1 @@
-trace(Math.cos(0));
+trace([0, 1, 'oso', 'donde', ['ta', 'oso']]);
