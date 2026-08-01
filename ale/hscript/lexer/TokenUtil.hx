@@ -8,6 +8,8 @@ class TokenUtil
         'var' => TVar,
         'function' => TFunction,
 
+        'untyped' => TUntyped,
+
         'new' => TNew,
 
         'for' => TFor,

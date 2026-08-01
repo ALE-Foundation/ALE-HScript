@@ -58,6 +58,8 @@ enum TokenType
     TVar;
     TFunction;
 
+    TUntyped;
+
     TNew;
     
     TReturn;

@@ -64,6 +64,11 @@ class Parser
 
                 fastExpr(EVar(id, parseOptionalValue()), cur);
 
+            case TUntyped:
+                advance();
+
+                parseStatement();
+
             case TFunction:
                 advance();
 
@@ -130,6 +135,11 @@ class Parser
 
         return switch (cur.type)
         {
+            case TUntyped:
+                advance();
+
+                parseExpr();
+
             case TLParen:
                 final args:Array<FunctionArgument> = parseFunctionArguments();
 

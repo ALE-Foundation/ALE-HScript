@@ -24,12 +24,6 @@ trace(0.0);
 // trace(-1.0);
 // trace(1e10);
 
-// - Class Instance
-
-// - Enum Instance
-
-// - Anonymous Structure
-
 // - Function Type
 
 function coolPrint(i:Int, ?s:String = 'sahur'):String
@@ -46,3 +40,11 @@ var funnyFunc = function(oso:Dynamic):String return oso();
 trace(funnyFunc((?oso:String) -> 'tung'));
 
 trace(funnyFunc(function():String return 'sahur'));
+
+// Type System
+
+// - Untyped
+
+untyped final oso = 'oso';
+
+trace(oso);
