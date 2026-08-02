@@ -2,8 +2,9 @@ package ale.hscript.interp;
 
 import ale.hscript.parser.ExprUtil;
 import ale.hscript.parser.Expr;
-
 import ale.hscript.Config;
+
+import haxe.Constraints.IMap;
 
 class Interp
 {
@@ -213,6 +214,16 @@ class Interp
 
             case ECall(object, args):
                 Reflect.callMethod(null, eval(object), args.map(arg -> eval(arg)));
+
+            case EArrayAccess(obj, key):
+                final res:Dynamic = eval(obj);
+
+                if (Std.isOfType(res, Array))
+                    res[eval(key)];
+                else if (Std.isOfType(res, IMap))
+                    cast(res, IMap<Dynamic, Dynamic>).get(eval(key));
+                else
+                    null;
 
             case EVar(id):
                 scope.get(id);

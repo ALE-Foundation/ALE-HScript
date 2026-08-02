@@ -157,6 +157,15 @@ class Parser
 
                     expr = fastExpr(EAssign(expr, parseExpr()), last());
 
+                case TLBracket:
+                    advance();
+
+                    final key:Expr = parseExpr();
+
+                    expect(TRBracket);
+
+                    expr = fastExpr(EArrayAccess(expr, key), last());
+
                 default:
                     return expr;
             }

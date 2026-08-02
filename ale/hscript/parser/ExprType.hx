@@ -11,6 +11,7 @@ enum ExprType
     EField(object:Null<Expr>, property:String);
 
     ECall(object:Expr, arguments:Array<Expr>);
+    EArrayAccess(object:Expr, key:Expr);
 
     EFunction(arguments:Array<FunctionArgument>, block:Expr);
 
