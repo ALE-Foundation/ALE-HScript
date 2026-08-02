@@ -35,18 +35,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: refs/heads/${{ github.head_ref }}
-          persist-credentials: false
-          fetch-depth: 0
-
-      - name: Override README
-        uses: tokusumi/markdown-embed-code@main
-        with:
-          markdown: "README.md"
-          token: ${{ secrets.GITHUB_TOKEN }}
-          message: "Synchronizing README"
-          silent: true
 
       - name: Setup Haxe
         uses: krdlab/setup-haxe@master

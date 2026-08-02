@@ -1,0 +1,23 @@
+name: Embed code in README
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  embed-code:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: refs/heads/${{ github.head_ref }}
+          persist-credentials: false
+          fetch-depth: 0
+
+      - uses: tokusumi/markdown-embed-code@main
+        with:
+          markdown: "README.md"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          message: "Synchronizing README"
+          silent: true
