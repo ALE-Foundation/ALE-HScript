@@ -19,7 +19,7 @@ jobs:
           persist-credentials: true
 
       - name: Embed code into README
-        uses: scheuclu/markdown-embed-code@main
+        uses: programmer290399/markdown-embed-code@main
         with:
           markdown: README.md
           token: ${{ secrets.GITHUB_TOKEN }}
