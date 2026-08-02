@@ -4,20 +4,26 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   embed-code:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          ref: refs/heads/${{ github.head_ref }}
-          persist-credentials: false
-          fetch-depth: 0
 
-      - uses: cgalliva/markdown-embed-code@main
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
-          markdown: "README.md"
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Embed code into README
+        uses: cgalliva/markdown-embed-code@main
+        with:
+          markdown: README.md
           token: ${{ secrets.GITHUB_TOKEN }}
           message: "Synchronizing README"
           silent: true
