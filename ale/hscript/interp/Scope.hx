@@ -59,6 +59,8 @@ class Scope
                 }
 
             case PGet, PNever:
+                throw 'Cannot assign to final "$id"';
+
                 null;
         }
     }
@@ -94,6 +96,8 @@ class Scope
                 }
 
             case PSet, PNever:
+                throw 'The expression "$id" cannot be accessed for reading';
+
                 null;
         }
     }

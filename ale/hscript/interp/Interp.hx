@@ -99,14 +99,7 @@ class Interp
                     for (index => arg in arguments)
                         funcScope.define(arguments[index].id, args[index] ?? eval(arguments[index].value));
 
-                    try
-                    {
-                        eval(block, funcScope);
-
-                        return null;
-                    } catch(signal:ReturnSignal) {
-                        return signal.value;
-                    }
+                    eval(block, funcScope);
                 });
 
             case EIf(condition, expr, elseExpr):
@@ -151,12 +144,19 @@ class Interp
 
                 scope = newScope ?? new Scope(scope);
 
-                for (expr in exprs)
-                    eval(expr);
+                var res:Dynamic = null;
+                
+                try
+                {
+                    for (expr in exprs)
+                        res = eval(expr);
+                } catch(e:ReturnSignal) {
+                    res = e.value;
+                }
 
                 scope = oldScope;
 
-                null;
+                res;
 
             case EContinue:
                 throw new ContinueSignal();
