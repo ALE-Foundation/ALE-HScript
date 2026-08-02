@@ -19,6 +19,12 @@ jobs:
           fetch-depth: 0
           ref: refs/heads/${{ github.ref_name }}
 
+      - name: Verify checkout
+        run: |
+          pwd
+          ls -la
+          git status
+
       - name: Embed code into README
         uses: cgalliva/markdown-embed-code@main
         with:
