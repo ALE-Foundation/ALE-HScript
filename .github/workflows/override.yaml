@@ -2,8 +2,6 @@ name: Embed code in README
 
 on:
   push:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
@@ -21,7 +19,7 @@ jobs:
           persist-credentials: true
 
       - name: Embed code into README
-        uses: cgalliva/markdown-embed-code@main
+        uses: scheuclu/markdown-embed-code@main
         with:
           markdown: README.md
           token: ${{ secrets.GITHUB_TOKEN }}
