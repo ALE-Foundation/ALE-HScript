@@ -4,8 +4,4 @@ Just a small project by someone who wants to learn how to create a scripting lan
 
 ---
 
-## This project currently supports the following...
-
-```haxe
-<!-- embed:..tests/scripts/test.hx -->
-```
+## This project currently supports what is shown in [**this**](tests/scripts/test.hx) script
