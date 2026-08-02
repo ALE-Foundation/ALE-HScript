@@ -54,25 +54,48 @@ enum TokenType
 
     // Keywords
 
-    TFinal;
-    TVar;
-    TFunction;
-
-    TUntyped;
-
-    TNew;
-    
-    TReturn;
-    TContinue;
+    TAbstract;
     TBreak;
-
-    TIf;
-    TElse;
-    TFor;
+    TCase;
+    TCast;
+    TCatch;
+    TClass;
+    TContinue;
     TDo;
-    TWhile;
-
+    TDynamic;
+    TElse;
+    TEnum;
+    TExtends;
+    TExtern;
     TFalse;
-    TTrue;
+    TFinal;
+    TFor;
+    TFunction;
+    TIf;
+    TImplements;
+    TImport;
+    TIn;
+    TInline;
+    TInterface;
+    TMacro;
+    TNew;
     TNull;
+    TOperator;
+    TOverload;
+    TOverride;
+    TPackage;
+    TPrivate;
+    TPublic;
+    TReturn;
+    TStatic;
+    TSwitch;
+    TThis;
+    TThrow;
+    TTrue;
+    TTry;
+    TTypedef;
+    TUntyped;
+    TUsing;
+    TVar;
+    TWhile;
 }
