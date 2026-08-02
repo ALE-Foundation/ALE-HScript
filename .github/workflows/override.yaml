@@ -13,14 +13,14 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v2
         with:
           persist-credentials: true
           fetch-depth: 0
           ref: refs/heads/${{ github.ref_name }}
 
       - name: Embed code into README
-        uses: programmer290399/markdown-embed-code@main
+        uses: cgalliva/markdown-embed-code@main
         with:
           markdown: README.md
           token: ${{ secrets.GITHUB_TOKEN }}
