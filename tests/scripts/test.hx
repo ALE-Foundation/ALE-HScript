@@ -61,23 +61,22 @@ trace(oso);
 
 // - Property
 
-var oso(default, set):String = 'messi tomate una pepsi';
+var oso(get, set):String = 'messi tomate una pepsi';
 
-function oso_set(value:String):String
-    oso = value;
-
-oso_set('oso');
-
-trace(oso);
-
-/*
 function get_oso():String
 {
-    return 'tung';
+    trace('cool getter', oso);
+
+    return oso;
 }
 
-function set_oso():String
+function set_oso(value:String):String
 {
-    return 'sahur';
+    trace('cool setter', value);
+
+    return oso = value;
 }
-*/
+
+oso = 'donde';
+
+trace(oso);

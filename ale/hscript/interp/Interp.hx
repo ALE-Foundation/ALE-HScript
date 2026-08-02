@@ -54,8 +54,15 @@ class Interp
 
         return switch (expr.type)
         {
-            case EVarDecl(id, value):
-                scope.define(id, eval(value));
+            case EVarDecl(id, value, getter, setter):
+                scope.define(id, eval(value), getter, setter);
+
+                null;
+            
+            case EFunctionDecl(id, func):
+                scope.define(id, eval(func));
+
+                null;
 
             case EArray(exprs):
                 exprs.map(expr -> eval(expr));
@@ -84,9 +91,6 @@ class Interp
 
             case ENew(cls, args):
                 Type.createInstance(eval(cls), args.map(arg -> eval(arg)));
-            
-            case EFunctionDecl(id, func):
-                scope.define(id, eval(func));
             
             case EFunction(arguments, block):
                 Reflect.makeVarArgs((args:Array<Dynamic>) -> {

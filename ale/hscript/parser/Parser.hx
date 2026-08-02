@@ -60,25 +60,30 @@ class Parser
 
                 final id:String = expectIdent();
 
+                var getter:Property = PDefault;
+                var setter:Property = PDefault;
+
                 if (cur.type == TVar)
                 {
                     if (check(TLParen))
                     {
                         advance();
 
-                        final getter:Property = expectProperty();
+                        getter = expectProperty();
 
                         expect(TComma);
 
-                        final setter:Property = expectProperty();
+                        setter = expectProperty();
 
                         expect(TRParen);
                     }
+                } else {
+                    setter = PNever;
                 }
 
                 parseOptionalType();
 
-                fastExpr(EVarDecl(id, parseOptionalValue()), cur);
+                fastExpr(EVarDecl(id, parseOptionalValue(), getter, setter), cur);
 
             case TUntyped:
                 advance();

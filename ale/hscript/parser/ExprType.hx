@@ -4,7 +4,7 @@ import ale.hscript.lexer.TokenType;
 
 enum ExprType
 {
-    EVarDecl(id:String, value:Expr);
+    EVarDecl(id:String, value:Expr, ?getter:Property, ?setter:Property);
     EFunctionDecl(id:String, value:Expr);
 
     EVar(id:String);
