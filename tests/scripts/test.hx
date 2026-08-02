@@ -1,30 +1,38 @@
-// Types
+final CATEGORY_TRACE:String -> Void = (str:String) -> {
+    trace('');
+    trace(str);
+    trace('');
+};
 
-// - Basic Types
+CATEGORY_TRACE('Types');
+
+CATEGORY_TRACE('- Basic Types');
 
 var oso:Date = Type.createInstance(StringBuf, []);
 oso.add('oso');
 
-// - - Bool
+trace(oso);
+
+CATEGORY_TRACE('- - Bool');
 
 trace(true);
 trace(false);
 
-// - - Int
+CATEGORY_TRACE('- - Int');
 
 trace(1);
 trace(0);
 // trace(-1);
 // trace(0xFF0000);
 
-// - - Float
+CATEGORY_TRACE('- - Float');
 
 trace(1.0);
 trace(0.0);
 // trace(-1.0);
 // trace(1e10);
 
-// - Function Type
+CATEGORY_TRACE('- - Function Type');
 
 function coolPrint(i:Int, ?s:String = 'sahur'):String
 {
@@ -41,17 +49,17 @@ trace(funnyFunc((?oso:String) -> 'tung'));
 
 trace(funnyFunc(function():String return 'sahur'));
 
-// Type System
+CATEGORY_TRACE('Type System');
 
-// - Untyped
+CATEGORY_TRACE('- Untyped');
 
 untyped final oso = 'oso';
 
 trace(oso);
 
-// Class Fields
+CATEGORY_TRACE('Class Fields');
 
-// - Variable
+CATEGORY_TRACE('- Variable');
 
 var oso:String = 'tung';
 
@@ -59,7 +67,7 @@ var oso:String = 'tung';
 
 trace(oso);
 
-// - Property
+CATEGORY_TRACE('- Property');
 
 var oso(get, set):String = 'messi tomate una pepsi';
 
@@ -80,3 +88,10 @@ function set_oso(value:String):String
 oso = 'donde';
 
 trace(oso);
+
+CATEGORY_TRACE('- Method');
+
+function dameElOso():String
+    return 'oso';
+
+trace(dameElOso());
