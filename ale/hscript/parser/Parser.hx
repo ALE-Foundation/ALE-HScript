@@ -219,12 +219,27 @@ class Parser
             case TLBracket:
                 advance();
 
-                final members:Array<Expr> = [];
+                final arrayMembers:Array<Expr> = [];
+                final mapMembers:Map<Expr, Expr> = [];
+
+                var mapStyle:Null<Bool> = null;
 
                 while (!end() && !check(TRBracket))
                 {
-                    members.push(parseExpr());
-                                        
+                    final left:Expr = parseExpr();
+
+                    if (mapStyle == null)
+                        mapStyle = check(TMapArrow);
+
+                    if (mapStyle)
+                    {
+                        expect(TMapArrow);
+
+                        mapMembers.set(left, parseExpr());
+                    } else {
+                        arrayMembers.push(left);
+                    }
+
                     if (check(TComma))
                         advance();
                     else
@@ -233,7 +248,7 @@ class Parser
 
                 expect(TRBracket);
 
-                fastExpr(EArray(members), cur);
+                fastExpr(mapStyle ? EMap(mapMembers) : EArray(arrayMembers), cur);
             
             case TIdent(id):
                 fastAdvanceExpr(EVar(id), cur);

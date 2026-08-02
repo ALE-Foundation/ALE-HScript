@@ -19,6 +19,7 @@ enum ExprType
     EString(str:String);
     ENumber(num:Float);
     EArray(members:Array<Expr>);
+    EMap(members:Map<Expr, Expr>);
 
     EAssign(obj:Expr, value:Expr);
 

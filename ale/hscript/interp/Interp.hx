@@ -83,6 +83,14 @@ class Interp
             case EArray(exprs):
                 exprs.map(expr -> eval(expr));
 
+            case EMap(exprs):
+                final res:Map<Dynamic, Dynamic> = new Map<Dynamic, Dynamic>();
+
+                for (expr in exprs.keys())
+                    res.set(eval(expr), eval(exprs[expr]));
+
+                res;
+
             case EType(module):
                 scope.get(module) ?? Type.resolveClass(module);
 
@@ -106,7 +114,24 @@ class Interp
                 }
 
             case ENew(cls, args):
-                Type.createInstance(eval(cls), args.map(arg -> eval(arg)));
+                final resolvedClass:Dynamic = eval(cls);
+
+                if (resolvedClass == null)
+                    switch (cls.type)
+                    {
+                        case EType(module):
+                            switch (module)
+                            {
+                                case 'Map', 'haxe.ds.Map':
+                                    return new Map<Dynamic, Dynamic>();
+
+                                default:
+                            }
+
+                        default:
+                    }
+
+                return Type.createInstance(resolvedClass, args.map(arg -> eval(arg)));
             
             case EFunction(arguments, block):
                 Reflect.makeVarArgs((args:Array<Dynamic>) -> {
@@ -193,7 +218,12 @@ class Interp
                 scope.get(id);
 
             case EField(object, id):
-                Reflect.getProperty(eval(object), id);
+                final obj:Dynamic = eval(object);
+
+                if (obj is String && id == 'code')
+                    obj.charCodeAt(0);
+                else
+                    Reflect.getProperty(obj, id);
 
             case EReturn(value):
                 throw new ReturnSignal(eval(value));

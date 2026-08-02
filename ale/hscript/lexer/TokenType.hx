@@ -49,6 +49,7 @@ enum TokenType
     TPercent;
 
     TArrow;
+    TMapArrow;
 
     TNot;
 

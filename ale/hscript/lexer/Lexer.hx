@@ -108,7 +108,10 @@ class Lexer
                     TQuestion;
 
                 case '='.code:
-                    TEqual;
+                    if (match('>'.code))
+                        TMapArrow;
+                    else
+                        TEqual;
 
                 case '<'.code:
                     TLess;
@@ -154,8 +157,7 @@ class Lexer
             {
                 advance();
                 
-                final start:Int = start + 1;
-
+                final start:Int = index;
                 final startPos:PosData = fastPosData();
 
                 while (peek() != cur)
@@ -181,14 +183,58 @@ class Lexer
 
             if (isDigitStart(cur))
             {
-                var usedPoint:Bool = false;
-
-                while (isDigit(peek()) || (peek() == '.'.code && !usedPoint))
+                if (cur == '0'.code && (match('x'.code) || match('X'.code)))
                 {
-                    if (peek() == '.'.code)
+                    advance();
+
+                    while (isHex(peek()))
+                        advance();
+
+                    result.push({
+                        type: TNumber(Std.parseInt(source.substr(start, index - start))),
+                        pos: {
+                            start: startPos,
+                            end: fastPosData()
+                        }
+                    });
+
+                    continue;
+                }
+
+                var usedPoint:Bool = false;
+                var usedExponent:Bool = false;
+
+                while (true)
+                {
+                    if (isDigit(peek()))
+                    {
+                        advance();
+
+                        continue;
+                    }
+
+                    if (!usedPoint && peek() == '.'.code)
+                    {
                         usedPoint = true;
 
-                    advance();
+                        advance();
+
+                        continue;
+                    }
+
+                    if (!usedExponent && (peek() == 'e'.code || peek() == 'E'.code))
+                    {
+                        usedExponent = true;
+
+                        advance();
+
+                        if (peek() == '+'.code || peek() == '-'.code)
+                            advance();
+
+                        continue;
+                    }
+
+                    break;
                 }
 
                 result.push({
@@ -280,6 +326,8 @@ class Lexer
     inline function isIdentPart(c:Int):Bool
         return isIdentStart(c) || (c >= '0'.code && c <= '9'.code);
 
+    inline function isHex(c:Int):Bool
+        return (c >= '0'.code && c <= '9'.code) || (c >= 'a'.code && c <= 'f'.code) || (c >= 'A'.code && c <= 'F'.code);
 
     inline function isDigit(c:Int):Bool
         return c >= '0'.code && c <= '9'.code;
