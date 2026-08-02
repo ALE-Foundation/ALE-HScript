@@ -59,7 +59,7 @@ class Scope
                 }
 
             case PGet, PNever:
-                throw 'Cannot assign to final "$id"';
+                throw 'Cannot assign final "$id"';
 
                 null;
         }

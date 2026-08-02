@@ -32,7 +32,7 @@ class Parser
     function requiresSemicolon(expr:ExprType):Bool
         return switch (expr)
         {
-            case EBlock(_), EFunctionDecl(_, _), EFunction(_, _):
+            case ETry(_, _), EBlock(_), EFunctionDecl(_, _), EFunction(_, _):
                 false;
 
             default:
@@ -84,6 +84,21 @@ class Parser
                 parseOptionalType();
 
                 fastExpr(EVarDecl(id, parseOptionalValue(), getter, setter), cur);
+
+            case TTry:
+                advance();
+
+                final body:Expr = parseBody();
+
+                expect(TCatch);
+
+                expect(TLParen);
+
+                final arg:FunctionArgument = parseFunctionArgument();
+
+                expect(TRParen);
+
+                fastExpr(ETry(body, arg, parseBody()), cur);
 
             case TUntyped:
                 advance();
@@ -313,17 +328,7 @@ class Parser
 
         while (!end() && !check(TRParen))
         {
-            if (check(TQuestion))
-                advance();
-
-            final name:String = expectIdent();
-
-            parseOptionalType();
-
-            result.push({
-                id: name,
-                value: parseOptionalValue()
-            });
+            result.push(parseFunctionArgument());
 
             if (check(TComma))
                 advance();
@@ -335,6 +340,22 @@ class Parser
 
         return result;
     }
+
+    function parseFunctionArgument():FunctionArgument
+    {
+        if (check(TQuestion))
+            advance();
+
+        final name:String = expectIdent();
+
+        parseOptionalType();
+
+        return {
+            id: name,
+            value: parseOptionalValue()
+        };
+    }
+    
 
     function parseCallArguments():Array<Expr>
     {

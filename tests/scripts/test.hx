@@ -15,3 +15,12 @@ ____CT('- Blocks');
 
     trace(oso.length);
 }
+
+try
+{
+    final oso:String = 'oso';
+
+    oso = 'donde';
+} catch(e:Dynamic) {
+    trace(e);
+}

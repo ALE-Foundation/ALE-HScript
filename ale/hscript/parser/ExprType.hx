@@ -26,6 +26,8 @@ enum ExprType
 
     ENew(cls:Expr, args:Array<Expr>);
 
+    ETry(body:Expr, arg:FunctionArgument, failed:Expr);
+
     EIf(condition:Expr, expr:Expr, ?elseExpr:Expr);
     EWhile(condition:Expr, expr:Expr);
     EDoWhile(condition:Expr, expr:Expr);

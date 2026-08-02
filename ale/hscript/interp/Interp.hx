@@ -64,6 +64,20 @@ class Interp
 
                 null;
 
+            case ETry(body, arg, failed):
+                try
+                {
+                    eval(body);
+                } catch(e:Dynamic) {
+                    final tryScope:Scope = new Scope(scope);
+
+                    tryScope.define(arg.id, e);
+
+                    eval(failed, tryScope);
+                }
+
+                null;
+
             case EArray(exprs):
                 exprs.map(expr -> eval(expr));
 
@@ -94,7 +108,7 @@ class Interp
             
             case EFunction(arguments, block):
                 Reflect.makeVarArgs((args:Array<Dynamic>) -> {
-                    var funcScope = new Scope(scope);
+                    final funcScope = new Scope(scope);
 
                     for (index => arg in arguments)
                         funcScope.define(arguments[index].id, args[index] ?? eval(arguments[index].value));
