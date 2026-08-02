@@ -65,11 +65,18 @@ trace('x'.code);
 ____CT('- - Array');
 
 trace([1, 2, 3]);
-trace([]);
+trace([0, 1, 2][2]);
 
 ____CT('- - Map');
 
 trace([
     'a' => 1,
-    'b' => 2
+    'b' => 2,
+    'tung' => 3
 ]);
+
+trace([
+    'a' => 1,
+    'b' => 2,
+    'tung' => 'sahur'
+]['tung']);
