@@ -60,9 +60,25 @@ class Parser
 
                 final id:String = expectIdent();
 
+                if (cur.type == TVar)
+                {
+                    if (check(TLParen))
+                    {
+                        advance();
+
+                        final getter:Property = expectProperty();
+
+                        expect(TComma);
+
+                        final setter:Property = expectProperty();
+
+                        expect(TRParen);
+                    }
+                }
+
                 parseOptionalType();
 
-                fastExpr(EVar(id, parseOptionalValue()), cur);
+                fastExpr(EVarDecl(id, parseOptionalValue()), cur);
 
             case TUntyped:
                 advance();
@@ -115,6 +131,11 @@ class Parser
                     advance();
                     
                     expr = fastExpr(EField(expr, expectIdent()), last());
+
+                case TEqual:
+                    advance();
+
+                    expr = fastExpr(EAssign(expr, parseExpr()), last());
 
                 default:
                     return expr;
@@ -195,7 +216,7 @@ class Parser
                 fastExpr(EArray(members), cur);
             
             case TIdent(id):
-                fastAdvanceExpr(EField(null, id), cur);
+                fastAdvanceExpr(EVar(id), cur);
 
             case TString(str):
                 fastAdvanceExpr(EString(str), cur);
@@ -213,14 +234,53 @@ class Parser
                 fastAdvanceExpr(ENull, cur);
 
             default:
+                throw 'Unsupported Token: ' + cur;
+
                 null;
         }
     }
 
 
+    function expectProperty():Property
+        return switch (advance().type)
+        {
+            case TNull:
+                PNull;
+
+            case TIdent(id):
+                switch (id)
+                {
+                    case 'set':
+                        PSet;
+
+                    case 'get':
+                        PGet;
+
+                    case 'default':
+                        PDefault;
+
+                    case 'never':
+                        PNever;
+
+                    default:
+                        error(TIdent('default'), last());
+
+                        null;
+                }
+
+            default:
+                error(TNull, last());
+
+                null;
+        }
+
+
     function parseBody(?stmt:Bool = true):Expr
     {
         var res:Expr = parseStatement();
+
+        if (stmt)
+            semicolon(res.type);
 
         if (!res.type.match(EBlock(_)))
         {
@@ -235,9 +295,6 @@ class Parser
                 pos: res.pos
             };
         }
-
-        if (stmt)
-            semicolon(res.type);
 
         return res;
     }

@@ -48,3 +48,36 @@ trace(funnyFunc(function():String return 'sahur'));
 untyped final oso = 'oso';
 
 trace(oso);
+
+// Class Fields
+
+// - Variable
+
+var oso:String = 'tung';
+
+{ var oso:String = 'sahur'; }
+
+trace(oso);
+
+// - Property
+
+var oso(default, set):String = 'messi tomate una pepsi';
+
+function oso_set(value:String):String
+    oso = value;
+
+oso_set('oso');
+
+trace(oso);
+
+/*
+function get_oso():String
+{
+    return 'tung';
+}
+
+function set_oso():String
+{
+    return 'sahur';
+}
+*/

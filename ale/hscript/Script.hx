@@ -25,7 +25,7 @@ class Script
     }
 
     public function get(id:String)
-        return interp.scope.variables.get(id);
+        return interp.scope.get(id);
 
     public function call(id:String, ?args:Array<Dynamic>)
     {

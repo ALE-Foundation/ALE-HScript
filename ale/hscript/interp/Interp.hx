@@ -54,7 +54,7 @@ class Interp
 
         return switch (expr.type)
         {
-            case EVar(id, value):
+            case EVarDecl(id, value):
                 scope.define(id, eval(value));
 
             case EArray(exprs):
@@ -62,6 +62,25 @@ class Interp
 
             case EType(module):
                 scope.get(module) ?? Type.resolveClass(module);
+
+            case EAssign(obj, value):
+                final newVal:Dynamic = eval(value);
+
+                switch (obj.type)
+                {
+                    case EVar(id):
+                        scope.set(id, newVal);
+
+                    case EField(obj, id):
+                        Reflect.setProperty(eval(obj), id, newVal);
+
+                        newVal;
+
+                    default:
+                        throw 'Invalid Assignment';
+
+                        null;
+                }
 
             case ENew(cls, args):
                 Type.createInstance(eval(cls), args.map(arg -> eval(arg)));
@@ -150,11 +169,11 @@ class Interp
             case ECall(object, args):
                 Reflect.callMethod(null, eval(object), args.map(arg -> eval(arg)));
 
+            case EVar(id):
+                scope.get(id);
+
             case EField(object, id):
-                if (object == null)
-                    scope.get(id);
-                else
-                    Reflect.getProperty(eval(object), id);
+                Reflect.getProperty(eval(object), id);
 
             case EReturn(value):
                 throw new ReturnSignal(eval(value));

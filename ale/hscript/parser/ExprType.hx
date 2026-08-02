@@ -4,9 +4,10 @@ import ale.hscript.lexer.TokenType;
 
 enum ExprType
 {
-    EVar(id:String, value:Expr);
+    EVarDecl(id:String, value:Expr);
     EFunctionDecl(id:String, value:Expr);
 
+    EVar(id:String);
     EField(object:Null<Expr>, property:String);
 
     ECall(object:Expr, arguments:Array<Expr>);
@@ -18,6 +19,8 @@ enum ExprType
     EString(str:String);
     ENumber(num:Float);
     EArray(members:Array<Expr>);
+
+    EAssign(obj:Expr, value:Expr);
 
     EType(module:String);
 
