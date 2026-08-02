@@ -68,6 +68,8 @@ class Interp
                 try
                 {
                     eval(body);
+                } catch(s:ReturnSignal) {
+                    throw s;
                 } catch(e:Dynamic) {
                     final tryScope:Scope = new Scope(scope);
 
