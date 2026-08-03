@@ -21,6 +21,7 @@ enum ExprType
     ENumber(num:Float);
     EArray(members:Array<Expr>);
     EMap(members:Map<Expr, Expr>);
+    EStructure(values:Map<String, Expr>);
 
     EAssign(obj:Expr, value:Expr);
 

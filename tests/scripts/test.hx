@@ -80,3 +80,13 @@ trace([
     'b' => 2,
     'tung' => 'sahur'
 ]['tung']);
+
+____CT('- - Anonymous Structure');
+
+trace({
+    foo: true,
+    oso: 'donde tu ta oso',
+    donde: {
+        tu: 'ta'
+    }
+});

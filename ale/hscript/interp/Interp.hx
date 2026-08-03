@@ -92,6 +92,14 @@ class Interp
 
                 res;
 
+            case EStructure(values):
+                final res:Dynamic = {};
+
+                for (key in values.keys())
+                    Reflect.setProperty(res, key, eval(values.get(key)));
+
+                res;
+
             case EType(module):
                 scope.get(module) ?? Type.resolveClass(module);
 

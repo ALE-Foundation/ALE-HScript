@@ -4,6 +4,8 @@ import ale.hscript.lexer.TokenUtil;
 import ale.hscript.lexer.TokenType;
 import ale.hscript.lexer.Token;
 
+import haxe.ds.StringMap;
+
 class Parser
 {
     final source:Array<Token>;
@@ -32,7 +34,7 @@ class Parser
     function requiresSemicolon(expr:ExprType):Bool
         return switch (expr)
         {
-            case ETry(_, _), EBlock(_), EFunctionDecl(_, _), EFunction(_, _):
+            case EStructure(_), ETry(_, _), EBlock(_), EFunctionDecl(_, _), EFunction(_, _):
                 false;
 
             default:
@@ -216,14 +218,41 @@ class Parser
             case TLBrace:
                 advance();
 
-                final exprs:Array<Expr> = [];
+                final pos:Int = index;
 
-                while (!end() && !check(TRBrace))
-                    exprs.push(parseSemicolonStatement());
+                final res:ExprType = try
+                {
+                    final values:StringMap<Expr> = new StringMap<Expr>();
+
+                    while (!end() && !check(TRBrace))
+                    {
+                        final key:String = expectIdent();
+
+                        expect(TColon);
+
+                        values.set(key, parseExpr());
+
+                        if (check(TComma))
+                            advance();
+                        else
+                            break;
+                    }
+
+                    EStructure(values);
+                } catch(_:Dynamic) {
+                    index = pos;
+
+                    final exprs:Array<Expr> = [];
+
+                    while (!end() && !check(TRBrace))
+                        exprs.push(parseSemicolonStatement());
+
+                    EBlock(exprs);
+                }
 
                 expect(TRBrace);
 
-                fastExpr(EBlock(exprs), cur);
+                fastExpr(res, cur);
 
             case TLBracket:
                 advance();
