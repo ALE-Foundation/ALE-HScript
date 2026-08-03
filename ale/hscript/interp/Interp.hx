@@ -5,6 +5,8 @@ import ale.hscript.parser.Expr;
 import ale.hscript.Config;
 
 import haxe.Constraints.IMap;
+import haxe.io.Path;
+import haxe.Log;
 
 class Interp
 {
@@ -221,7 +223,25 @@ class Interp
                 num;
 
             case ECall(object, args):
-                Reflect.callMethod(null, eval(object), args.map(arg -> eval(arg)));
+                final solvedArgs:Array<Dynamic> = args.map(arg -> eval(arg));
+
+                switch (object.type)
+                {
+                    case EVar(id):
+                        switch (id)
+                        {
+                            case 'trace':
+                                Log.trace(name + ':'  + expr.pos.start.line + ': ' + solvedArgs.join(','), null);
+
+                                return null;
+
+                            default:
+                        }
+
+                    default:
+                }
+
+                Reflect.callMethod(null, eval(object), solvedArgs);
 
             case EArrayAccess(obj, key):
                 final res:Dynamic = eval(obj);

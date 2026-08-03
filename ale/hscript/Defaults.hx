@@ -5,8 +5,6 @@ import sys.FileSystem;
 import sys.io.File;
 #end
 
-import haxe.PosInfos;
-import haxe.Rest;
 import haxe.Log;
 
 class Defaults
@@ -33,9 +31,7 @@ class Defaults
     ];
     public static final ABSTRACTS:Array<String> = [];
     public static final TYPEDEFS:Map<String, Class<Dynamic>> = [];
-    public static final VARIABLES:Map<String, Dynamic> = [
-        'trace' => Reflect.makeVarArgs(args -> Log.trace(args.join(','), null))
-    ];
+    public static final VARIABLES:Map<String, Dynamic> = [];
 
     public static final EXTENSION:String = '.hx';
 
