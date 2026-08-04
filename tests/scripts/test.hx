@@ -90,3 +90,16 @@ trace({
         tu: 'ta'
     }
 });
+
+____CT('- - Operators');
+
+____CT('- - - Unary');
+
+trace(~10);
+trace(!false);
+trace(-20);
+
+var oso:Int = 10;
+
+trace(++oso);
+trace(--oso);

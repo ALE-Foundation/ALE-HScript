@@ -134,18 +134,54 @@ class Parser
     }
 
     function parseExpr():Expr
+        return parseBinary();
+
+    function parseBinary(?minPrec:Int = 0):Expr
     {
-        return parsePostfix();
+        var left:Expr = parsePrefix();
+
+        while (true)
+        {
+            var prec:Int = precedence(peek().type);
+
+            if (prec < minPrec)
+                break;
+
+            final op:Token = advance();
+
+            left = fastExpr(EBinOp(op.type, left, parseBinary(prec + 1)), op);
+        }
+
+        return left;
+    }
+
+    function parsePrefix():Expr
+    {
+        switch (peek().type)
+        {
+            case TExclamation, TTilde, TMinus, TDoublePlus, TDoubleMinus:
+                final op:Token = advance();
+
+                return fastExpr(EPrefix(op.type, parsePrefix()), op);
+
+            default:
+                return parsePostfix();
+        }
     }
 
     function parsePostfix():Expr
     {
-        var expr:Expr = parsePrefix();
+        var expr:Expr = parsePrimitive();
 
         while (!end())
         {
             switch (peek().type)
             {
+                case TDoublePlus, TDoubleMinus:
+                    final op:Token = advance();
+
+                    expr = fastExpr(EPostfix(TDoublePlus, expr), op);
+
                 case TLParen:
                     expr = fastExpr(ECall(expr, parseCallArguments()), last());
 
@@ -174,11 +210,6 @@ class Parser
         }
 
         return expr;
-    }
-
-    function parsePrefix():Expr
-    {
-        return parsePrimitive();
     }
 
     function parsePrimitive():Expr
@@ -582,6 +613,51 @@ class Parser
                 null;
         }
 
+
+    function precedence(token:TokenType):Int
+    {
+        return switch (token)
+        {
+            case TEqual, TPlusEqual, TMinusEqual, TStarEqual, TSlashEqual, TPercentEqual, TAmpersandEqual, TPipeEqual, TCaretEqual, TDoubleLessEqual, TDoubleGreaterEqual, TTripleGreaterEqual:
+                1;
+
+            case TDoubleQuestion:
+                2;
+
+            case TDoublePipe:
+                3;
+
+            case TDoubleAmpersand:
+                4;
+
+            case TPipe:
+                5;
+
+            case TCaret:
+                6;
+
+            case TAmpersand:
+                7;
+
+            case TDoubleEqual, TExclamationEqual:
+                8;
+
+            case TLess, TGreater, TLessEqual, TGreaterEqual:
+                9;
+
+            case TDoubleLess, TDoubleGreater, TTripleGreater:
+                10;
+
+            case TPlus, TMinus:
+                11;
+
+            case TStar, TSlash, TPercent:
+                12;
+
+            default:
+                -1;
+        }
+    }
 
     var index:Int = 0;
 

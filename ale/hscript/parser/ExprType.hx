@@ -40,7 +40,8 @@ enum ExprType
     EBreak;
 
     EBinOp(op:TokenType, left:Expr, right:Expr);
-    EUnOp(op:TokenType, left:Expr);
+    EPrefix(op:TokenType, left:Expr);
+    EPostfix(op:TokenType, right:Expr);
 
     EFalse;
     ETrue;

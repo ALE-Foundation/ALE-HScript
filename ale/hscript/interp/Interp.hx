@@ -1,6 +1,7 @@
 package ale.hscript.interp;
 
 import ale.hscript.parser.ExprUtil;
+import ale.hscript.parser.ExprType;
 import ale.hscript.parser.Expr;
 import ale.hscript.Config;
 
@@ -106,23 +107,7 @@ class Interp
                 scope.get(module) ?? Type.resolveClass(module);
 
             case EAssign(obj, value):
-                final newVal:Dynamic = eval(value);
-
-                switch (obj.type)
-                {
-                    case EVar(id):
-                        scope.set(id, newVal);
-
-                    case EField(obj, id):
-                        Reflect.setProperty(eval(obj), id, newVal);
-
-                        newVal;
-
-                    default:
-                        throw 'Invalid Assignment';
-
-                        null;
-                }
+                assign(obj, eval(value));
 
             case ENew(cls, args):
                 final resolvedClass:Dynamic = eval(cls);
@@ -276,6 +261,27 @@ class Interp
             case ENull:
                 null;
 
+            case EPrefix(op, right):
+                final r:Dynamic = eval(right);
+
+                untyped switch (op)
+                {
+                    case TTilde:
+                        ~r;
+
+                    case TExclamation:
+                        !r;
+
+                    case TMinus:
+                        -r;
+
+                    case TDoublePlus, TDoubleMinus:
+                        assign(right, r + (op == TDoubleMinus ? -1 : 1));
+
+                    default:
+                        null;
+                }
+
             case EBinOp(op, left, right):
                 final l:Dynamic = eval(left) ?? 0;
                 final r:Dynamic = eval(right) ?? 0;
@@ -326,4 +332,21 @@ class Interp
                 null;
         }
     }
+
+    function assign(obj:Expr, value:Dynamic):Dynamic
+        return switch (obj.type)
+        {
+            case EVar(id):
+                scope.set(id, value);
+
+            case EField(obj, id):
+                Reflect.setProperty(eval(obj), id, value);
+
+                value;
+
+            default:
+                throw 'Invalid Assignment';
+
+                null;
+        }
 }
