@@ -294,10 +294,10 @@ class Interp
                     case TPercent:
                         l % r;
 
-                    case TEqualEqual:
+                    case TDoubleEqual:
                         l == r;
 
-                    case TNotEqual:
+                    case TExclamationEqual:
                         l != r;
 
                     case TLess:
@@ -312,10 +312,10 @@ class Interp
                     case TGreaterEqual:
                         l >= r;
 
-                    case TAndAnd:
+                    case TDoubleAmpersand:
                         l && r;
 
-                    case TOrOr:
+                    case TDoublePipe:
                         l || r;
 
                     default:

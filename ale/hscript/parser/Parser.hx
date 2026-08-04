@@ -123,7 +123,7 @@ class Parser
 
                 var res:Expr = null;
 
-                if (!check(TSemiColon))
+                if (!check(TSemicolon))
                     res = parseExpr();
 
                 fastExpr(EReturn(res), cur);
@@ -267,11 +267,11 @@ class Parser
                     final left:Expr = parseExpr();
 
                     if (mapStyle == null)
-                        mapStyle = check(TMapArrow);
+                        mapStyle = check(TFatArrow);
 
                     if (mapStyle)
                     {
-                        expect(TMapArrow);
+                        expect(TFatArrow);
 
                         mapMembers.set(left, parseExpr());
                     } else {
@@ -553,7 +553,7 @@ class Parser
 
     inline function semicolon(type:ExprType)
         if (requiresSemicolon(type))
-            expect(TSemiColon);
+            expect(TSemicolon);
 
 
     function error(want:TokenType, ?got:Token)

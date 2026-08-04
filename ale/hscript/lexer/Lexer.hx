@@ -78,7 +78,7 @@ class Lexer
                     TColon;
 
                 case ';'.code:
-                    TSemiColon;
+                    TSemicolon;
 
                 case ','.code:
                     TComma;
@@ -109,7 +109,7 @@ class Lexer
 
                 case '='.code:
                     if (match('>'.code))
-                        TMapArrow;
+                        TFatArrow;
                     else
                         TEqual;
 
@@ -138,7 +138,7 @@ class Lexer
                     TPercent;
 
                 case '!'.code:
-                    TNot;
+                    TExclamation;
                 
                 default:
                     null;

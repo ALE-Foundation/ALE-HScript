@@ -9,49 +9,76 @@ enum TokenType
     
     // Symbols
 
-    TColon;
-    TSemiColon;
+    TPlus; // +
+    TMinus; // -
+    TStar; // *
+    TSlash; // /
+    TPercent; // %
 
-    TComma;
-    TDot;
+    TEqual; // =
+    TDoubleEqual; // ==
+    TNotEqual; // !=
+    TExclamationEqual; // !==
 
-    TLParen;
-    TRParen;
+    TGreater; // >
+    TLess; // <
+    TGreaterEqual; // >=
+    TLessEqual; // <=
 
-    TLBrace;
-    TRBrace;
+    TAmpersand; // &
+    TDoubleAmpersand; // &&
 
-    TLBracket;
-    TRBracket;
+    TPipe; // |
+    TDoublePipe; // ||
 
-    TTripleDot;
+    TCaret; // ^
+    TTilde; // ~
+    TExclamation; // !
 
-    TEqual;
+    TDoubleLess; // <<
+    TDoubleGreater; // >>
+    TTripleGreater; // >>>
 
-    TQuestionQuestion;
-    TQuestion;
+    TPlusEqual; // +=
+    TMinusEqual; // -=
+    TStarEqual; // *=
+    TSlashEqual; // /=
+    TPercentEqual; // %=
 
-    TOrOr;
-    TAndAnd;
-    TEqualEqual;
-    TNotEqual;
+    TAmpersandEqual; // &=
+    TPipeEqual; // |=
+    TCaretEqual; // ^=
 
-    TGreater;
-    TGreaterEqual;
-    TLess;
-    TLessEqual;
+    TDoubleLessEqual; // <<=
+    TDoubleGreaterEqual; // >>=
+    TTripleGreaterEqual; // >>>=
 
-    TMinus;
-    TPlus;
+    TDoublePlus; // ++
+    TDoubleMinus; // --
 
-    TStar;
-    TSlash;
-    TPercent;
+    TDoubleQuestion; // ??
+    TQuestionDot; // ?.
 
-    TArrow;
-    TMapArrow;
+    TArrow; // ->
+    TFatArrow; // =>
 
-    TNot;
+    TLParen; // (
+    TRParen; // )
+
+    TLBrace; // {
+    TRBrace; // }
+
+    TLBracket; // [
+    TRBracket; // ]
+
+    TDot; // .
+    TComma; // ,
+    TColon; // :
+    TSemicolon; // ;
+    TQuestion; // ?
+
+    TAt; // @
+    TDollar; // $
 
     // Keywords
 
