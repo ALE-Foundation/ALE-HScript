@@ -17,8 +17,7 @@ enum TokenType
 
     TEqual; // =
     TDoubleEqual; // ==
-    TNotEqual; // !=
-    TExclamationEqual; // !==
+    TExclamationEqual; // !=
 
     TGreater; // >
     TLess; // <

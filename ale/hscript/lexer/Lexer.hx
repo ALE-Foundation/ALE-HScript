@@ -104,42 +104,125 @@ class Lexer
                 case ']'.code:
                     TRBracket;
 
+                case '@'.code:
+                    TAt;
+
+                case '$'.code:
+                    TDollar;
+
                 case '?'.code:
-                    TQuestion;
+                    if (match('?'.code))
+                        TDoubleQuestion;
+                    else if (match('.'.code))
+                        TQuestionDot;
+                    else
+                        TQuestion;
 
                 case '='.code:
                     if (match('>'.code))
                         TFatArrow;
+                    else if (match('='.code))
+                        TDoubleEqual;
                     else
                         TEqual;
 
+                case '!'.code:
+                    if (match('='.code))
+                        TExclamationEqual;
+                    else
+                        TExclamation;
+
                 case '<'.code:
-                    TLess;
+                    if (match('<'.code))
+                    {
+                        if (match('='.code))
+                            TDoubleLessEqual;
+                        else
+                            TDoubleLess;
+                    } else if (match('='.code))
+                        TLessEqual;
+                    else
+                        TLess;
 
                 case '>'.code:
-                    TGreater;
+                    if (match('>'.code))
+                    {
+                        if (match('>'.code))
+                        {
+                            if (match('='.code))
+                                TTripleGreaterEqual;
+                            else
+                                TTripleGreater;
+                        } else if (match('='.code))
+                            TDoubleGreaterEqual;
+                        else
+                            TDoubleGreater;
+                    } else if (match('='.code))
+                        TGreaterEqual;
+                    else
+                        TGreater;
 
                 case '-'.code:
                     if (match('>'.code))
                         TArrow;
+                    else if (match('-'.code))
+                        TDoubleMinus;
+                    else if (match('='.code))
+                        TMinusEqual;
                     else
                         TMinus;
 
                 case '+'.code:
-                    TPlus;
+                    if (match('+'.code))
+                        TDoublePlus;
+                    else if (match('='.code))
+                        TPlusEqual;
+                    else
+                        TPlus;
 
                 case '*'.code:
-                    TStar;
+                    if (match('='.code))
+                        TStarEqual;
+                    else
+                        TStar;
 
                 case '/'.code:
-                    TSlash;
+                    if (match('='.code))
+                        TSlashEqual;
+                    else
+                        TSlash;
 
                 case '%'.code:
-                    TPercent;
+                    if (match('='.code))
+                        TPercentEqual;
+                    else
+                        TPercent;
 
-                case '!'.code:
-                    TExclamation;
-                
+                case '&'.code:
+                    if (match('&'.code))
+                        TDoubleAmpersand;
+                    else if (match('='.code))
+                        TAmpersandEqual;
+                    else
+                        TAmpersand;
+
+                case '|'.code:
+                    if (match('|'.code))
+                        TDoublePipe;
+                    else if (match('='.code))
+                        TPipeEqual;
+                    else
+                        TPipe;
+
+                case '^'.code:
+                    if (match('='.code))
+                        TCaretEqual;
+                    else
+                        TCaret;
+
+                case '~'.code:
+                    TTilde;
+
                 default:
                     null;
             });
