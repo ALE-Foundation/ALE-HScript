@@ -99,7 +99,43 @@ trace(~10);
 trace(!false);
 trace(-20);
 
-var oso:Int = 10;
+var oso:Int = 3;
 
 trace(++oso);
 trace(--oso);
+
+____CT('- - - Binary');
+
+trace(7 % 5);
+trace(5 * 4);
+trace(10 / 2);
+trace(5 + 12);
+trace(5 - 20);
+trace('after all' + ' of the waster years');
+trace(oso + ' tristes tigres');
+
+trace(20 << 2);
+trace(20 >> 2);
+trace(10 >>> 2);
+trace(12 & 10);
+trace(12 | 10);
+trace(12 ^ 10);
+
+trace(true && false);
+trace(false || true);
+
+/* C.A.
+var tung:String = 'tung';
+
+trace(tung += ' sahur');
+trace(tung);
+*/
+
+trace(10 == 10);
+trace(20 != 20);
+trace(5 < 10);
+trace(10 <= 10);
+trace(5 > 10);
+trace(5 >= 5);
+
+trace(10...20);

@@ -288,8 +288,8 @@ class Interp
 
                 untyped switch (op)
                 {
-                    case TPlus:
-                        l + r;
+                    case TPercent:
+                        l % r;
 
                     case TStar:
                         l * r;
@@ -297,8 +297,35 @@ class Interp
                     case TSlash:
                         l / r;
 
-                    case TPercent:
-                        l % r;
+                    case TPlus:
+                        l + r;
+
+                    case TMinus:
+                        l - r;
+
+                    case TDoubleLess:
+                        Std.int(l) << Std.int(r);
+
+                    case TDoubleGreater:
+                        Std.int(l) >> Std.int(r);
+
+                    case TTripleGreater:
+                        Std.int(l) >>> Std.int(r);
+
+                    case TAmpersand:
+                        Std.int(l) & Std.int(r);
+
+                    case TPipe:
+                        Std.int(l) | Std.int(r);
+
+                    case TCaret:
+                        Std.int(l) ^ Std.int(r);
+
+                    case TDoubleAmpersand:
+                        l && r;
+
+                    case TDoublePipe:
+                        l || r;
 
                     case TDoubleEqual:
                         l == r;
@@ -318,11 +345,8 @@ class Interp
                     case TGreaterEqual:
                         l >= r;
 
-                    case TDoubleAmpersand:
-                        l && r;
-
-                    case TDoublePipe:
-                        l || r;
+                    case TTripleDot:
+                        new IntIterator(l, r);
 
                     default:
                         null;

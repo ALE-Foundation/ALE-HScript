@@ -72,6 +72,73 @@ class Lexer
 
             final startPos:PosData = fastPosData();
 
+            if (isDigitStart(cur))
+            {
+                if (cur == '0'.code && (match('x'.code) || match('X'.code)))
+                {
+                    advance();
+
+                    while (isHex(peek()))
+                        advance();
+
+                    result.push({
+                        type: TNumber(Std.parseInt(source.substr(start, index - start))),
+                        pos: {
+                            start: startPos,
+                            end: fastPosData()
+                        }
+                    });
+
+                    continue;
+                }
+
+                var usedPoint:Bool = false;
+                var usedExponent:Bool = false;
+
+                while (true)
+                {
+                    if (isDigit(peek()))
+                    {
+                        advance();
+
+                        continue;
+                    }
+
+                    if (!usedPoint && peek() == '.'.code && next() != '.'.code)
+                    {
+                        usedPoint = true;
+
+                        advance();
+
+                        continue;
+                    }
+
+                    if (!usedExponent && (peek() == 'e'.code || peek() == 'E'.code))
+                    {
+                        usedExponent = true;
+
+                        advance();
+
+                        if (peek() == '+'.code || peek() == '-'.code)
+                            advance();
+
+                        continue;
+                    }
+
+                    break;
+                }
+
+                result.push({
+                    type: TNumber(Std.parseFloat(source.substr(start, index - start))),
+                    pos: {
+                        start: startPos,
+                        end: fastPosData()
+                    }
+                });
+
+                continue;
+            }
+
             final symbolToken:Token = fastToken(switch (cur)
             {
                 case ':'.code:
@@ -84,7 +151,10 @@ class Lexer
                     TComma;
 
                 case '.'.code:
-                    TDot;
+                    if (match('.'.code) && match('.'.code))
+                        TTripleDot;
+                    else
+                        TDot;
 
                 case '('.code:
                     TLParen;
@@ -264,73 +334,6 @@ class Lexer
                 continue;
             }
 
-            if (isDigitStart(cur))
-            {
-                if (cur == '0'.code && (match('x'.code) || match('X'.code)))
-                {
-                    advance();
-
-                    while (isHex(peek()))
-                        advance();
-
-                    result.push({
-                        type: TNumber(Std.parseInt(source.substr(start, index - start))),
-                        pos: {
-                            start: startPos,
-                            end: fastPosData()
-                        }
-                    });
-
-                    continue;
-                }
-
-                var usedPoint:Bool = false;
-                var usedExponent:Bool = false;
-
-                while (true)
-                {
-                    if (isDigit(peek()))
-                    {
-                        advance();
-
-                        continue;
-                    }
-
-                    if (!usedPoint && peek() == '.'.code)
-                    {
-                        usedPoint = true;
-
-                        advance();
-
-                        continue;
-                    }
-
-                    if (!usedExponent && (peek() == 'e'.code || peek() == 'E'.code))
-                    {
-                        usedExponent = true;
-
-                        advance();
-
-                        if (peek() == '+'.code || peek() == '-'.code)
-                            advance();
-
-                        continue;
-                    }
-
-                    break;
-                }
-
-                result.push({
-                    type: TNumber(Std.parseFloat(source.substr(start, index - start))),
-                    pos: {
-                        start: startPos,
-                        end: fastPosData()
-                    }
-                });
-
-                continue;
-            }
-
             if (isIdentStart(cur))
             {
                 advance();
@@ -416,7 +419,7 @@ class Lexer
         return c >= '0'.code && c <= '9'.code;
 
     inline function isDigitStart(c:Int):Bool
-        return isDigit(c) || c == '.'.code;
+        return isDigit(c) || (c == '.'.code && isDigit(next()));
     
 
     inline function fastPosData():PosData

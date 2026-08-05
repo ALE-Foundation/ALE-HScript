@@ -75,6 +75,7 @@ enum TokenType
     TColon; // :
     TSemicolon; // ;
     TQuestion; // ?
+    TTripleDot;
 
     TAt; // @
     TDollar; // $

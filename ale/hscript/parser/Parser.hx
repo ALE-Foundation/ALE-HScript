@@ -17,6 +17,10 @@ class Parser
         this.source = source;
 
         length = source.length;
+
+        initPrecedence();
+
+        trace(TokenUtil.tokensToTokenTypes(source));
     }
 
 
@@ -614,50 +618,64 @@ class Parser
         }
 
 
-    function precedence(token:TokenType):Int
+    var _precedenceCount:Int = 0;
+
+    var _precedenceMap:Map<TokenType, Int> = [];
+
+    function addPrecedence(type:TokenType, ?repeat:Bool = false)
+        _precedenceMap[type] = repeat ? _precedenceCount : ++_precedenceCount;
+
+    function initPrecedence()
     {
-        return switch (token)
-        {
-            case TEqual, TPlusEqual, TMinusEqual, TStarEqual, TSlashEqual, TPercentEqual, TAmpersandEqual, TPipeEqual, TCaretEqual, TDoubleLessEqual, TDoubleGreaterEqual, TTripleGreaterEqual:
-                1;
+        addPrecedence(TEqual);
+        addPrecedence(TPlusEqual, true);
+        addPrecedence(TMinusEqual, true);
+        addPrecedence(TStarEqual, true);
+        addPrecedence(TSlashEqual, true);
+        addPrecedence(TPercentEqual, true);
+        addPrecedence(TAmpersandEqual, true);
+        addPrecedence(TPipeEqual, true);
+        addPrecedence(TCaretEqual, true);
+        addPrecedence(TDoubleLessEqual, true);
+        addPrecedence(TDoubleGreaterEqual, true);
+        addPrecedence(TTripleGreaterEqual, true);
 
-            case TDoubleQuestion:
-                2;
+        addPrecedence(TTripleDot);
 
-            case TDoublePipe:
-                3;
+        addPrecedence(TDoubleQuestion);
 
-            case TDoubleAmpersand:
-                4;
+        addPrecedence(TDoublePipe);
 
-            case TPipe:
-                5;
+        addPrecedence(TDoubleAmpersand);
 
-            case TCaret:
-                6;
+        addPrecedence(TPipe);
 
-            case TAmpersand:
-                7;
+        addPrecedence(TCaret);
 
-            case TDoubleEqual, TExclamationEqual:
-                8;
+        addPrecedence(TAmpersand);
 
-            case TLess, TGreater, TLessEqual, TGreaterEqual:
-                9;
+        addPrecedence(TDoubleEqual);
+        addPrecedence(TExclamationEqual, true);
 
-            case TDoubleLess, TDoubleGreater, TTripleGreater:
-                10;
+        addPrecedence(TLess);
+        addPrecedence(TGreater, true);
+        addPrecedence(TLessEqual, true);
+        addPrecedence(TGreaterEqual, true);
 
-            case TPlus, TMinus:
-                11;
+        addPrecedence(TDoubleLess);
+        addPrecedence(TDoubleGreater, true);
+        addPrecedence(TTripleGreater, true);
 
-            case TStar, TSlash, TPercent:
-                12;
+        addPrecedence(TPlus);
+        addPrecedence(TMinus, true);
 
-            default:
-                -1;
-        }
+        addPrecedence(TStar);
+        addPrecedence(TSlash, true);
+        addPrecedence(TPercent, true);
     }
+
+    function precedence(token:TokenType):Int
+        return _precedenceMap[token] ?? -1;
 
     var index:Int = 0;
 
