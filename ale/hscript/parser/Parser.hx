@@ -182,7 +182,7 @@ class Parser
                 case TDoublePlus, TDoubleMinus:
                     final op:Token = advance();
 
-                    expr = fastExpr(EPostfix(TDoublePlus, expr), op);
+                    expr = fastExpr(EPostfix(op.type, expr), op);
 
                 case TLParen:
                     expr = fastExpr(ECall(expr, parseCallArguments()), last());

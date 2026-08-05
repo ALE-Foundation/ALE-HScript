@@ -104,6 +104,12 @@ var oso:Int = 3;
 trace(++oso);
 trace(--oso);
 
+trace(oso++);
+trace(oso);
+
+trace(oso--);
+trace(oso);
+
 ____CT('- - - Binary');
 
 trace(7 % 5);

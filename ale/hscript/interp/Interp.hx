@@ -282,6 +282,20 @@ class Interp
                         null;
                 }
 
+            case EPostfix(op, left):
+                final l:Dynamic = eval(left);
+
+                untyped switch (op)
+                {
+                    case TDoublePlus, TDoubleMinus:
+                        assign(left, l + (op == TDoubleMinus ? -1 : 1));
+
+                        l;
+
+                    default:
+                        null;
+                }
+
             case EBinOp(op, left, right):
                 final l:Dynamic = eval(left) ?? 0;
                 final r:Dynamic = eval(right) ?? 0;
