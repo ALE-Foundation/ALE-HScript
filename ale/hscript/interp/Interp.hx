@@ -226,7 +226,12 @@ class Interp
                     default:
                 }
 
-                Reflect.callMethod(null, eval(object), solvedArgs);
+                final func:Dynamic = eval(object);
+
+                if (func == null)
+                    null;
+                else
+                    Reflect.callMethod(null, func, solvedArgs);
 
             case EArrayAccess(obj, key):
                 final res:Dynamic = eval(obj);
@@ -403,6 +408,9 @@ class Interp
                                 null;
                         }
                 }
+
+            case ETernOp(condition, ifTrue, ifFalse):
+                eval(condition) ? eval(ifTrue) : eval(ifFalse);
 
             default:
                 null;

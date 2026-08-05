@@ -157,3 +157,8 @@ trace(5 >= 5);
 trace(10...20);
 
 trace((10 + 10) * 10);
+
+____CT('- - - Ternary');
+
+trace(true ? 10 : 20);
+trace(false ? 10 : 20);

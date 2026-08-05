@@ -187,7 +187,7 @@ class Parser
                 case TLParen:
                     expr = fastExpr(ECall(expr, parseCallArguments()), last());
 
-                case TDot:
+                case TDot, TQuestionDot:
                     advance();
                     
                     expr = fastExpr(EField(expr, expectIdent()), last());
@@ -205,6 +205,17 @@ class Parser
                     expect(TRBracket);
 
                     expr = fastExpr(EArrayAccess(expr, key), last());
+
+                case TQuestion:
+                    advance();
+
+                    final ifTrue:Expr = parseExpr();
+
+                    expect(TColon);
+                    
+                    final ifFalse:Expr = parseExpr();
+
+                    expr = fastExpr(ETernOp(expr, ifTrue, ifFalse), last());
 
                 default:
                     return expr;

@@ -42,6 +42,7 @@ enum ExprType
     EBinOp(op:TokenType, left:Expr, right:Expr);
     EPrefix(op:TokenType, left:Expr);
     EPostfix(op:TokenType, right:Expr);
+    ETernOp(condition:Expr, ifTrue:Expr, ifFalse:Expr);
 
     EFalse;
     ETrue;
