@@ -19,8 +19,6 @@ class Parser
         length = source.length;
 
         initPrecedence();
-
-        trace(TokenUtil.tokensToTokenTypes(source));
     }
 
 
@@ -228,11 +226,26 @@ class Parser
                 parseExpr();
 
             case TLParen:
-                final args:Array<FunctionArgument> = parseFunctionArguments();
+                final pos:Int = index;
 
-                expect(TArrow);
+                try
+                {
+                    final args:Array<FunctionArgument> = parseFunctionArguments();
 
-                fastExpr(EFunction(args, parseBody(false)), cur);
+                    expect(TArrow);
+
+                    fastExpr(EFunction(args, parseBody(false)), cur);
+                } catch(_:Dynamic) {
+                    index = pos;
+
+                    advance();
+
+                    final res:Expr = parseExpr();
+
+                    expect(TRParen);
+
+                    res;
+                }
 
             case TFunction:
                 advance();
