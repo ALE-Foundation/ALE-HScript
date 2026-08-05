@@ -297,73 +297,111 @@ class Interp
                 }
 
             case EBinOp(op, left, right):
-                final l:Dynamic = eval(left) ?? 0;
-                final r:Dynamic = eval(right) ?? 0;
+                final l:Dynamic = eval(left);
 
                 untyped switch (op)
                 {
-                    case TPercent:
-                        l % r;
-
-                    case TStar:
-                        l * r;
-
-                    case TSlash:
-                        l / r;
-
-                    case TPlus:
-                        l + r;
-
-                    case TMinus:
-                        l - r;
-
-                    case TDoubleLess:
-                        Std.int(l) << Std.int(r);
-
-                    case TDoubleGreater:
-                        Std.int(l) >> Std.int(r);
-
-                    case TTripleGreater:
-                        Std.int(l) >>> Std.int(r);
-
-                    case TAmpersand:
-                        Std.int(l) & Std.int(r);
-
-                    case TPipe:
-                        Std.int(l) | Std.int(r);
-
-                    case TCaret:
-                        Std.int(l) ^ Std.int(r);
-
                     case TDoubleAmpersand:
-                        l && r;
+                        l && eval(right);
 
                     case TDoublePipe:
-                        l || r;
-
-                    case TDoubleEqual:
-                        l == r;
-
-                    case TExclamationEqual:
-                        l != r;
-
-                    case TLess:
-                        l < r;
-
-                    case TLessEqual:
-                        l <= r;
-
-                    case TGreater:
-                        l > r;
-
-                    case TGreaterEqual:
-                        l >= r;
-
-                    case TTripleDot:
-                        new IntIterator(l, r);
+                        l || eval(right);
 
                     default:
-                        null;
+                        final r:Dynamic = eval(right);
+                    
+                        untyped switch (op)
+                        {
+                            case TPercent:
+                                l % r;
+
+                            case TPercentEqual:
+                                assign(left, l % r);
+
+                            case TStar:
+                                l * r;
+
+                            case TStarEqual:
+                                assign(left, l * r);
+
+                            case TSlash:
+                                l / r;
+
+                            case TSlashEqual:
+                                assign(left, l / r);
+
+                            case TPlus:
+                                l + r;
+
+                            case TPlusEqual:
+                                assign(left, l + r);
+
+                            case TMinus:
+                                l - r;
+
+                            case TMinusEqual:
+                                assign(left, l - r);
+
+                            case TDoubleLess:
+                                Std.int(l) << Std.int(r);
+
+                            case TDoubleLessEqual:
+                                assign(left, Std.int(l) << Std.int(r));
+
+                            case TDoubleGreater:
+                                Std.int(l) >> Std.int(r);
+
+                            case TDoubleGreaterEqual:
+                                assign(left, Std.int(l) >> Std.int(r));
+
+                            case TTripleGreater:
+                                Std.int(l) >>> Std.int(r);
+
+                            case TTripleGreaterEqual:
+                                assign(left, Std.int(l) >>> Std.int(r));
+
+                            case TAmpersand:
+                                Std.int(l) & Std.int(r);
+
+                            case TAmpersandEqual:
+                                assign(left, Std.int(l) & Std.int(r));
+
+                            case TPipe:
+                                Std.int(l) | Std.int(r);
+
+                            case TPipeEqual:
+                                assign(left, Std.int(l) | Std.int(r));
+
+                            case TCaret:
+                                Std.int(l) ^ Std.int(r);
+
+                            case TCaretEqual:
+                                assign(left, Std.int(l) ^ Std.int(r));
+
+                            case TDoubleEqual:
+                                l == r;
+
+                            case TExclamationEqual:
+                                l != r;
+
+                            case TLess:
+                                l < r;
+
+                            case TLessEqual:
+                                l <= r;
+
+                            case TGreater:
+                                l > r;
+
+                            case TGreaterEqual:
+                                l >= r;
+
+                            case TTripleDot:
+                                new IntIterator(l, r);
+
+                            default:
+                                null;
+                        }
                 }
 
             default:

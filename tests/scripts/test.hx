@@ -130,12 +130,22 @@ trace(12 ^ 10);
 trace(true && false);
 trace(false || true);
 
-/* C.A.
-var tung:String = 'tung';
+var osoVal:Float = 7;
 
-trace(tung += ' sahur');
-trace(tung);
-*/
+trace(osoVal %= 5);
+trace(osoVal *= 10);
+trace(osoVal /= 5);
+trace(osoVal += 6);
+trace(osoVal -= 5);
+
+var osoVal:Int = 10;
+
+trace(osoVal <<= 2);
+trace(osoVal >>= 2);
+trace(osoVal >>>= 2);
+trace(osoVal &= 2);
+trace(osoVal |= 2);
+trace(osoVal ^= 2);
 
 trace(10 == 10);
 trace(20 != 20);
