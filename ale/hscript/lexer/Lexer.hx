@@ -182,8 +182,12 @@ class Lexer
 
                 case '?'.code:
                     if (match('?'.code))
-                        TDoubleQuestion;
-                    else if (match('.'.code))
+                    {
+                        if (match('='.code))
+                            TDoubleQuestionEqual;
+                        else
+                            TDoubleQuestion;
+                    } else if (match('.'.code))
                         TQuestionDot;
                     else
                         TQuestion;

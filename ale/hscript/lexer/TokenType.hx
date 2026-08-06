@@ -52,6 +52,8 @@ enum TokenType
     TDoubleGreaterEqual; // >>=
     TTripleGreaterEqual; // >>>=
 
+    TDoubleQuestionEqual;
+
     TDoublePlus; // ++
     TDoubleMinus; // --
 

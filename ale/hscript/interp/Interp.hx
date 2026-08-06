@@ -390,6 +390,12 @@ class Interp
                     case TDoublePipe:
                         l || eval(right);
 
+                    case TDoubleQuestion:
+                        l ?? eval(right);
+
+                    case TDoubleQuestionEqual:
+                        assign(left, l ?? eval(right));
+
                     default:
                         final r:Dynamic = eval(right);
                     

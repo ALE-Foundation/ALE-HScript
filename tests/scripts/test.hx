@@ -167,6 +167,24 @@ ____CT('- - - Ternary');
 trace(true ? 10 : 20);
 trace(if (false) 10 else 20);
 
+____CT('- Local Functions');
+
+function oso(donde:String, ?tuta:Dynamic, ?oh:String = 'masha'):Null<Bool>
+{
+    trace(tuta ?? 'tuta');
+
+    tuta ??= 'tuta';
+
+    trace(donde, tuta, oh);
+
+    return false;
+
+    trace('tung tung tung');
+}
+
+oso('donde');
+oso('donde', 'tuta dura sin ir al gym');
+
 ____CT('- new');
 
 trace(new StringMap<Dynamic>());

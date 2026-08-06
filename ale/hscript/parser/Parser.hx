@@ -894,6 +894,7 @@ class Parser
         addPrecedence(TDoubleLessEqual, true);
         addPrecedence(TDoubleGreaterEqual, true);
         addPrecedence(TTripleGreaterEqual, true);
+        addPrecedence(TDoubleQuestionEqual, true);
 
         addPrecedence(TTripleDot);
 
