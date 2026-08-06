@@ -199,10 +199,8 @@ do {
 ____CT('- if');
 
 if (false)
-{
     trace('false');
-} else if (true) {
+else if (true)
     trace('true');
-} else {
+else
     trace('tung');
-}
