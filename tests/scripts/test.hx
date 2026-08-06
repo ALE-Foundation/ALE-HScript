@@ -162,3 +162,14 @@ ____CT('- - - Ternary');
 
 trace(true ? 10 : 20);
 trace(false ? 10 : 20);
+
+____CT('- new');
+
+trace(new haxe.ds.StringMap<Dynamic>());
+
+____CT('- for');
+
+final map = [1 => 101, 'oso' => 102, 3 => 103];
+
+for (key => value in map)
+    trace(key, value);

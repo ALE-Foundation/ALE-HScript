@@ -4,7 +4,7 @@ import ale.hscript.lexer.TokenType;
 
 enum ExprType
 {
-    EVarDecl(id:String, value:Expr, ?getter:Property, ?setter:Property);
+    EVarDecl(id:String, value:Expr, ?getter:Property, ?setter:Property, ?isFinal:Bool);
     EFunctionDecl(id:String, value:Expr);
 
     EVar(id:String);
@@ -30,6 +30,8 @@ enum ExprType
     ENew(cls:Expr, args:Array<Expr>);
 
     ETry(body:Expr, arg:FunctionArgument, failed:Expr);
+
+    EFor(indexId:String, iterId:String, iter:Expr, body:Expr);
 
     EIf(condition:Expr, expr:Expr, ?elseExpr:Expr);
     EWhile(condition:Expr, expr:Expr);

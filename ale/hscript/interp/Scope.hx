@@ -21,11 +21,12 @@ class Scope
         bypassSetter = new Map<String, Bool>();
     }
 
-    public function define(id:String, value:Dynamic, ?getter:Property = PDefault, ?setter:Property = PDefault)
+    public function define(id:String, value:Dynamic, ?getter:Property = PDefault, ?setter:Property = PDefault, ?isFinal:Bool = false)
         variables[id] = {
             value: value,
             getter: getter,
-            setter: setter
+            setter: setter,
+            isFinal: isFinal
         };
 
     public function set(id:String, value:Dynamic):Dynamic
@@ -36,6 +37,13 @@ class Scope
             return null;
 
         final theVar = scope.variables[id];
+
+        if (theVar.isFinal)
+        {
+            throw 'Cannot assign final "$id"';
+
+            return null;
+        }
 
         return switch (theVar.setter)
         {
@@ -59,7 +67,7 @@ class Scope
                 }
 
             case PGet, PNever:
-                throw 'Cannot assign final "$id"';
+                throw 'Expression "$id" cannot be accessed for writing';
 
                 null;
         }

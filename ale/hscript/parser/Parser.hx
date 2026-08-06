@@ -36,7 +36,7 @@ class Parser
     function requiresSemicolon(expr:ExprType):Bool
         return switch (expr)
         {
-            case EStructure(_), ETry(_, _), EBlock(_), EFunctionDecl(_, _), EFunction(_, _):
+            case EFor(_), EStructure(_), ETry(_, _), EBlock(_), EFunctionDecl(_, _), EFunction(_, _):
                 false;
 
             default:
@@ -62,7 +62,7 @@ class Parser
             case TVar, TFinal:
                 advance();
 
-                final id:String = expectIdent();
+                final id:String = parseIdent();
 
                 var getter:Property = PDefault;
                 var setter:Property = PDefault;
@@ -81,13 +81,37 @@ class Parser
 
                         expect(TRParen);
                     }
-                } else {
-                    setter = PNever;
                 }
 
                 parseOptionalType();
 
-                fastExpr(EVarDecl(id, parseOptionalValue(), getter, setter), cur);
+                fastExpr(EVarDecl(id, parseOptionalValue(), getter, setter, cur.type == TFinal), cur);
+
+            case TFor:
+                advance();
+
+                expect(TLParen);
+
+                var indexId:String = null;
+
+                var iterId:String = parseIdent();
+
+                if (check(TFatArrow))
+                {
+                    advance();
+
+                    indexId = iterId;
+
+                    iterId = parseIdent();
+                }
+
+                expect(TIn);
+
+                final iter:Expr = parseExpr();
+
+                expect(TRParen);
+
+                fastExpr(EFor(indexId, iterId, iter, parseBody()), cur);
 
             case TTry:
                 advance();
@@ -112,7 +136,7 @@ class Parser
             case TFunction:
                 advance();
 
-                final id:String = expectIdent();
+                final id:String = parseIdent();
 
                 final args:Array<FunctionArgument> = parseFunctionArguments();
 
@@ -190,7 +214,7 @@ class Parser
                 case TDot, TQuestionDot:
                     advance();
                     
-                    expr = fastExpr(EField(expr, expectIdent()), last());
+                    expr = fastExpr(EField(expr, parseIdent()), last());
 
                 case TEqual:
                     advance();
@@ -285,7 +309,7 @@ class Parser
 
                     while (!end() && !check(TRBrace))
                     {
-                        final key:String = expectIdent();
+                        final key:String = parseIdent();
 
                         expect(TColon);
 
@@ -458,7 +482,7 @@ class Parser
         if (check(TQuestion))
             advance();
 
-        final name:String = expectIdent();
+        final name:String = parseIdent();
 
         parseOptionalType();
 
@@ -510,7 +534,7 @@ class Parser
             case TLBrace:
                 while (!end() && !check(TRBrace))
                 {
-                    expectIdent();
+                    parseIdent();
 
                     parseOptionalType();
 
@@ -529,7 +553,7 @@ class Parser
                 {
                     advance();
 
-                    module.add('.' + expectIdent());
+                    module.add('.' + parseIdent());
                 }
 
             case TLParen:
@@ -629,7 +653,7 @@ class Parser
         else
             error(type, token);
 
-    function expectIdent():String
+    function parseIdent():String
         return switch (advance().type)
         {
             case TIdent(id):

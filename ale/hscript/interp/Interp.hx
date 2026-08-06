@@ -6,6 +6,7 @@ import ale.hscript.parser.Expr;
 import ale.hscript.Config;
 
 import haxe.Constraints.IMap;
+import haxe.ds.ObjectMap;
 import haxe.io.Path;
 import haxe.Log;
 
@@ -58,8 +59,8 @@ class Interp
 
         return switch (expr.type)
         {
-            case EVarDecl(id, value, getter, setter):
-                scope.define(id, eval(value), getter, setter);
+            case EVarDecl(id, value, getter, setter, isFinal):
+                scope.define(id, eval(value), getter, setter, isFinal);
 
                 null;
             
@@ -88,10 +89,10 @@ class Interp
                 exprs.map(expr -> eval(expr));
 
             case EMap(exprs):
-                final res:Map<Dynamic, Dynamic> = new Map<Dynamic, Dynamic>();
+                final res:ObjectMap<Dynamic, Dynamic> = new ObjectMap<Dynamic, Dynamic>();
 
-                for (expr in exprs.keys())
-                    res.set(eval(expr), eval(exprs[expr]));
+                for (key => expr in exprs)
+                    res.set(eval(key), eval(expr));
 
                 res;
 
@@ -245,6 +246,37 @@ class Interp
 
             case EVar(id):
                 scope.get(id);
+
+            case EFor(indexId, iterId, iter, body):
+                if (indexId == null)
+                {
+                    final it = makeIterator(eval(iter));
+
+                    while (it.hasNext())
+                    {
+                        final newScope = new Scope(scope);
+
+                        newScope.define(iterId, it.next());
+
+                        eval(body, newScope);
+                    }
+                } else {
+                    final it = makeKeyValueIterator(eval(iter));
+
+                    while (it.hasNext())
+                    {
+                        final pair = it.next();
+
+                        final newScope = new Scope(scope);
+
+                        newScope.define(indexId, pair.key);
+                        newScope.define(iterId, pair.value);
+
+                        eval(body, newScope);
+                    }
+                }
+
+                null;
 
             case EField(object, id):
                 final obj:Dynamic = eval(object);
@@ -417,6 +449,49 @@ class Interp
         }
     }
 
+    function makeIterator(obj:Dynamic):Iterator<Dynamic>
+    {
+        #if js
+        if (obj is Array)
+            return (obj : Array<Dynamic>).iterator();
+
+        if (obj.iterator != null)
+            obj = obj.iterator();
+        #else
+        #if cpp if (obj.iterator != null) #end
+            try
+            {
+                obj = obj.iterator();
+            } catch(e:Dynamic) {}
+        #end
+            
+        if (obj.hasNext == null || obj.next == null)
+            obj = null;
+
+        return obj;
+    }
+
+    function makeKeyValueIterator(obj:Dynamic):KeyValueIterator<Dynamic, Dynamic>
+    {
+        #if js
+        if (obj is Array)
+            return (obj : Array<Dynamic>).keyValueIterator();
+
+        if (obj.keyValueIterator != null)
+            obj = obj.keyValueIterator();
+        #else
+        try
+        {
+            obj = obj.keyValueIterator();
+        } catch(e:Dynamic) {}
+        #end
+
+        if (obj.hasNext == null || obj.next == null)
+            obj = null;
+
+        return obj;
+    }
+
     function assign(obj:Expr, value:Dynamic):Dynamic
         return switch (obj.type)
         {
@@ -425,6 +500,16 @@ class Interp
 
             case EField(obj, id):
                 Reflect.setProperty(eval(obj), id, value);
+
+                value;
+
+            case EArrayAccess(obj, key):
+                final res:Dynamic = eval(obj);
+
+                if (Std.isOfType(res, Array))
+                    res[eval(key)] = value;
+                else if (Std.isOfType(res, IMap))
+                    cast(res, IMap<Dynamic, Dynamic>).set(eval(key), value);
 
                 value;
 

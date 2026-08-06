@@ -5,5 +5,6 @@ import ale.hscript.parser.Property;
 typedef Variable = {
     value:Dynamic,
     getter:Property,
-    setter:Property
+    setter:Property,
+    isFinal:Bool
 }
