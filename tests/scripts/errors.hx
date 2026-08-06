@@ -1,1 +1,1 @@
-trace(Date);
+trace(Date)

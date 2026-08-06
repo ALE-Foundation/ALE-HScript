@@ -5,6 +5,9 @@ import sys.FileSystem;
 import sys.io.File;
 #end
 
+import ale.hscript.utils.Error;
+
+import haxe.Exception;
 import haxe.Log;
 
 class Defaults
@@ -40,5 +43,18 @@ class Defaults
 
     public static final INTERP_NAME:String = 'ALEHScript.hx';
 
-    public static final ERROR_HANDLER:String -> Void = (e) -> Log.trace('[ ERROR ] ' + e, null);
+    public static final ERROR_HANDLER:Dynamic -> String -> Void = (error, name) -> {
+        final msg:StringBuf = new StringBuf();
+
+        msg.add(name + ': ');
+
+        if (error is Error)
+            msg.add(error.toString());
+        else if (error is Exception)
+            msg.add(error.message);
+        else
+            msg.add(Std.string(error));
+
+        Log.trace('[ ERROR ] ' + msg.toString(), null);
+    };
 }

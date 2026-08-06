@@ -4,9 +4,6 @@ import ale.hscript.lexer.*;
 import ale.hscript.parser.*;
 import ale.hscript.interp.*;
 
-import haxe.Exception;
-import haxe.Timer;
-
 class Script
 {
     public final content:String;
@@ -21,7 +18,7 @@ class Script
 
         content = isFile ? Config.FILE_READER(path) : script;
 
-        interp = new Interp(name ?? script);
+        interp = new Interp((name ?? script) + Config.EXTENSION);
     }
 
     public function get(id:String)
@@ -45,8 +42,8 @@ class Script
         try
         {
             return execute();
-        } catch(error:Exception) {
-            Config.ERROR_HANDLER(error.message);
+        } catch(error:Dynamic) {
+            Config.ERROR_HANDLER(error, interp.name);
         }
 
         return null;

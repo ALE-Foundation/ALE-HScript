@@ -1,5 +1,7 @@
 package ale.hscript.utils;
 
+import ale.hscript.lexer.TokenType;
+
 import haxe.Exception;
 
 class Error extends Exception
@@ -20,8 +22,21 @@ class Error extends Exception
     }
 
     static function format(type:ErrorType):String
-        return Std.string(type);
+        return switch (type)
+        {
+
+
+            default:
+                Std.string(type);
+        }
+
+    static function formatToken(type:TokenType):String
+        return switch (type)
+        {
+            default:
+                Std.string(type);
+        }
 
     override function toString():String
-        return '($line:$column) $message';
+        return '$line:$column: $message';
 }
