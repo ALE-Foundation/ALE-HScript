@@ -621,7 +621,7 @@ class Parser
                 fastAdvanceExpr(ENull, cur);
 
             default:
-                error(EUnexpected(cur));
+                error(EUnexpected(cur.type), cur);
 
                 null;
         }

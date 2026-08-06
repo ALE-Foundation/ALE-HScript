@@ -14,5 +14,5 @@ enum ErrorType
     EInvalidNumber;
 
     EExpected(want:TokenType, got:TokenType);
-    EUnexpected(got:Token);
+    EUnexpected(got:TokenType);
 }
