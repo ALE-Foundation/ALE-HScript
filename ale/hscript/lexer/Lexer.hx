@@ -1,5 +1,8 @@
 package ale.hscript.lexer;
 
+import ale.hscript.utils.ErrorType;
+import ale.hscript.utils.Error;
+
 using StringTools;
 
 class Lexer
@@ -22,6 +25,13 @@ class Lexer
         while (index < length)
         {
             final cur:Int = peek();
+
+            if (isSpace(cur))
+            {
+                advance();
+
+                continue;
+            }
 
             if (cur == '/'.code)
             {
@@ -46,7 +56,7 @@ class Lexer
                     while (true)
                     {
                         if (peek() == -1)
-                            throw 'Unterminated comment';
+                            error(EUnterminatedComment);
 
                         if (peek() == '*'.code && index + 1 < length && source.fastCodeAt(index + 1) == '/'.code)
                         {
@@ -77,8 +87,13 @@ class Lexer
                     while (isHex(peek()))
                         advance();
 
+                    final num:Null<Int> = Std.parseInt(source.substr(start, index - start));
+
+                    if (num == null)
+                        error(EInvalidNumber);
+
                     result.push({
-                        type: TNumber(Std.parseInt(source.substr(start, index - start))),
+                        type: TNumber(num),
                         line: tokenLine,
                         column: tokenColumn
                     });
@@ -122,8 +137,13 @@ class Lexer
                     break;
                 }
 
+                final num:Null<Float> = Std.parseFloat(source.substr(start, index - start));
+
+                if (num == null)
+                    error(EInvalidNumber);
+
                 result.push({
-                    type: TNumber(Std.parseFloat(source.substr(start, index - start))),
+                    type: TNumber(num),
                     line: tokenLine,
                     column: tokenColumn
                 });
@@ -317,7 +337,7 @@ class Lexer
                     advance();
 
                     if (index >= length)
-                        throw 'Unterminated String';
+                        error(EUnterminatedString);
                 }
 
                 result.push({
@@ -349,7 +369,9 @@ class Lexer
                 continue;
             }
 
-            advance();
+
+
+            error(EInvalidCharacter(cur));
         }
 
         return result;
@@ -414,4 +436,10 @@ class Lexer
 
     inline function isDigitStart(c:Int):Bool
         return isDigit(c) || (c == '.'.code && isDigit(next()));
+
+    inline function isSpace(c:Int):Bool
+        return c == ' '.code || c == '\t'.code || c == '\r'.code || c == '\n'.code;
+
+    inline function error(type:ErrorType):Void
+        throw new Error(type, line, column);
 }

@@ -52,7 +52,7 @@ enum TokenType
     TDoubleGreaterEqual; // >>=
     TTripleGreaterEqual; // >>>=
 
-    TDoubleQuestionEqual;
+    TDoubleQuestionEqual; // ??=
 
     TDoublePlus; // ++
     TDoubleMinus; // --
@@ -119,7 +119,6 @@ enum TokenType
     TReturn;
     TStatic;
     TSwitch;
-    TDefault;
     TThis;
     TThrow;
     TTrue;

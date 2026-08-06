@@ -4,6 +4,9 @@ import ale.hscript.lexer.TokenUtil;
 import ale.hscript.lexer.TokenType;
 import ale.hscript.lexer.Token;
 
+import ale.hscript.utils.ErrorType;
+import ale.hscript.utils.Error;
+
 import haxe.ds.StringMap;
 
 class Parser
@@ -286,20 +289,20 @@ class Parser
 
                             condition = parseExpr();
 
-                        case TDefault:
+                        case TIdent(val) if (val == 'default'):
                             advance();
 
                             isDefault = true;
 
                         default:
-                            error(TCase, peek());
+                            error(EExpected(TCase, peek()));
                     }
 
                     expect(TColon);
 
                     final parts:Array<Expr> = [];
 
-                    while (!end() && !check(TDefault) && !check(TCase) && !check(TRBrace))
+                    while (!end() && !checkIdent('default') && !check(TCase) && !check(TRBrace))
                         parts.push(parseSemicolonStatement());
 
                     final res:Expr = fastExpr(EBlock(parts), cur);
@@ -610,7 +613,7 @@ class Parser
                 fastAdvanceExpr(ENull, cur);
 
             default:
-                throw 'Unsupported Token: ' + cur;
+                error(EUnexpected(cur));
 
                 null;
         }
@@ -639,13 +642,13 @@ class Parser
                         PNever;
 
                     default:
-                        error(TIdent('default'), last());
+                        error(EExpected(TIdent('default'), last()));
 
                         null;
                 }
 
             default:
-                error(TNull, last());
+                error(EExpected(TIdent(null), last()));
 
                 null;
         }
@@ -778,7 +781,7 @@ class Parser
                 while (!end() && !check(TRParen))
                 {
                     if (count > 0 && advance().type != TComma)
-                        error(TComma, last());
+                        error(EExpected(TComma, last()));
 
                     parseType();
 
@@ -792,7 +795,7 @@ class Parser
                 parseType();
 
             default:
-                error(null, last());
+                error(EExpected(TIdent(null), last()));
         }
 
         switch (peek().type)
@@ -867,19 +870,19 @@ class Parser
     }
 
 
-    function error(want:TokenType, ?got:Token)
+    inline function error(type:ErrorType, ?got:Token)
     {
         got ??= peek();
 
-        throw 'Expected ' + want + ', got ' + got.type + ' at ' + got.line + ':' + got.column;
+        throw new Error(type, got.line, got.column);
     }
 
 
-    function expect(type:TokenType, ?token:Token)
+    inline function expect(type:TokenType, ?got:Token)
         if (check(type))
             advance();
         else
-            error(type, token);
+            error(EExpected(type, got));
 
     function parseIdent():String
         return switch (advance().type)
@@ -892,6 +895,47 @@ class Parser
 
                 null;
         }
+
+
+    var index:Int = 0;
+
+    inline function advance():Token
+        return source[index++];
+
+    inline function peek():Token
+        return source[index];
+
+    inline function last():Token
+        return source[index - 1];
+
+    inline function next():Token
+        return source[index + 1];
+
+    inline function end():Bool
+        return index >= length;
+
+    inline function check(type:TokenType):Bool
+        return peek().type == type;
+
+    inline function checkIdent(str:String):Bool
+        return switch (peek().type)
+        {
+            case TIdent(id):
+                id == str;
+
+            default:
+                false;
+        }
+
+    inline function match(type:TokenType):Bool
+    {
+        final res:Bool = peek().type == type;
+
+        if (res)
+            advance();
+
+        return res;
+    }
 
 
     var _precedenceCount:Int = 0;
@@ -953,34 +997,4 @@ class Parser
 
     function precedence(token:TokenType):Int
         return _precedenceMap[token] ?? -1;
-
-    var index:Int = 0;
-
-    inline function advance():Token
-        return source[index++];
-
-    inline function peek():Token
-        return source[index];
-
-    inline function last():Token
-        return source[index - 1];
-
-    inline function next():Token
-        return source[index + 1];
-
-    inline function end():Bool
-        return index >= length;
-
-    inline function check(type:TokenType):Bool
-        return peek().type == type;
-
-    inline function match(type:TokenType):Bool
-    {
-        final res:Bool = peek().type == type;
-
-        if (res)
-            advance();
-
-        return res;
-    }
 }

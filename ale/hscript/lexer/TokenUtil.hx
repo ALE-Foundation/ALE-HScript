@@ -39,7 +39,6 @@ class TokenUtil
         'return' => TReturn,
         'static' => TStatic,
         'switch' => TSwitch,
-        'default' => TDefault,
         'this' => TThis,
         'throw' => TThrow,
         'true' => TTrue,
