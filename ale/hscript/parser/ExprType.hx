@@ -37,6 +37,8 @@ enum ExprType
     EWhile(condition:Expr, expr:Expr);
     EDoWhile(condition:Expr, expr:Expr);
 
+    EThrow(value:Expr);
+
     EReturn(value:Expr);
     EContinue;
     EBreak;

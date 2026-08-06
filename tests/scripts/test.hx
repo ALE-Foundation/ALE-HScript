@@ -200,3 +200,16 @@ else if (true)
     trace('true');
 else
     trace('tung');
+
+____CT('- switch');
+
+
+
+____CT('- throw');
+
+try
+{
+    throw 'oso';
+} catch(val:Dynamic) {
+    trace(val);
+}

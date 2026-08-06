@@ -201,6 +201,17 @@ class Parser
                     res = parseExpr();
 
                 fastExpr(EReturn(res), cur);
+                
+            case TThrow:
+                advance();
+
+                fastExpr(EThrow(parseExpr()), cur);
+
+            case TBreak:
+                fastAdvanceExpr(EBreak, cur);
+
+            case TContinue:
+                fastAdvanceExpr(EContinue, cur);
 
             default:
                 parseExpr();
@@ -440,12 +451,6 @@ class Parser
                 expect(TRBracket);
 
                 fastExpr(mapStyle ? EMap(mapMembers) : EArray(arrayMembers), cur);
-            
-            case TBreak:
-                fastAdvanceExpr(EBreak, cur);
-
-            case TContinue:
-                fastAdvanceExpr(EContinue, cur);
 
             case TIdent(id):
                 fastAdvanceExpr(EVar(id), cur);

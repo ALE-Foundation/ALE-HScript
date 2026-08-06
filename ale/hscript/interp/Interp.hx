@@ -202,6 +202,9 @@ class Interp
             case EBreak:
                 throw new BreakSignal();
 
+            case EThrow(val):
+                throw eval(val);
+
             case EString(str):
                 str;
 
