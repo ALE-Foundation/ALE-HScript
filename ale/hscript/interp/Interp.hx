@@ -85,6 +85,15 @@ class Interp
 
                 null;
 
+            case ESwitch(obj, cases, defaultExpr):
+                final res:Dynamic = eval(obj);
+
+                for (cas in cases)
+                    if (eval(cas.condition) == res)
+                        return eval(cas.body);
+
+                eval(defaultExpr);
+
             case EArray(exprs):
                 exprs.map(expr -> eval(expr));
 
@@ -219,6 +228,9 @@ class Interp
                     case EVar(id):
                         switch (id)
                         {
+                            case 'cast':
+                                return solvedArgs[0];
+
                             case 'trace':
                                 Log.trace(name + ':'  + expr.pos.start.line + ': ' + solvedArgs.join(','), null);
 

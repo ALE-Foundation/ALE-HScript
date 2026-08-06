@@ -36,7 +36,7 @@ class Parser
     function requiresSemicolon(expr:ExprType):Bool
         return switch (expr)
         {
-            case EIf(_, _, _), EWhile(_, _), EFor(_), EStructure(_), ETry(_, _), EBlock(_), EFunctionDecl(_, _), EFunction(_, _):
+            case ESwitch(_, _, _), EIf(_, _, _), EWhile(_, _), EFor(_), EStructure(_), ETry(_, _), EBlock(_), EFunctionDecl(_, _), EFunction(_, _):
                 false;
 
             default:
@@ -201,6 +201,65 @@ class Parser
                     res = parseExpr();
 
                 fastExpr(EReturn(res), cur);
+
+            case TSwitch:
+                advance();
+
+                match(TLParen);
+
+                final obj:Expr = parseExpr();
+
+                match(TRParen);
+
+                expect(TLBrace);
+
+                var cases:Array<SwitchCondition> = [];
+
+                var defaultExpr:Expr = null;
+
+                while (!end() && !check(TRBrace))
+                {
+                    var condition:Expr = null;
+
+                    var isDefault:Bool = false;
+
+                    switch (peek().type)
+                    {
+                        case TCase:
+                            advance();
+
+                            condition = parseExpr();
+
+                        case TDefault:
+                            advance();
+
+                            isDefault = true;
+
+                        default:
+                            error(TCase, peek());
+                    }
+
+                    expect(TColon);
+
+                    final parts:Array<Expr> = [];
+
+                    while (!end() && !check(TDefault) && !check(TCase) && !check(TRBrace))
+                        parts.push(parseSemicolonStatement());
+
+                    final res:Expr = fastExpr(EBlock(parts), last());
+                    
+                    if (isDefault)
+                        defaultExpr = res;
+                    else
+                        cases.push({
+                            condition: condition,
+                            body: res
+                        });
+                }
+
+                expect(TRBrace);
+
+                fastExpr(ESwitch(obj, cases, defaultExpr), cur);
                 
             case TThrow:
                 advance();
@@ -314,6 +373,14 @@ class Parser
 
         return switch (cur.type)
         {
+            case TCast:
+                advance();
+
+                if (check(TLParen))
+                    fastExpr(ECall(fastExpr(EVar('cast'), cur), parseCallArguments()), cur);
+                else
+                    parseExpr();
+
             case TUntyped:
                 advance();
 
@@ -324,21 +391,41 @@ class Parser
 
                 try
                 {
-                    final args:Array<FunctionArgument> = parseFunctionArguments();
-
-                    expect(TArrow);
-
-                    fastExpr(EFunction(args, parseBody(false)), cur);
-                } catch(_:Dynamic) {
-                    index = pos;
-
                     advance();
 
                     final res:Expr = parseExpr();
 
+                    expect(TColon);
+
+                    parseType();
+
                     expect(TRParen);
 
+                    if (check(TArrow))
+                        throw null;
+
                     res;
+                } catch(_:Dynamic) {
+                    try
+                    {
+                        index = pos;
+
+                        final args:Array<FunctionArgument> = parseFunctionArguments();
+
+                        expect(TArrow);
+
+                        fastExpr(EFunction(args, parseBody(false)), cur);
+                    } catch(_:Dynamic) {
+                        index = pos;
+
+                        advance();
+
+                        final res:Expr = parseExpr();
+
+                        expect(TRParen);
+
+                        res;
+                    }
                 }
                 
             case TIf:
@@ -825,4 +912,14 @@ class Parser
 
     inline function check(type:TokenType):Bool
         return peek().type == type;
+
+    inline function match(type:TokenType):Bool
+    {
+        final res:Bool = peek().type == type;
+
+        if (res)
+            advance();
+
+        return res;
+    }
 }

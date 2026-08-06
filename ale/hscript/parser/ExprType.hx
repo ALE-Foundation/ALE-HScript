@@ -39,6 +39,8 @@ enum ExprType
 
     EThrow(value:Expr);
 
+    ESwitch(obj:Expr, cases:Array<SwitchCondition>, ?defaultExpr:Expr);
+
     EReturn(value:Expr);
     EContinue;
     EBreak;

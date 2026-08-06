@@ -203,7 +203,20 @@ else
 
 ____CT('- switch');
 
+switch ('oso')
+{
+    case 'donde':
+        trace('a');
+    
+    case 'tu':
+        trace('b');
 
+    case 'ta':
+        trace('c');
+
+    default:
+        trace('d');
+}
 
 ____CT('- throw');
 
@@ -213,3 +226,11 @@ try
 } catch(val:Dynamic) {
     trace(val);
 }
+
+____CT('- cast');
+
+trace(cast 'oso');
+
+trace(cast('donde', String));
+
+trace(('tu ta' : String));

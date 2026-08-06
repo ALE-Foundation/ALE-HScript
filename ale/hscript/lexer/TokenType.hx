@@ -117,6 +117,7 @@ enum TokenType
     TReturn;
     TStatic;
     TSwitch;
+    TDefault;
     TThis;
     TThrow;
     TTrue;
