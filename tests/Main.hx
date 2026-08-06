@@ -1,15 +1,18 @@
 package;
 
 import ale.hscript.Script;
+import ale.hscript.Config;
 
-import haxe.Log;
+using StringTools;
 
 class Main
 {
 	static function main()
 	{
-		final script:Script = new Script('test');
-		
-		script.execute();
+		#if sys
+		for (scr in sys.FileSystem.readDirectory(Config.SCRIPT_PATH))
+			if (scr.endsWith(Config.EXTENSION))
+				new Script(scr.replace(Config.EXTENSION, '')).execute();
+		#end
 	}
 }
