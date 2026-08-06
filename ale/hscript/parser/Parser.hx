@@ -329,6 +329,28 @@ class Parser
 
                     res;
                 }
+                
+            case TIf:
+                advance();
+
+                expect(TLParen);
+
+                final condition:Expr = parseExpr();
+
+                expect(TRParen);
+
+                final body:Expr = parseBody(false);
+
+                var elseBody:Expr = null;
+
+                if (check(TElse))
+                {
+                    advance();
+
+                    elseBody = parseBody(false);
+                }
+
+                fastExpr(EIf(condition, body, elseBody), cur);
 
             case TFunction:
                 advance();

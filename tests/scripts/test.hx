@@ -1,5 +1,3 @@
-
-/*
 final ____CT:String -> Void = (str:String) -> {
     trace('');
     trace(str);
@@ -163,7 +161,7 @@ trace((10 + 10) * 10);
 ____CT('- - - Ternary');
 
 trace(true ? 10 : 20);
-trace(false ? 10 : 20);
+trace(if (false) 10 else 20);
 
 ____CT('- new');
 
@@ -193,8 +191,6 @@ var i:Int = 0;
 do {
     trace(++i);
 } while (i < 3);
-
-*/
 
 ____CT('- if');
 
