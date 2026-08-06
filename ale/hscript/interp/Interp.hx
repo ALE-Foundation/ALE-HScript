@@ -3,6 +3,7 @@ package ale.hscript.interp;
 import ale.hscript.parser.ExprUtil;
 import ale.hscript.parser.ExprType;
 import ale.hscript.parser.Expr;
+import ale.hscript.utils.TypeList;
 import ale.hscript.Config;
 
 import haxe.Constraints.IMap;
@@ -15,6 +16,8 @@ class Interp
     public final name:String;
 
     public var scope:Scope;
+
+    public var softPackage:String;
 
     public function new(name:String)
     {
@@ -59,6 +62,22 @@ class Interp
 
         return switch (expr.type)
         {
+            case EPackage(module):
+                softPackage = module;
+
+                null;
+
+            case EImport(module):
+                scope.define(module.split('.').pop(), Type.resolveClass(module));
+
+                null;
+
+            case EPackageImport(module):
+                for (type in TypeList.list[module])
+                    scope.define(type, Type.resolveClass(module + '.' + type));
+
+                null;
+
             case EVarDecl(id, value, getter, setter, isFinal):
                 scope.define(id, eval(value), getter, setter, isFinal);
 
@@ -114,7 +133,7 @@ class Interp
                 res;
 
             case EType(module):
-                scope.get(module) ?? Type.resolveClass(module);
+                scope.get(module) ?? Type.resolveClass(module) ?? (softPackage == null ? null : Type.resolveClass(softPackage + '.' + module));
 
             case EAssign(obj, value):
                 assign(obj, eval(value));

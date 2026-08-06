@@ -52,10 +52,61 @@ class Parser
 
         return res;
     }
+
+    var allowPackage:Bool = true;
+    var allowImports:Bool = true;
     
     function parseStatement():Expr
     {
         final cur:Token = peek();
+
+        if (allowPackage && check(TPackage))
+        {
+            allowPackage = false;
+
+            advance();
+
+            final str:StringBuf = new StringBuf();
+
+            while (!end() && !check(TSemicolon))
+            {
+                str.add(parseIdent());
+
+                if (match(TDot))
+                    str.add('.');
+                else
+                    break;
+            }
+
+            return fastExpr(EPackage(str.length > 0 ? str.toString() : null), cur);
+        }
+
+        allowPackage = false;
+
+        if (allowImports && check(TImport))
+        {
+            advance();
+
+            final str:StringBuf = new StringBuf();
+
+            while (!end() && !check(TStar))
+            {
+                str.add(parseIdent());
+
+                if (match(TDot))
+                {
+                    if (match(TStar))
+                        return fastExpr(EPackageImport(str.toString()), cur);
+
+                    str.add('.');
+                } else
+                    break;
+            }
+
+            return fastExpr(EImport(str.toString()), cur);
+        }
+
+        allowImports = false;
 
         return switch (cur.type)
         {
@@ -483,9 +534,7 @@ class Parser
 
                         values.set(key, parseExpr());
 
-                        if (check(TComma))
-                            advance();
-                        else
+                        if (!match(TComma))
                             break;
                     }
 
@@ -529,9 +578,7 @@ class Parser
                         arrayMembers.push(left);
                     }
 
-                    if (check(TComma))
-                        advance();
-                    else
+                    if (!match(TComma))
                         break;
                 }
 
@@ -634,9 +681,7 @@ class Parser
         {
             result.push(parseFunctionArgument());
 
-            if (check(TComma))
-                advance();
-            else
+            if (!match(TComma))
                 break;
         }
 
@@ -671,9 +716,7 @@ class Parser
         {
             result.push(parseExpr());
 
-            if (check(TComma))
-                advance();
-            else
+            if (!match(TComma))
                 break;
         }
         
@@ -706,9 +749,7 @@ class Parser
 
                     parseOptionalType();
 
-                    if (check(TComma))
-                        advance();
-                    else
+                    if (!match(TComma))
                         break;
                 }
 
@@ -756,9 +797,7 @@ class Parser
                 {
                     parseType();
 
-                    if (check(TComma))
-                        advance();
-                    else
+                    if (!match(TComma))
                         break;
                 }
 

@@ -1,3 +1,7 @@
+package;
+
+import haxe.ds.*;
+
 final ____CT:String -> Void = (str:String) -> {
     trace('');
     trace(str);
@@ -165,7 +169,7 @@ trace(if (false) 10 else 20);
 
 ____CT('- new');
 
-trace(new haxe.ds.StringMap<Dynamic>());
+trace(new StringMap<Dynamic>());
 
 ____CT('- for');
 

@@ -50,6 +50,11 @@ enum ExprType
     EPostfix(op:TokenType, right:Expr);
     ETernOp(condition:Expr, ifTrue:Expr, ifFalse:Expr);
 
+    EPackage(module:String);
+    
+    EPackageImport(module:String);
+    EImport(module:String);
+
     EFalse;
     ETrue;
     ENull;
