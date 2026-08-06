@@ -251,7 +251,11 @@ try
 
 ____CT('- cast');
 
-trace(cast 'oso');
+final oso:Dynamic = {
+    donde: 'oso'
+}
+
+trace(cast oso.donde);
 
 trace(cast('donde', String));
 

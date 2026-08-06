@@ -36,7 +36,7 @@ class Parser
     function requiresSemicolon(expr:ExprType):Bool
         return switch (expr)
         {
-            case ESwitch(_, _, _), EIf(_, _, _), EWhile(_, _), EFor(_), EStructure(_), ETry(_, _), EBlock(_), EFunctionDecl(_, _), EFunction(_, _):
+            case EVarDecl(_, _, _, _, _), ESwitch(_, _, _), EIf(_, _, _), EWhile(_, _), EFor(_), EStructure(_), ETry(_, _), EBlock(_), EFunctionDecl(_, _), EFunction(_, _):
                 false;
 
             default:
@@ -136,7 +136,12 @@ class Parser
 
                 parseOptionalType();
 
-                fastExpr(EVarDecl(id, parseOptionalValue(), getter, setter, cur.type == TFinal), cur);
+                final val:Expr = parseOptionalValue();
+
+                if (!semicolon(val.type))
+                    match(TSemicolon);
+
+                fastExpr(EVarDecl(id, val, getter, setter, cur.type == TFinal), cur);
 
             case TIf:
                 advance();
@@ -851,9 +856,15 @@ class Parser
     }
 
 
-    inline function semicolon(type:ExprType)
-        if (requiresSemicolon(type))
+    inline function semicolon(type:ExprType):Bool
+    {
+        final res:Bool = requiresSemicolon(type);
+
+        if (res)
             expect(TSemicolon);
+
+        return res;
+    }
 
 
     function error(want:TokenType, ?got:Token)
