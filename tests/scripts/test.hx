@@ -169,6 +169,9 @@ trace(new haxe.ds.StringMap<Dynamic>());
 
 ____CT('- for');
 
+for (i in 0...10)
+    trace(i);
+
 final map = [1 => 101, 'oso' => 102, 3 => 103];
 
 for (key => value in map)
