@@ -3,6 +3,8 @@ package;
 import haxe.ds.*;
 
 final ____CT:String -> Void = (str:String) -> {
+    return;
+    
     trace('');
     trace(str);
     trace('');

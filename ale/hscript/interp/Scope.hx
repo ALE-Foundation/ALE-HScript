@@ -1,5 +1,7 @@
 package ale.hscript.interp;
 
+import ale.hscript.utils.ErrorType;
+
 import ale.hscript.parser.Property;
 
 class Scope
@@ -40,7 +42,7 @@ class Scope
 
         if (theVar.isFinal)
         {
-            throw 'Cannot assign final "$id"';
+            throw ErrorType.EFinalAssign(id);
 
             return null;
         }
@@ -67,7 +69,7 @@ class Scope
                 }
 
             case PGet, PNever:
-                throw 'Expression "$id" cannot be accessed for writing';
+                throw ErrorType.ENeverWrite(id);
 
                 null;
         }
@@ -104,15 +106,29 @@ class Scope
                 }
 
             case PSet, PNever:
-                throw 'The expression "$id" cannot be accessed for reading';
+                throw ErrorType.ENeverRead(id);
 
                 null;
         }
     }
 
-    public function exists(id:String):Dynamic
-        return resolve(id) != null;
+    public function exists(id:String):Bool
+        return try
+        {
+            resolve(id);
+
+            true;
+        } catch(e:ErrorType) {
+            false;
+        }
 
     function resolve(id:String):Scope
-        return variables.exists(id) ? this : parent?.resolve(id);
+    {
+        final res:Scope = variables.exists(id) ? this : parent?.resolve(id);
+
+        if (res == null)
+            throw ErrorType.EUnknownVariable(id);
+
+        return res;
+    }
 }

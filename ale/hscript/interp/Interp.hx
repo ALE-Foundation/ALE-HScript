@@ -3,7 +3,11 @@ package ale.hscript.interp;
 import ale.hscript.parser.ExprUtil;
 import ale.hscript.parser.ExprType;
 import ale.hscript.parser.Expr;
+
 import ale.hscript.utils.TypeList;
+import ale.hscript.utils.ErrorType;
+import ale.hscript.utils.Error;
+
 import ale.hscript.Config;
 
 import haxe.Constraints.IMap;
@@ -15,6 +19,8 @@ class Interp
 {
     public final name:String;
 
+    public var imports:Map<String, Class<Dynamic>>;
+
     public var scope:Scope;
 
     public var softPackage:String;
@@ -23,16 +29,18 @@ class Interp
     {
         this.name = name;
 
+        imports = new Map<String, Class<Dynamic>>();
+
         scope = new Scope();
 
         for (cls in Config.IMPORTS)
-            scope.define(Type.getClassName(cls).split('.').pop(), cls);
+            imports[Type.getClassName(cls).split('.').pop()] = cls;
         
-        for (tpd in Config.TYPEDEFS.keys())
-            scope.define(tpd, Config.TYPEDEFS[tpd]);
+        for (key => val in Config.TYPEDEFS)
+            imports[key] = val;
 
-        for (vrb in Config.VARIABLES.keys())
-            scope.define(vrb, Config.VARIABLES[vrb]);
+        for (key => val in Config.VARIABLES)
+            imports[key] = val;
     }
 
     public function execute(exprs:Array<Expr>):Dynamic
@@ -60,98 +68,207 @@ class Interp
         if (expr == null)
             return null;
 
-        return switch (expr.type)
+        try
         {
-            case EEof:
-                null;
+            return switch (expr.type)
+            {
+                case EEof:
+                    null;
 
-            case EPackage(module):
-                softPackage = module;
+                case EPackage(module):
+                    softPackage = module;
 
-                null;
+                    null;
 
-            case EImport(module):
-                scope.define(module.split('.').pop(), Type.resolveClass(module));
+                case EImport(module):
+                    final cls = Type.resolveClass(module);
 
-                null;
+                    if (cls == null)
+                        error(ETypeNotFound(module), expr);
 
-            case EPackageImport(module):
-                for (type in TypeList.list[module])
-                    scope.define(type, Type.resolveClass(module + '.' + type));
+                    imports[module.split('.').pop()] = cls;
 
-                null;
+                    null;
 
-            case EVarDecl(id, value, getter, setter, isFinal):
-                scope.define(id, eval(value), getter, setter, isFinal);
+                case EPackageImport(module):
+                    for (type in TypeList.list[module])
+                        imports[type] = Type.resolveClass(module + '.' + type);
 
-                null;
-            
-            case EFunctionDecl(id, func):
-                scope.define(id, eval(func));
+                    null;
 
-                null;
+                case EVarDecl(id, value, getter, setter, isFinal):
+                    scope.define(id, eval(value), getter, setter, isFinal);
 
-            case ETry(body, arg, failed):
-                try
-                {
-                    eval(body);
-                } catch(s:ReturnSignal) {
-                    throw s;
-                } catch(e:Dynamic) {
-                    final tryScope:Scope = new Scope(scope);
+                    null;
+                
+                case EFunctionDecl(id, func):
+                    scope.define(id, eval(func));
 
-                    tryScope.define(arg.id, e);
+                    null;
 
-                    eval(failed, tryScope);
-                }
-
-                null;
-
-            case ESwitch(obj, cases, defaultExpr):
-                final res:Dynamic = eval(obj);
-
-                for (cas in cases)
-                    if (eval(cas.condition) == res)
-                        return eval(cas.body);
-
-                eval(defaultExpr);
-
-            case EArray(exprs):
-                exprs.map(expr -> eval(expr));
-
-            case EMap(exprs):
-                final res:ObjectMap<Dynamic, Dynamic> = new ObjectMap<Dynamic, Dynamic>();
-
-                for (key => expr in exprs)
-                    res.set(eval(key), eval(expr));
-
-                res;
-
-            case EStructure(values):
-                final res:Dynamic = {};
-
-                for (key in values.keys())
-                    Reflect.setProperty(res, key, eval(values.get(key)));
-
-                res;
-
-            case EType(module):
-                scope.get(module) ?? Type.resolveClass(module) ?? (softPackage == null ? null : Type.resolveClass(softPackage + '.' + module));
-
-            case EAssign(obj, value):
-                assign(obj, eval(value));
-
-            case ENew(cls, args):
-                final resolvedClass:Dynamic = eval(cls);
-
-                if (resolvedClass == null)
-                    switch (cls.type)
+                case ETry(body, arg, failed):
+                    try
                     {
-                        case EType(module):
-                            switch (module)
+                        eval(body);
+                    } catch(s:ReturnSignal) {
+                        throw s;
+                    } catch(e:Dynamic) {
+                        final tryScope:Scope = new Scope(scope);
+
+                        tryScope.define(arg.id, e);
+
+                        eval(failed, tryScope);
+                    }
+
+                    null;
+
+                case ESwitch(obj, cases, defaultExpr):
+                    final res:Dynamic = eval(obj);
+
+                    for (cas in cases)
+                        if (eval(cas.condition) == res)
+                            return eval(cas.body);
+
+                    eval(defaultExpr);
+
+                case EArray(exprs):
+                    exprs.map(expr -> eval(expr));
+
+                case EMap(exprs):
+                    final res:ObjectMap<Dynamic, Dynamic> = new ObjectMap<Dynamic, Dynamic>();
+
+                    for (key => expr in exprs)
+                        res.set(eval(key), eval(expr));
+
+                    res;
+
+                case EStructure(values):
+                    final res:Dynamic = {};
+
+                    for (key in values.keys())
+                        Reflect.setProperty(res, key, eval(values.get(key)));
+
+                    res;
+
+                case EType(module):
+                    final res = imports[module] ?? Type.resolveClass(module) ?? (softPackage == null ? null : Type.resolveClass(softPackage + '.' + module));
+
+                    if (res == null)
+                        error(ETypeNotFound(module), expr);
+
+                    res;
+
+                case EAssign(obj, value):
+                    assign(obj, eval(value));
+
+                case ENew(cls, args):
+                    final resolvedClass = switch (cls.type)
+                    {
+                        case EType(module) if (module == 'Map' || module == 'haxe.ds.Map'):
+                            return new Map<Dynamic, Dynamic>();
+
+                        default:
+                            eval(cls);
+                    };
+
+                    return Type.createInstance(resolvedClass, args.map(arg -> eval(arg)));
+                
+                case EFunction(arguments, block):
+                    Reflect.makeVarArgs((args:Array<Dynamic>) -> {
+                        final funcScope = new Scope(scope);
+
+                        for (index => arg in arguments)
+                            funcScope.define(arguments[index].id, args[index] ?? eval(arguments[index].value));
+
+                        eval(block, funcScope);
+                    });
+
+                case EIf(condition, expr, elseExpr):
+                    if (eval(condition))
+                        eval(expr);
+                    else if (elseExpr != null)
+                        eval(elseExpr);
+                    else
+                        null;
+
+                case EWhile(condition, expr):
+                    while (eval(condition))
+                    {
+                        try
+                        {
+                            eval(expr);
+                        } catch (c:ContinueSignal) {
+                            continue;
+                        } catch (b:BreakSignal) {
+                            break;
+                        }
+                    }
+
+                    null;
+
+                case EDoWhile(condition, expr):
+                    do {
+                        try
+                        {
+                            eval(expr);
+                        } catch (c:ContinueSignal) {
+                            continue;
+                        } catch (b:BreakSignal) {
+                            break;
+                        }
+                    } while(eval(condition));
+
+                    null;
+
+                case EBlock(exprs):
+                    final oldScope:Scope = scope;
+
+                    scope = newScope ?? new Scope(scope);
+
+                    var res:Dynamic = null;
+                    
+                    try
+                    {
+                        for (expr in exprs)
+                            res = eval(expr);
+                    } catch(e:ReturnSignal) {
+                        res = e.value;
+                    }
+
+                    scope = oldScope;
+
+                    res;
+
+                case EContinue:
+                    throw new ContinueSignal();
+
+                case EBreak:
+                    throw new BreakSignal();
+
+                case EThrow(val):
+                    throw eval(val);
+
+                case EString(str):
+                    str;
+
+                case ENumber(num):
+                    num;
+
+                case ECall(object, args):
+                    final solvedArgs:Array<Dynamic> = args.map(arg -> eval(arg));
+
+                    switch (object.type)
+                    {
+                        case EVar(id):
+                            switch (id)
                             {
-                                case 'Map', 'haxe.ds.Map':
-                                    return new Map<Dynamic, Dynamic>();
+                                case 'cast':
+                                    return solvedArgs[0];
+
+                                case 'trace':
+                                    Log.trace(name + ':'  + expr.line + ': ' + solvedArgs.join(','), null);
+
+                                    return null;
 
                                 default:
                             }
@@ -159,348 +276,265 @@ class Interp
                         default:
                     }
 
-                return Type.createInstance(resolvedClass, args.map(arg -> eval(arg)));
-            
-            case EFunction(arguments, block):
-                Reflect.makeVarArgs((args:Array<Dynamic>) -> {
-                    final funcScope = new Scope(scope);
+                    Reflect.callMethod(null, eval(object), solvedArgs);
 
-                    for (index => arg in arguments)
-                        funcScope.define(arguments[index].id, args[index] ?? eval(arguments[index].value));
+                case EArrayAccess(obj, key):
+                    final res:Dynamic = eval(obj);
 
-                    eval(block, funcScope);
-                });
+                    if (Std.isOfType(res, Array))
+                        res[eval(key)];
+                    else if (Std.isOfType(res, IMap))
+                        cast(res, IMap<Dynamic, Dynamic>).get(eval(key));
+                    else {
+                        error(EInvalidArrayAccess(Type.getClassName(Type.getClass(res))), expr);
+                        
+                        null;
+                    }
 
-            case EIf(condition, expr, elseExpr):
-                if (eval(condition))
-                    eval(expr);
-                else if (elseExpr != null)
-                    eval(elseExpr);
-                else
-                    null;
-
-            case EWhile(condition, expr):
-                while (eval(condition))
-                {
+                case EVar(id):
                     try
                     {
-                        eval(expr);
-                    } catch (c:ContinueSignal) {
-                        continue;
-                    } catch (b:BreakSignal) {
-                        break;
-                    }
-                }
+                        scope.get(id);
+                    } catch(e:ErrorType) {
+                        if (imports.exists(id))
+                            imports[id];
+                        else {
+                            throw error(e, expr);
 
-                null;
-
-            case EDoWhile(condition, expr):
-                do {
-                    try
-                    {
-                        eval(expr);
-                    } catch (c:ContinueSignal) {
-                        continue;
-                    } catch (b:BreakSignal) {
-                        break;
-                    }
-                } while(eval(condition));
-
-                null;
-
-            case EBlock(exprs):
-                final oldScope:Scope = scope;
-
-                scope = newScope ?? new Scope(scope);
-
-                var res:Dynamic = null;
-                
-                try
-                {
-                    for (expr in exprs)
-                        res = eval(expr);
-                } catch(e:ReturnSignal) {
-                    res = e.value;
-                }
-
-                scope = oldScope;
-
-                res;
-
-            case EContinue:
-                throw new ContinueSignal();
-
-            case EBreak:
-                throw new BreakSignal();
-
-            case EThrow(val):
-                throw eval(val);
-
-            case EString(str):
-                str;
-
-            case ENumber(num):
-                num;
-
-            case ECall(object, args):
-                final solvedArgs:Array<Dynamic> = args.map(arg -> eval(arg));
-
-                switch (object.type)
-                {
-                    case EVar(id):
-                        switch (id)
-                        {
-                            case 'cast':
-                                return solvedArgs[0];
-
-                            case 'trace':
-                                Log.trace(name + ':'  + expr.line + ': ' + solvedArgs.join(','), null);
-
-                                return null;
-
-                            default:
+                            null;
                         }
+                    }
 
-                    default:
-                }
+                case EFor(indexId, iterId, iter, body):
+                    final newScope = new Scope(scope);
+                        
+                    if (indexId == null)
+                    {
+                        final it = makeIterator(eval(iter));
 
-                final func:Dynamic = eval(object);
+                        while (it.hasNext())
+                        {
+                            newScope.define(iterId, it.next());
 
-                if (func == null)
-                    null;
-                else
-                    Reflect.callMethod(null, func, solvedArgs);
+                            try
+                            {
+                                eval(body, newScope);
+                            } catch (c:ContinueSignal) {
+                                continue;
+                            } catch (b:BreakSignal) {
+                                break;
+                            }
+                        }
+                    } else {
+                        final it = makeKeyValueIterator(eval(iter));
 
-            case EArrayAccess(obj, key):
-                final res:Dynamic = eval(obj);
+                        while (it.hasNext())
+                        {
+                            final pair = it.next();
 
-                if (Std.isOfType(res, Array))
-                    res[eval(key)];
-                else if (Std.isOfType(res, IMap))
-                    cast(res, IMap<Dynamic, Dynamic>).get(eval(key));
-                else
+                            newScope.define(indexId, pair.key);
+                            newScope.define(iterId, pair.value);
+
+                            try
+                            {
+                                eval(body, newScope);
+                            } catch (c:ContinueSignal) {
+                                continue;
+                            } catch (b:BreakSignal) {
+                                break;
+                            }
+                        }
+                    }
+
                     null;
 
-            case EVar(id):
-                scope.get(id);
+                case EField(object, id):
+                    final obj:Dynamic = eval(object);
 
-            case EFor(indexId, iterId, iter, body):
-                final newScope = new Scope(scope);
-                    
-                if (indexId == null)
-                {
-                    final it = makeIterator(eval(iter));
+                    if (obj is String && id == 'code')
+                        obj.charCodeAt(0);
+                    else
+                        Reflect.getProperty(obj, id);
 
-                    while (it.hasNext())
+                case EReturn(value):
+                    throw new ReturnSignal(eval(value));
+
+                case EFalse:
+                    false;
+
+                case ETrue:
+                    true;
+
+                case ENull:
+                    null;
+
+                case EPrefix(op, right):
+                    final r:Dynamic = eval(right);
+
+                    untyped switch (op)
                     {
-                        newScope.define(iterId, it.next());
+                        case TTilde:
+                            ~r;
 
-                        try
-                        {
-                            eval(body, newScope);
-                        } catch (c:ContinueSignal) {
-                            continue;
-                        } catch (b:BreakSignal) {
-                            break;
-                        }
+                        case TExclamation:
+                            !r;
+
+                        case TMinus:
+                            -r;
+
+                        case TDoublePlus, TDoubleMinus:
+                            assign(right, r + (op == TDoubleMinus ? -1 : 1));
+
+                        default:
+                            error(EInvalidOp(op), expr);
+
+                            null;
                     }
-                } else {
-                    final it = makeKeyValueIterator(eval(iter));
 
-                    while (it.hasNext())
+                case EPostfix(op, left):
+                    final l:Dynamic = eval(left);
+
+                    untyped switch (op)
                     {
-                        final pair = it.next();
+                        case TDoublePlus, TDoubleMinus:
+                            assign(left, l + (op == TDoubleMinus ? -1 : 1));
 
-                        newScope.define(indexId, pair.key);
-                        newScope.define(iterId, pair.value);
+                            l;
 
-                        try
-                        {
-                            eval(body, newScope);
-                        } catch (c:ContinueSignal) {
-                            continue;
-                        } catch (b:BreakSignal) {
-                            break;
-                        }
+                        default:
+                            error(EInvalidOp(op), expr);
+
+                            null;
                     }
-                }
 
-                null;
+                case EBinOp(op, left, right):
+                    final l:Dynamic = eval(left);
 
-            case EField(object, id):
-                final obj:Dynamic = eval(object);
+                    untyped switch (op)
+                    {
+                        case TDoubleAmpersand:
+                            l && eval(right);
 
-                if (obj is String && id == 'code')
-                    obj.charCodeAt(0);
-                else
-                    Reflect.getProperty(obj, id);
+                        case TDoublePipe:
+                            l || eval(right);
 
-            case EReturn(value):
-                throw new ReturnSignal(eval(value));
+                        case TDoubleQuestion:
+                            l ?? eval(right);
 
-            case EFalse:
-                false;
+                        case TDoubleQuestionEqual:
+                            assign(left, l ?? eval(right));
 
-            case ETrue:
-                true;
+                        default:
+                            final r:Dynamic = eval(right);
+                        
+                            untyped switch (op)
+                            {
+                                case TPercent:
+                                    l % r;
 
-            case ENull:
-                null;
+                                case TPercentEqual:
+                                    assign(left, l % r);
 
-            case EPrefix(op, right):
-                final r:Dynamic = eval(right);
+                                case TStar:
+                                    l * r;
 
-                untyped switch (op)
-                {
-                    case TTilde:
-                        ~r;
+                                case TStarEqual:
+                                    assign(left, l * r);
 
-                    case TExclamation:
-                        !r;
+                                case TSlash:
+                                    l / r;
 
-                    case TMinus:
-                        -r;
+                                case TSlashEqual:
+                                    assign(left, l / r);
 
-                    case TDoublePlus, TDoubleMinus:
-                        assign(right, r + (op == TDoubleMinus ? -1 : 1));
+                                case TPlus:
+                                    l + r;
 
-                    default:
-                        null;
-                }
+                                case TPlusEqual:
+                                    assign(left, l + r);
 
-            case EPostfix(op, left):
-                final l:Dynamic = eval(left);
+                                case TMinus:
+                                    l - r;
 
-                untyped switch (op)
-                {
-                    case TDoublePlus, TDoubleMinus:
-                        assign(left, l + (op == TDoubleMinus ? -1 : 1));
+                                case TMinusEqual:
+                                    assign(left, l - r);
 
-                        l;
+                                case TDoubleLess:
+                                    Std.int(l) << Std.int(r);
 
-                    default:
-                        null;
-                }
+                                case TDoubleLessEqual:
+                                    assign(left, Std.int(l) << Std.int(r));
 
-            case EBinOp(op, left, right):
-                final l:Dynamic = eval(left);
+                                case TDoubleGreater:
+                                    Std.int(l) >> Std.int(r);
 
-                untyped switch (op)
-                {
-                    case TDoubleAmpersand:
-                        l && eval(right);
+                                case TDoubleGreaterEqual:
+                                    assign(left, Std.int(l) >> Std.int(r));
 
-                    case TDoublePipe:
-                        l || eval(right);
+                                case TTripleGreater:
+                                    Std.int(l) >>> Std.int(r);
 
-                    case TDoubleQuestion:
-                        l ?? eval(right);
+                                case TTripleGreaterEqual:
+                                    assign(left, Std.int(l) >>> Std.int(r));
 
-                    case TDoubleQuestionEqual:
-                        assign(left, l ?? eval(right));
+                                case TAmpersand:
+                                    Std.int(l) & Std.int(r);
 
-                    default:
-                        final r:Dynamic = eval(right);
-                    
-                        untyped switch (op)
-                        {
-                            case TPercent:
-                                l % r;
+                                case TAmpersandEqual:
+                                    assign(left, Std.int(l) & Std.int(r));
 
-                            case TPercentEqual:
-                                assign(left, l % r);
+                                case TPipe:
+                                    Std.int(l) | Std.int(r);
 
-                            case TStar:
-                                l * r;
+                                case TPipeEqual:
+                                    assign(left, Std.int(l) | Std.int(r));
 
-                            case TStarEqual:
-                                assign(left, l * r);
+                                case TCaret:
+                                    Std.int(l) ^ Std.int(r);
 
-                            case TSlash:
-                                l / r;
+                                case TCaretEqual:
+                                    assign(left, Std.int(l) ^ Std.int(r));
 
-                            case TSlashEqual:
-                                assign(left, l / r);
+                                case TDoubleEqual:
+                                    l == r;
 
-                            case TPlus:
-                                l + r;
+                                case TExclamationEqual:
+                                    l != r;
 
-                            case TPlusEqual:
-                                assign(left, l + r);
+                                case TLess:
+                                    l < r;
 
-                            case TMinus:
-                                l - r;
+                                case TLessEqual:
+                                    l <= r;
 
-                            case TMinusEqual:
-                                assign(left, l - r);
+                                case TGreater:
+                                    l > r;
 
-                            case TDoubleLess:
-                                Std.int(l) << Std.int(r);
+                                case TGreaterEqual:
+                                    l >= r;
 
-                            case TDoubleLessEqual:
-                                assign(left, Std.int(l) << Std.int(r));
+                                case TTripleDot:
+                                    new IntIterator(l, r);
 
-                            case TDoubleGreater:
-                                Std.int(l) >> Std.int(r);
+                                default:
+                                    error(EInvalidOp(op), expr);
+                                    
+                                    null;
+                            }
+                    }
 
-                            case TDoubleGreaterEqual:
-                                assign(left, Std.int(l) >> Std.int(r));
+                case ETernOp(condition, ifTrue, ifFalse):
+                    eval(condition) ? eval(ifTrue) : eval(ifFalse);
 
-                            case TTripleGreater:
-                                Std.int(l) >>> Std.int(r);
+                default:
+                    error(EInvalidExpression(expr.type), expr);
 
-                            case TTripleGreaterEqual:
-                                assign(left, Std.int(l) >>> Std.int(r));
+                    null;
+            }
+        } catch(externalError:ErrorType) {
+            throw error(externalError, expr);
 
-                            case TAmpersand:
-                                Std.int(l) & Std.int(r);
-
-                            case TAmpersandEqual:
-                                assign(left, Std.int(l) & Std.int(r));
-
-                            case TPipe:
-                                Std.int(l) | Std.int(r);
-
-                            case TPipeEqual:
-                                assign(left, Std.int(l) | Std.int(r));
-
-                            case TCaret:
-                                Std.int(l) ^ Std.int(r);
-
-                            case TCaretEqual:
-                                assign(left, Std.int(l) ^ Std.int(r));
-
-                            case TDoubleEqual:
-                                l == r;
-
-                            case TExclamationEqual:
-                                l != r;
-
-                            case TLess:
-                                l < r;
-
-                            case TLessEqual:
-                                l <= r;
-
-                            case TGreater:
-                                l > r;
-
-                            case TGreaterEqual:
-                                l >= r;
-
-                            case TTripleDot:
-                                new IntIterator(l, r);
-
-                            default:
-                                null;
-                        }
-                }
-
-            case ETernOp(condition, ifTrue, ifFalse):
-                eval(condition) ? eval(ifTrue) : eval(ifFalse);
-
-            default:
-                null;
+            null;
         }
     }
 
@@ -569,8 +603,11 @@ class Interp
                 value;
 
             default:
-                throw 'Invalid Assignment';
+                throw error(EInvalidAssignment, obj);
 
                 null;
         }
+
+    inline function error(type:ErrorType, expr:Expr)
+        throw new Error(type, expr.line, expr.column);
 }

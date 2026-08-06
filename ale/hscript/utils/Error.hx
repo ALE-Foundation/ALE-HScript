@@ -45,6 +45,33 @@ class Error extends Exception
             case EUnexpected(got):
                 'Unexpected ${formatToken(got)}';
 
+            case ETypeNotFound(module):
+                'Type "$module" not found';
+
+            case EInvalidAssignment:
+                'Invalid assignment';
+
+            case EInvalidArrayAccess(type):
+                'Array access is not allowed on $type';
+
+            case EFinalAssign(id):
+                'Cannot assign final variable "$id"';
+
+            case ENeverWrite(id):
+                'Variable "$id" cannot be accessed for writing';
+
+            case ENeverRead(id):
+                'Variable "$id" cannot be accessed for reading';
+
+            case EUnknownVariable(id):
+                'Unknown variable "$id"';
+
+            case EInvalidOp(op):
+                'Invalid operation "$op"';
+
+            case EInvalidExpression(expr):
+                'Invalid expression $expr';
+
             default:
                 Std.string(type);
         }
