@@ -297,7 +297,7 @@ class Parser
                     while (!end() && !check(TDefault) && !check(TCase) && !check(TRBrace))
                         parts.push(parseSemicolonStatement());
 
-                    final res:Expr = fastExpr(EBlock(parts), last());
+                    final res:Expr = fastExpr(EBlock(parts), cur);
                     
                     if (isDefault)
                         defaultExpr = res;
@@ -344,7 +344,7 @@ class Parser
 
             final op:Token = advance();
 
-            left = fastExpr(EBinOp(op.type, left, parseBinary(prec + 1)), op);
+            left = fastExprFromExpr(EBinOp(op.type, left, parseBinary(prec + 1)), left);
         }
 
         return left;
@@ -375,20 +375,20 @@ class Parser
                 case TDoublePlus, TDoubleMinus:
                     final op:Token = advance();
 
-                    expr = fastExpr(EPostfix(op.type, expr), op);
+                    expr = fastExprFromExpr(EPostfix(op.type, expr), expr);
 
                 case TLParen:
-                    expr = fastExpr(ECall(expr, parseCallArguments()), last());
+                    expr = fastExprFromExpr(ECall(expr, parseCallArguments()), expr);
 
                 case TDot, TQuestionDot:
                     advance();
                     
-                    expr = fastExpr(EField(expr, parseIdent()), last());
+                    expr = fastExprFromExpr(EField(expr, parseIdent()), expr);
 
                 case TEqual:
                     advance();
 
-                    expr = fastExpr(EAssign(expr, parseExpr()), last());
+                    expr = fastExprFromExpr(EAssign(expr, parseExpr()), expr);
 
                 case TLBracket:
                     advance();
@@ -397,7 +397,7 @@ class Parser
 
                     expect(TRBracket);
 
-                    expr = fastExpr(EArrayAccess(expr, key), last());
+                    expr = fastExprFromExpr(EArrayAccess(expr, key), expr);
 
                 case TQuestion:
                     advance();
@@ -408,7 +408,7 @@ class Parser
                     
                     final ifFalse:Expr = parseExpr();
 
-                    expr = fastExpr(ETernOp(expr, ifTrue, ifFalse), last());
+                    expr = fastExprFromExpr(ETernOp(expr, ifTrue, ifFalse), expr);
 
                 default:
                     return expr;
@@ -658,12 +658,14 @@ class Parser
             if (!stmt && !res.type.match(EReturn(_)))
                 res = {
                     type: EReturn(res),
-                    pos: res.pos
+                    line: res.line,
+                    column: res.column
                 }
 
             res = {
                 type: EBlock([res]),
-                pos: res.pos
+                line: res.line,
+                column: res.column
             };
         }
 
@@ -830,7 +832,15 @@ class Parser
     inline function fastExpr(type:ExprType, token:Token):Expr
         return {
             type: type,
-            pos: token.pos
+            line: token.line,
+            column: token.column
+        };
+
+    inline function fastExprFromExpr(type:ExprType, expr:Expr):Expr
+        return {
+            type: type,
+            line: expr.line,
+            column: expr.column
         };
 
     inline function fastAdvanceExpr(type:ExprType, token:Token):Expr
@@ -850,7 +860,7 @@ class Parser
     {
         got ??= peek();
 
-        throw 'Expected ' + want + ', got ' + got.type;
+        throw 'Expected ' + want + ', got ' + got.type + ' at ' + got.line + ':' + got.column;
     }
 
 

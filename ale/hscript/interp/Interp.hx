@@ -251,7 +251,7 @@ class Interp
                                 return solvedArgs[0];
 
                             case 'trace':
-                                Log.trace(name + ':'  + expr.pos.start.line + ': ' + solvedArgs.join(','), null);
+                                Log.trace(name + ':'  + expr.line + ': ' + solvedArgs.join(','), null);
 
                                 return null;
 

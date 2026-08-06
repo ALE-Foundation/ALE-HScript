@@ -1,8 +1,5 @@
 package ale.hscript.lexer;
 
-import ale.hscript.utils.ScriptPos;
-import ale.hscript.utils.PosData;
-
 using StringTools;
 
 class Lexer
@@ -25,8 +22,6 @@ class Lexer
         while (index < length)
         {
             final cur:Int = peek();
-
-            final cur = peek();
 
             if (cur == '/'.code)
             {
@@ -70,7 +65,8 @@ class Lexer
 
             final start:Int = index;
 
-            final startPos:PosData = fastPosData();
+            final tokenLine:Int = line;
+            final tokenColumn:Int = column;
 
             if (isDigitStart(cur))
             {
@@ -83,10 +79,8 @@ class Lexer
 
                     result.push({
                         type: TNumber(Std.parseInt(source.substr(start, index - start))),
-                        pos: {
-                            start: startPos,
-                            end: fastPosData()
-                        }
+                        line: tokenLine,
+                        column: tokenColumn
                     });
 
                     continue;
@@ -130,16 +124,14 @@ class Lexer
 
                 result.push({
                     type: TNumber(Std.parseFloat(source.substr(start, index - start))),
-                    pos: {
-                        start: startPos,
-                        end: fastPosData()
-                    }
+                    line: tokenLine,
+                    column: tokenColumn
                 });
 
                 continue;
             }
 
-            final symbolToken:Token = fastToken(switch (cur)
+            final symbolToken:TokenType = switch (cur)
             {
                 case ':'.code:
                     TColon;
@@ -299,11 +291,15 @@ class Lexer
 
                 default:
                     null;
-            });
+            };
 
             if (symbolToken != null)
             {
-                result.push(symbolToken);
+                result.push({
+                    type: symbolToken,
+                    line: tokenLine,
+                    column: tokenColumn
+                });
 
                 advance();
 
@@ -313,24 +309,21 @@ class Lexer
             if (cur == '\''.code || cur == '"'.code)
             {
                 advance();
-                
+
                 final start:Int = index;
-                final startPos:PosData = fastPosData();
 
                 while (peek() != cur)
                 {
                     advance();
-                    
+
                     if (index >= length)
                         throw 'Unterminated String';
                 }
 
                 result.push({
                     type: TString(source.substr(start, index - start)),
-                    pos: {
-                        start: startPos,
-                        end: fastPosData()
-                    }
+                    line: tokenLine,
+                    column: tokenColumn
                 });
 
                 advance();
@@ -349,22 +342,19 @@ class Lexer
 
                 result.push({
                     type: TokenUtil.stringToTokenType.exists(ident) ? TokenUtil.stringToTokenType[ident] : TIdent(ident),
-                    pos: {
-                        start: startPos,
-                        end: fastPosData()
-                    }
+                    line: tokenLine,
+                    column: tokenColumn
                 });
 
                 continue;
             }
-            
+
             advance();
         }
 
         return result;
     }
-
-
+    
     var index:Int = 0;
     var line:Int = 1;
     var column:Int = 1;
@@ -424,28 +414,4 @@ class Lexer
 
     inline function isDigitStart(c:Int):Bool
         return isDigit(c) || (c == '.'.code && isDigit(next()));
-    
-
-    inline function fastPosData():PosData
-        return {
-            index: index,
-            line: line,
-            column: column
-        };
-
-    inline function fastPos():ScriptPos
-        return {
-            start: fastPosData()
-        };
-
-    inline function fastToken(type:TokenType):Token
-    {
-        if (type == null)
-            return null;
-
-        return {
-            type: type,
-            pos: fastPos()
-        }
-    }
 }
