@@ -36,7 +36,7 @@ class Parser
     function requiresSemicolon(expr:ExprType):Bool
         return switch (expr)
         {
-            case EFor(_), EStructure(_), ETry(_, _), EBlock(_), EFunctionDecl(_, _), EFunction(_, _):
+            case EIf(_, _, _), EWhile(_, _), EFor(_), EStructure(_), ETry(_, _), EBlock(_), EFunctionDecl(_, _), EFunction(_, _):
                 false;
 
             default:
@@ -87,6 +87,28 @@ class Parser
 
                 fastExpr(EVarDecl(id, parseOptionalValue(), getter, setter, cur.type == TFinal), cur);
 
+            case TIf:
+                advance();
+
+                expect(TLParen);
+
+                final condition:Expr = parseExpr();
+
+                expect(TRParen);
+
+                final body:Expr = parseBody();
+
+                var elseBody:Expr = null;
+
+                if (check(TElse))
+                {
+                    advance();
+
+                    elseBody = parseBody();
+                }
+
+                fastExpr(EIf(condition, body, elseBody), cur);
+
             case TFor:
                 advance();
 
@@ -112,6 +134,32 @@ class Parser
                 expect(TRParen);
 
                 fastExpr(EFor(indexId, iterId, iter, parseBody()), cur);
+
+            case TDo:
+                advance();
+
+                final body:Expr = parseExpr();
+
+                expect(TWhile);
+
+                expect(TLParen);
+
+                final condition:Expr = parseExpr();
+
+                expect(TRParen);
+
+                fastExpr(EDoWhile(condition, body), cur);
+
+            case TWhile:
+                advance();
+
+                expect(TLParen);
+
+                final condition:Expr = parseExpr();
+
+                expect(TRParen);
+
+                fastExpr(EWhile(condition, parseBody()), cur);
 
             case TTry:
                 advance();
@@ -166,7 +214,7 @@ class Parser
     {
         var left:Expr = parsePrefix();
 
-        while (true)
+        while (!end())
         {
             var prec:Int = precedence(peek().type);
 
@@ -371,6 +419,12 @@ class Parser
 
                 fastExpr(mapStyle ? EMap(mapMembers) : EArray(arrayMembers), cur);
             
+            case TBreak:
+                fastAdvanceExpr(EBreak, cur);
+
+            case TContinue:
+                fastAdvanceExpr(EContinue, cur);
+
             case TIdent(id):
                 fastAdvanceExpr(EVar(id), cur);
 

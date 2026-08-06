@@ -1,3 +1,5 @@
+
+/*
 final ____CT:String -> Void = (str:String) -> {
     trace('');
     trace(str);
@@ -176,3 +178,31 @@ final map = [1 => 101, 'oso' => 102, 3 => 103];
 
 for (key => value in map)
     trace(key, value);
+
+____CT('- while');
+
+var f:Float = 0;
+
+while (f < 0.75)
+    trace(f = Math.random());
+
+____CT('- do while');
+
+var i:Int = 0;
+
+do {
+    trace(++i);
+} while (i < 3);
+
+*/
+
+____CT('- if');
+
+if (false)
+{
+    trace('false');
+} else if (true) {
+    trace('true');
+} else {
+    trace('tung');
+}

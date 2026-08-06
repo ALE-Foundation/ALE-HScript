@@ -248,17 +248,24 @@ class Interp
                 scope.get(id);
 
             case EFor(indexId, iterId, iter, body):
+                final newScope = new Scope(scope);
+                    
                 if (indexId == null)
                 {
                     final it = makeIterator(eval(iter));
 
                     while (it.hasNext())
                     {
-                        final newScope = new Scope(scope);
-
                         newScope.define(iterId, it.next());
 
-                        eval(body, newScope);
+                        try
+                        {
+                            eval(body, newScope);
+                        } catch (c:ContinueSignal) {
+                            continue;
+                        } catch (b:BreakSignal) {
+                            break;
+                        }
                     }
                 } else {
                     final it = makeKeyValueIterator(eval(iter));
@@ -267,12 +274,17 @@ class Interp
                     {
                         final pair = it.next();
 
-                        final newScope = new Scope(scope);
-
                         newScope.define(indexId, pair.key);
                         newScope.define(iterId, pair.value);
 
-                        eval(body, newScope);
+                        try
+                        {
+                            eval(body, newScope);
+                        } catch (c:ContinueSignal) {
+                            continue;
+                        } catch (b:BreakSignal) {
+                            break;
+                        }
                     }
                 }
 
