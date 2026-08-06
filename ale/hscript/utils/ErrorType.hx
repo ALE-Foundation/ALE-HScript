@@ -13,15 +13,6 @@ enum ErrorType
     EUnterminatedComment;
     EInvalidNumber;
 
-    EExpected(want:TokenType, got:Token);
+    EExpected(want:TokenType, got:TokenType);
     EUnexpected(got:Token);
-    EUnexpectedEOF;
-    EExpectedExpression;
-    EExpectedIdentifier;
-    EInvalidAssignment(expr:Expr);
-
-    EUndefinedVariable(token:Token);
-    EUndefinedField(token:Token);
-    ECannotCall(expr:Expr);
-    EInvalidOperation(expr:Expr);
 }

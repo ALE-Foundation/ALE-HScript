@@ -128,4 +128,8 @@ enum TokenType
     TUsing;
     TVar;
     TWhile;
+
+    // Misc.
+
+    TEof;
 }

@@ -30,7 +30,12 @@ class Parser
         final result:Array<Expr> = [];
 
         while (index < length)
-            result.push(parseSemicolonStatement());
+        {
+            final res:Expr = parseSemicolonStatement();
+            
+            if (res != null)
+                result.push(res);
+        }
 
         return result;
     }
@@ -39,7 +44,7 @@ class Parser
     function requiresSemicolon(expr:ExprType):Bool
         return switch (expr)
         {
-            case EVarDecl(_, _, _, _, _), ESwitch(_, _, _), EIf(_, _, _), EWhile(_, _), EFor(_), EStructure(_), ETry(_, _), EBlock(_), EFunctionDecl(_, _), EFunction(_, _):
+            case EEof, EVarDecl(_, _, _, _, _), ESwitch(_, _, _), EIf(_, _, _), EWhile(_, _), EFor(_), EStructure(_), ETry(_, _), EBlock(_), EFunctionDecl(_, _), EFunction(_, _):
                 false;
 
             default:
@@ -295,7 +300,7 @@ class Parser
                             isDefault = true;
 
                         default:
-                            error(EExpected(TCase, peek()));
+                            expected(TCase, peek());
                     }
 
                     expect(TColon);
@@ -330,6 +335,9 @@ class Parser
 
             case TContinue:
                 fastAdvanceExpr(EContinue, cur);
+
+            case TEof:
+                fastAdvanceExpr(EEof, cur);
 
             default:
                 parseExpr();
@@ -642,13 +650,13 @@ class Parser
                         PNever;
 
                     default:
-                        error(EExpected(TIdent('default'), last()));
+                        expected(TIdent('default'), last());
 
                         null;
                 }
 
             default:
-                error(EExpected(TIdent(null), last()));
+                expected(TIdent(null), last());
 
                 null;
         }
@@ -781,7 +789,7 @@ class Parser
                 while (!end() && !check(TRParen))
                 {
                     if (count > 0 && advance().type != TComma)
-                        error(EExpected(TComma, last()));
+                        expected(TComma, last());
 
                     parseType();
 
@@ -795,7 +803,7 @@ class Parser
                 parseType();
 
             default:
-                error(EExpected(TIdent(null), last()));
+                expected(TIdent(null), last());
         }
 
         switch (peek().type)
@@ -877,12 +885,15 @@ class Parser
         throw new Error(type, got.line, got.column);
     }
 
+    inline function expected(type:TokenType, ?got:Token)
+        error(EExpected(type, got == null ? peek().type : got.type));
+
 
     inline function expect(type:TokenType, ?got:Token)
         if (check(type))
             advance();
         else
-            error(EExpected(type, got));
+            expected(type, got);
 
     function parseIdent():String
         return switch (advance().type)

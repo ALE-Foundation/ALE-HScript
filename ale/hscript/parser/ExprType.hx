@@ -58,4 +58,6 @@ enum ExprType
     EFalse;
     ETrue;
     ENull;
+    
+    EEof;
 }

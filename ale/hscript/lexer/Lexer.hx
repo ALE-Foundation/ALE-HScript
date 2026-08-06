@@ -369,10 +369,14 @@ class Lexer
                 continue;
             }
 
-
-
             error(EInvalidCharacter(cur));
         }
+
+        result.push({
+            type: TEof,
+            line: line,
+            column: column
+        });
 
         return result;
     }

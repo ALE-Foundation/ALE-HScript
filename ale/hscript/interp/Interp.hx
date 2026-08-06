@@ -62,6 +62,9 @@ class Interp
 
         return switch (expr.type)
         {
+            case EEof:
+                null;
+
             case EPackage(module):
                 softPackage = module;
 
