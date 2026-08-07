@@ -1,5 +1,7 @@
-var oso(default, never) = 10;
+var oso(default, never) = {
+    oso: 'donde'
+};
 
-oso = 'donde';
+trace(oso.oso);
 
-trace(oso);
+trace(haxe.ds.StringMap);

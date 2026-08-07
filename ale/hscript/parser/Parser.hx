@@ -603,7 +603,34 @@ class Parser
                 fastExpr(mapStyle ? EMap(mapMembers) : EArray(arrayMembers), cur);
 
             case TIdent(id):
-                fastAdvanceExpr(EVar(id), cur);
+                advance();
+
+                final typeRes:StringBuf = new StringBuf();
+
+                typeRes.add(id);
+
+                var res:Expr = fastExpr(EVar(id), cur);
+
+                while (!end() && check(TDot))
+                {
+                    advance();
+
+                    final newId:String = parseIdent();
+
+                    typeRes.add('.' + newId);
+
+                    final type:Dynamic = Type.resolveClass(typeRes.toString());
+
+                    if (type == null)
+                        res = fastExpr(EField(res, newId), cur);
+                    else {
+                        res = fastExpr(EType(typeRes.toString()), cur);
+
+                        break;
+                    }
+                }
+
+                res;
 
             case TString(str):
                 fastAdvanceExpr(EString(str), cur);
