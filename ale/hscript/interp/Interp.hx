@@ -1,13 +1,13 @@
 package ale.hscript.interp;
 
+import ale.hscript.macros.TypeListMacro;
+
 import ale.hscript.parser.ExprUtil;
 import ale.hscript.parser.ExprType;
 import ale.hscript.parser.Expr;
 
 import ale.hscript.errors.ErrorType;
 import ale.hscript.errors.Error;
-
-import ale.hscript.utils.TypeList;
 
 import ale.hscript.Config;
 
@@ -97,7 +97,7 @@ class Interp
                     null;
 
                 case EPackageImport(module):
-                    for (type in TypeList.list[module])
+                    for (type in TypeListMacro.list[module])
                         imports[type] = Type.resolveClass(module + '.' + type);
 
                     null;

@@ -16,9 +16,7 @@ using StringTools;
 
 class TypeListMacro
 {
-    @:noPrivateAccess
-    @:allow(ale.hscript.utils.TypeList)
-    static var list(get, null):Map<String, Array<String>>;
+    public static var list(get, null):Map<String, Array<String>>;
 
     static function get_list():Map<String, Array<String>>
     {
@@ -47,7 +45,7 @@ class TypeListMacro
         return list;
     }
 
-    macro public static function build():Array<Field>
+    public static function init()
     {
         Context.onGenerate(types -> {
             switch (Context.getType('ale.hscript.macros.TypeListMacro'))
@@ -81,7 +79,5 @@ class TypeListMacro
                 default:
             }
         });
-
-        return Context.getBuildFields();
     }
 }

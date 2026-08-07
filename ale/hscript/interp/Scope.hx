@@ -12,8 +12,6 @@ class Scope
 
     public function new(?parent:Scope)
     {
-        trace('instance');
-
         this.parent = parent;
 
         variables = new Map<String, Variable>();
