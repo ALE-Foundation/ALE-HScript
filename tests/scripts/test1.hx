@@ -1,1 +1,3 @@
-trace(ale.hscript.errors.ALE_HScript_Enum_ErrorType.EUnknownVariable('oso'));
+import ale.hscript.errors.ErrorType;
+
+trace(ErrorType.EUnknownVariable('oso'));

@@ -8,8 +8,9 @@ using StringTools;
 
 class EnumsMacro
 {
-    public static final PREFIX:String = 'ALE_HScript_Enum_';
+    public static final SUFFIX:String = '_ALE_HScript_Enum';
 
+    #if macro
     public static function onAfterTyping(types:Array<ModuleType>)
     {
         for (type in types)
@@ -73,7 +74,7 @@ class EnumsMacro
                         }
                     }
 
-                    final name:String = PREFIX + enumDecl.name;
+                    final name:String = SUFFIX + enumDecl.name;
 
                     Context.defineType(
                         {
@@ -89,4 +90,5 @@ class EnumsMacro
             }
         }
     }
+    #end
 }

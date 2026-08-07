@@ -1,6 +1,7 @@
 package ale.hscript.interp;
 
 import ale.hscript.macros.TypeListMacro;
+import ale.hscript.macros.EnumsMacro;
 
 import ale.hscript.parser.ExprUtil;
 import ale.hscript.parser.ExprType;
@@ -173,7 +174,7 @@ class Interp
                     res;
 
                 case EType(module):
-                    final res = imports[module] ?? Type.resolveClass(module) ?? (softPackage == null ? null : Type.resolveClass(softPackage + '.' + module));
+                    final res = resolveType(module);
 
                     if (res == null)
                         error(ETypeNotFound(module), expr);
@@ -571,6 +572,24 @@ class Interp
 
             null;
         }
+    }
+
+    function resolveType(mod:String):Class<Dynamic>
+    {
+        for (module in [mod, softPackage == null ? null : softPackage + '.' + mod, mod + EnumsMacro.SUFFIX])
+            if (module != null)
+                for (method in [
+                    () -> imports[module],
+                    () -> Type.resolveClass(module)
+                ])
+                {
+                    final res:Class<Dynamic> = method();
+
+                    if (res != null)
+                        return res;
+                }
+
+        return null;
     }
 
     function makeIterator(obj:Dynamic):Iterator<Dynamic>
