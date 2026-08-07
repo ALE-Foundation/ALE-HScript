@@ -383,7 +383,7 @@ class Lexer
                                     default:
                                         error(EInvalidEscape(escape));
 
-                                        null;
+                                        0;
                                 }
 
                             default:
