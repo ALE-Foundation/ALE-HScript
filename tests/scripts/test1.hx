@@ -1,1 +1,1 @@
-trace(ale.hscript.errors.ErrorType.EInvalidCast);
+trace(ale.hscript.errors.ALE_HScript_Enum_ErrorType.EUnknownVariable('oso'));

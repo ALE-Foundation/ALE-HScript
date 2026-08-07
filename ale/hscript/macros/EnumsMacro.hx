@@ -29,15 +29,41 @@ class EnumsMacro
                         if (val.params.length > 0)
                             continue;
 
-                        if (val.name != 'EInvalidCast')
-                            continue;
-
                         switch (val.type)
                         {
-                            default:
+                            case TFun(args, _):
+                                final fnArgs:Array<FunctionArg> = [];
+                                final callArgs:Array<Expr> = [];
+
+                                for (arg in args)
+                                {
+                                    fnArgs.push({
+                                        name: arg.name,
+                                        type: Context.toComplexType(arg.t),
+                                        opt: arg.opt
+                                    });
+
+                                    callArgs.push({
+                                        expr: EConst(CIdent(arg.name)),
+                                        pos: Context.currentPos()
+                                    });
+                                }
+
                                 fields.push({
                                     name: val.name,
                                     access: [APublic, AStatic],
+                                    kind: FFun({
+                                        args: fnArgs,
+                                        ret: Context.toComplexType(TEnum(ref, [])),
+                                        expr: macro return $p{enumDecl.pack.concat([enumDecl.name, val.name])}($a{callArgs})
+                                    }),
+                                    pos: val.pos
+                                });
+
+                            default:
+                                fields.push({
+                                    name: val.name,
+                                    access: [APublic, AStatic, AFinal],
                                     kind: FVar(
                                         Context.toComplexType(TEnum(ref, [])),
                                         macro $p{enumDecl.pack.concat([enumDecl.name, val.name])}
