@@ -45,6 +45,7 @@ class TypeListMacro
         return list;
     }
 
+    #if macro
     public static function onGenerate(types:Array<Type>)
     {
         switch (Context.getType('ale.hscript.macros.TypeListMacro'))
@@ -78,4 +79,5 @@ class TypeListMacro
             default:
         }
     }
+    #end
 }
