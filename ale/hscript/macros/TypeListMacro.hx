@@ -45,39 +45,37 @@ class TypeListMacro
         return list;
     }
 
-    public static function init()
+    public static function onGenerate(types:Array<Type>)
     {
-        Context.onGenerate(types -> {
-            switch (Context.getType('ale.hscript.macros.TypeListMacro'))
-            {
-                case TInst(t, _):
-                    final cls = t.get();
+        switch (Context.getType('ale.hscript.macros.TypeListMacro'))
+        {
+            case TInst(t, _):
+                final cls = t.get();
 
-                    if (cls.meta.has('typeList'))
-                        return;
+                if (cls.meta.has('typeList'))
+                    return;
 
-                    final entries = [];
+                final entries = [];
 
-                    for (type in types)
+                for (type in types)
+                {
+                    switch (type)
                     {
-                        switch (type)
-                        {
-                            case TInst(ref, _):
-                                final c = ref.get();
+                        case TInst(ref, _):
+                            final c = ref.get();
 
-                                final fullName = (c.pack.length > 0 ? c.pack.join('.') + '.' : '') + c.name;
+                            final fullName = (c.pack.length > 0 ? c.pack.join('.') + '.' : '') + c.name;
 
-                                if (!fullName.endsWith('_Fields_') && !fullName.endsWith('_Impl_'))
-                                    entries.push(fullName);
+                            if (!fullName.endsWith('_Fields_') && !fullName.endsWith('_Impl_'))
+                                entries.push(fullName);
 
-                            default:
-                        }
+                        default:
                     }
+                }
 
-                    cls.meta.add('typeList', [macro $v{entries.join(';')}], Context.currentPos());
+                cls.meta.add('typeList', [macro $v{entries.join(';')}], Context.currentPos());
 
-                default:
-            }
-        });
+            default:
+        }
     }
 }
