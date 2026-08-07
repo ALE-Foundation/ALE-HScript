@@ -41,7 +41,7 @@ class Defaults
     public static final SCRIPT_PATH:String = 'scripts/';
     public static final MODULE_PATH:String = 'classes/';
 
-    public static final INTERP_NAME:String = 'ALEHScript.hx';
+    public static final SCRIPT_NAME:String = 'ale_hscript';
 
     public static final ERROR_HANDLER:Dynamic -> String -> Void = (error, name) -> {
         final msg:StringBuf = new StringBuf();

@@ -18,7 +18,7 @@ class Script
 
         content = isFile ? Config.FILE_READER(path) : script;
 
-        interp = new Interp((name ?? script) + Config.EXTENSION);
+        interp = new Interp((name ?? (isFile ? script : Config.SCRIPT_NAME)) + Config.EXTENSION);
     }
 
     public function get(id:String)
