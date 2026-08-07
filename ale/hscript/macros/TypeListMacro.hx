@@ -36,9 +36,9 @@ class TypeListMacro
                 var pack = parts.join('.');
 
                 if (!list.exists(pack))
-                    list[pack] = [typeName];
-                else
-                    list[pack].push(typeName);
+                    list[pack] = [];
+
+                list[pack].push(typeName);
             }
         }
 

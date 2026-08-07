@@ -1,1 +1,1 @@
-trace('ola');
+trace(ale.hscript.errors.ErrorType.EInvalidCast);
