@@ -290,20 +290,13 @@ class Interp
 
                     switch (object.type)
                     {
-                        case EVar(id):
-                            switch (id)
-                            {
-                                case 'cast':
-                                    return solvedArgs[0];
+                        case EVar(id) if (id == 'cast'):
+                            solvedArgs[0];
 
-                                case 'trace':
-                                    Log.trace(name + ':'  + expr.line + ': ' + solvedArgs.join(','), null);
+                        case EVar(id) if (id == 'trace'):
+                            Log.trace(name + ':'  + expr.line + ': ' + solvedArgs.join(','), null);
 
-                                    return null;
-
-                                default:
-                                    null;
-                            }
+                            null;
                         
                         case EField(target, id):
                             final obj:Dynamic = eval(target);
