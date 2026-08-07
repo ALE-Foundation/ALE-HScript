@@ -10,7 +10,7 @@ class Script
 
     public final interp:Interp;
 
-    public function new(script:String, ?name:String)
+    public function new(script:String, ?name:String, ?superInstance:Dynamic, ?context:Dynamic)
     {
         final path:String = Config.SCRIPT_PATH + script + Config.EXTENSION;
 
@@ -18,14 +18,20 @@ class Script
 
         content = isFile ? Config.FILE_READER(path) : script;
 
-        interp = new Interp((name ?? (isFile ? script : Config.SCRIPT_NAME)) + Config.EXTENSION);
+        interp = new Interp((name ?? (isFile ? script : Config.SCRIPT_NAME)) + Config.EXTENSION, superInstance);
     }
 
-    public function get(id:String)
-        return interp.scope.get(id);
+    public function set(id:String, value:Dynamic):Void
+        interp.variables.define(id, value);
 
-    public function call(id:String, ?args:Array<Dynamic>)
+    public function get(id:String)
+        return interp.variables.get(id);
+
+    public function call(id:String, ?args:Array<Dynamic>):Dynamic
     {
+        if (!interp.variables.exists(id))
+            return null;
+
         final func:Dynamic = get(id);
 
         if (func != null)
@@ -37,12 +43,16 @@ class Script
     public function execute():Dynamic      
         return interp.execute(new Parser(new Lexer(content).tokenize()).parse());
 
+    public var failedExecution(default, null):Bool = false;
+
     public function safeExecute():Dynamic
     {
         try
         {
             return execute();
         } catch(error:Dynamic) {
+            failedExecution = true;
+            
             Config.ERROR_HANDLER(error, interp.name);
         }
 

@@ -63,6 +63,7 @@ class Parser
 
     var allowPackage:Bool = true;
     var allowImports:Bool = true;
+    var allowUsings:Bool = true;
     
     function parseStatement():Expr
     {
@@ -115,6 +116,15 @@ class Parser
         }
 
         allowImports = false;
+
+        if (allowUsings && check(TUsing))
+        {
+            advance();
+
+            return fastExpr(EUsing(parseType()), cur);
+        }
+
+        allowUsings = false;
 
         return switch (cur.type)
         {

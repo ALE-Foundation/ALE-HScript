@@ -57,6 +57,8 @@ enum ExprType
     EPackageImport(module:String);
     EImport(module:String);
 
+    EUsing(module:Expr);
+
     EFalse;
     ETrue;
     ENull;

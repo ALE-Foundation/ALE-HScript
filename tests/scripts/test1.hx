@@ -1,3 +1,3 @@
-import ale.hscript.errors.ErrorType;
+using StringTools;
 
-trace(ErrorType.EUnknownVariable('oso'));
+trace('oso'.startsWith('oso'));

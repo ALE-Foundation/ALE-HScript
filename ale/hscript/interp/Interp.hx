@@ -24,19 +24,23 @@ class Interp
 
     public var imports:Map<String, Class<Dynamic>>;
 
+    public var variables:Scope;
+
     public var scope:Scope;
 
     public var softPackage:String;
 
     final scopePool:GenericStack<Scope>;
 
-    public function new(name:String)
+    var usings:Array<Dynamic> = [];
+
+    public function new(name:String, ?superInstance:Dynamic)
     {
         this.name = name;
 
         imports = new Map<String, Class<Dynamic>>();
 
-        scope = new Scope();
+        variables = scope = new Scope(null, superInstance);
 
         scopePool = new GenericStack<Scope>();
 
@@ -95,6 +99,11 @@ class Interp
                 case EPackageImport(module):
                     for (type in TypeListMacro.list[module])
                         imports[type] = Type.resolveClass(module + '.' + type);
+
+                    null;
+
+                case EUsing(module):
+                    usings.push(eval(module));
 
                     null;
 
@@ -293,12 +302,33 @@ class Interp
                                     return null;
 
                                 default:
+                                    null;
+                            }
+                        
+                        case EField(target, id):
+                            final obj:Dynamic = eval(target);
+
+                            try
+                            {
+                                final method:Dynamic = Reflect.getProperty(obj, id);
+
+                                if (method != null)
+                                    return Reflect.callMethod(obj, method, solvedArgs);
+                            } catch (_:Dynamic) {}
+
+                            for (usingClass in usings)
+                            {
+                                final method:Dynamic = Reflect.field(usingClass, id);
+
+                                if (method != null)
+                                    return Reflect.callMethod(usingClass, method, [obj].concat(solvedArgs));
                             }
 
-                        default:
-                    }
+                            null;
 
-                    Reflect.callMethod(null, eval(object), solvedArgs);
+                        default:
+                            Reflect.callMethod(null, eval(object), solvedArgs);
+                    }
 
                 case EArrayAccess(obj, key):
                     final res:Dynamic = eval(obj);
