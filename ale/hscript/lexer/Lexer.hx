@@ -330,23 +330,75 @@ class Lexer
             {
                 advance();
 
-                final start:Int = index;
+                final res:StringBuf = new StringBuf();
 
                 while (peek() != cur)
                 {
-                    advance();
+                    final char:Int = advance();
 
                     if (index >= length)
                         error(EUnterminatedString);
+
+                    res.addChar(
+                        switch (char)
+                        {
+                            case '\\'.code:
+                                final escape:Int = advance();
+
+                                switch (escape)
+                                {
+                                    case 't'.code:
+                                        '\t'.code;
+
+                                    case 'n'.code:
+                                        '\n'.code;
+
+                                    case 'r'.code:
+                                        '\r'.code;
+
+                                    case '"'.code:
+                                        '\"'.code;
+
+                                    case "'".code:
+                                        '\''.code;
+
+                                    case '\\'.code:
+                                        '\\'.code;
+
+                                    case 'x'.code:
+                                        readHex(2);
+
+                                    case 'u'.code:
+                                        if (peek() == '{'.code)
+                                        {
+                                            advance();
+
+                                            readUnicode();
+                                        } else
+                                            readHex(4);
+
+                                    case c if (c >= '0'.code && c <= '7'.code):
+                                        readOctal(escape);
+
+                                    default:
+                                        error(EInvalidEscape(escape));
+
+                                        null;
+                                }
+
+                            default:
+                                char;
+                        }
+                    );
                 }
 
+                advance();
+
                 result.push({
-                    type: TString(source.substr(start, index - start)),
+                    type: TString(res.toString()),
                     line: tokenLine,
                     column: tokenColumn
                 });
-
-                advance();
 
                 continue;
             }
@@ -380,6 +432,72 @@ class Lexer
 
         return result;
     }
+
+
+    function readHex(length:Int):Int
+    {
+        var value:Int = 0;
+
+        for (_ in 0...length)
+        {
+            final c:Int = advance();
+
+            if (c == -1)
+                error(EUnterminatedString);
+
+            if (!isHex(c))
+                error(EInvalidEscape(c));
+
+            value <<= 4;
+
+            value |= hexValue(c);
+        }
+
+        return value;
+    }
+
+    function readUnicode():Int
+    {
+        var value:Int = 0;
+
+        while (peek() != '}'.code)
+        {
+            final c:Int = advance();
+
+            if (c == -1)
+                error(EUnterminatedString);
+
+            if (!isHex(c))
+                error(EInvalidEscape(c));
+
+            value <<= 4;
+
+            value |= hexValue(c);
+        }
+
+        if (value > 0x10FFFF)
+            error(EInvalidEscape(value));
+
+        advance();
+
+        return value;
+    }
+
+    function readOctal(first:Int):Int
+    {
+        var value:Int = first - '0'.code;
+
+        for (_ in 0...2)
+        {
+            if (!isDigit(peek()) || peek() > '7'.code)
+                break;
+
+            value = (value << 3) | (advance() - '0'.code);
+        }
+
+        return value;
+    }
+
     
     var index:Int = 0;
     var line:Int = 1;
@@ -403,6 +521,9 @@ class Lexer
 
     function advance():Int
     {
+        if (index >= length)
+            return -1;
+
         final char:Int = source.fastCodeAt(index++);
 
         if (char == '\n'.code)
@@ -416,6 +537,9 @@ class Lexer
 
         return char;
     }
+
+    inline function hexValue(c:Int):Int
+        return c <= '9'.code ? c - '0'.code : c <= 'F'.code ? c - 'A'.code + 10 : c - 'a'.code + 10;
 
     inline function isLower(c:Int):Bool
         return c >= 'a'.code && c <= 'z'.code;

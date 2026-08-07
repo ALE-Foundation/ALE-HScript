@@ -30,6 +30,9 @@ class Error extends Exception
             case EInvalidCharacter(char):
                 'Invalid character "${String.fromCharCode(char)}"';
 
+            case EInvalidEscape(char):
+                'Invalid escape: "\\${String.fromCharCode(char)}"';
+
             case EUnterminatedString:
                 'Unterminated string';
 

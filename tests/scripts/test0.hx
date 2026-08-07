@@ -3,11 +3,7 @@ package;
 import haxe.ds.*;
 
 final ____CT:String -> Void = (str:String) -> {
-    return;
-    
-    trace('');
-    trace(str);
-    trace('');
+    haxe.Log.trace('\n' + str + '\n', null);
 };
 
 ____CT('Expressions');
@@ -262,3 +258,30 @@ trace(cast oso.donde);
 trace(cast('donde', String));
 
 trace(('tu ta' : String));
+
+____CT('Standard Library');
+
+____CT('- String');
+
+trace('messi');
+trace('\ttomate');
+trace('\nuna');
+Sys.print("fanta\rpepsi\n");
+trace("\"");
+trace('\'');
+trace('\\');
+trace('\x41');
+trace('\x61');
+trace('\x7A');
+trace('\u0041');
+trace('\u00F1');
+trace('\u03A9');
+trace('\u{41}');
+trace('\u{1F43B}');
+trace('\u{10FFFF}');
+trace('\101');
+trace('\141');
+trace('\040');
+trace('Tung\nSahur');
+trace('\toso\tdonde\ttuta');
+trace('A\x42\u0043\u{44}\105');
