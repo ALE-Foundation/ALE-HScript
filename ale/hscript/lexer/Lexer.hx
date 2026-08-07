@@ -1,7 +1,7 @@
 package ale.hscript.lexer;
 
-import ale.hscript.utils.ErrorType;
-import ale.hscript.utils.Error;
+import ale.hscript.errors.ErrorType;
+import ale.hscript.errors.Error;
 
 using StringTools;
 

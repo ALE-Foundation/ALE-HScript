@@ -4,8 +4,8 @@ import ale.hscript.lexer.TokenUtil;
 import ale.hscript.lexer.TokenType;
 import ale.hscript.lexer.Token;
 
-import ale.hscript.utils.ErrorType;
-import ale.hscript.utils.Error;
+import ale.hscript.errors.ErrorType;
+import ale.hscript.errors.Error;
 
 import haxe.ds.StringMap;
 
@@ -443,10 +443,24 @@ class Parser
             case TCast:
                 advance();
 
-                if (check(TLParen))
-                    fastExpr(ECall(fastExpr(EVar('cast'), cur), parseCallArguments()), cur);
-                else
-                    parseExpr();
+                var res:Expr = if (check(TLParen))
+                {
+                    advance();
+
+                    final obj:Expr = parseExpr();
+
+                    expect(TComma);
+
+                    final type:Expr = parseType();
+
+                    expect(TRParen);
+
+                    fastExpr(ECast(obj, type), cur);
+                } else {
+                    fastExpr(ECast(parseExpr()), cur);
+                }
+
+                res;
 
             case TUntyped:
                 advance();
@@ -460,18 +474,18 @@ class Parser
                 {
                     advance();
 
-                    final res:Expr = parseExpr();
+                    final obj:Expr = parseExpr();
 
                     expect(TColon);
 
-                    parseType();
+                    final type:Expr = parseType();
 
                     expect(TRParen);
 
                     if (check(TArrow))
                         throw null;
 
-                    res;
+                    fastExpr(ECast(obj, type), cur);
                 } catch(_:Dynamic) {
                     try
                     {

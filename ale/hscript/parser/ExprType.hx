@@ -45,6 +45,8 @@ enum ExprType
     EContinue;
     EBreak;
 
+    ECast(obj:Expr, ?type:Expr);
+
     EBinOp(op:TokenType, left:Expr, right:Expr);
     EPrefix(op:TokenType, left:Expr);
     EPostfix(op:TokenType, right:Expr);

@@ -5,7 +5,7 @@ import sys.FileSystem;
 import sys.io.File;
 #end
 
-import ale.hscript.utils.Error;
+import ale.hscript.errors.Error;
 
 import haxe.Exception;
 import haxe.Log;

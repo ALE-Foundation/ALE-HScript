@@ -1,4 +1,4 @@
-package ale.hscript.utils;
+package ale.hscript.errors;
 
 import ale.hscript.lexer.TokenType;
 
@@ -48,11 +48,14 @@ class Error extends Exception
             case ETypeNotFound(module):
                 'Type "$module" not found';
 
+            case EInvalidArrayAccess(type):
+                'Array access is not allowed on $type';
+
             case EInvalidAssignment:
                 'Invalid assignment';
 
-            case EInvalidArrayAccess(type):
-                'Array access is not allowed on $type';
+            case EInvalidCast:
+                'Invalid cast';
 
             case EFinalAssign(id):
                 'Cannot assign final variable "$id"';

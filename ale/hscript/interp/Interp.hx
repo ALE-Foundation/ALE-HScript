@@ -4,9 +4,10 @@ import ale.hscript.parser.ExprUtil;
 import ale.hscript.parser.ExprType;
 import ale.hscript.parser.Expr;
 
+import ale.hscript.errors.ErrorType;
+import ale.hscript.errors.Error;
+
 import ale.hscript.utils.TypeList;
-import ale.hscript.utils.ErrorType;
-import ale.hscript.utils.Error;
 
 import ale.hscript.Config;
 
@@ -95,6 +96,20 @@ class Interp
                         imports[type] = Type.resolveClass(module + '.' + type);
 
                     null;
+
+                case ECast(obj, type):
+                    final resObj:Dynamic = eval(obj);
+
+                    if (type == null)
+                        resObj;
+                    else {
+                        final res:Dynamic = Std.downcast(resObj, eval(type));
+
+                        if (res == null && resObj != null)
+                            error(EInvalidCast, expr);
+
+                        res;
+                    }
 
                 case EVarDecl(id, value, getter, setter, isFinal):
                     scope.define(id, eval(value), getter, setter, isFinal);
@@ -299,7 +314,7 @@ class Interp
                         if (imports.exists(id))
                             imports[id];
                         else {
-                            throw error(e, expr);
+                            error(e, expr);
 
                             null;
                         }
@@ -532,7 +547,7 @@ class Interp
                     null;
             }
         } catch(externalError:ErrorType) {
-            throw error(externalError, expr);
+            error(externalError, expr);
 
             null;
         }
@@ -603,7 +618,7 @@ class Interp
                 value;
 
             default:
-                throw error(EInvalidAssignment, obj);
+                error(EInvalidAssignment, obj);
 
                 null;
         }

@@ -1,4 +1,4 @@
-package ale.hscript.utils;
+package ale.hscript.errors;
 
 import ale.hscript.lexer.TokenType;
 import ale.hscript.lexer.Token;
@@ -20,6 +20,7 @@ enum ErrorType
     ETypeNotFound(module:String);
     EInvalidArrayAccess(type:String);
     EInvalidAssignment;
+    EInvalidCast;
 
     EFinalAssign(id:String);
     ENeverWrite(id:String);

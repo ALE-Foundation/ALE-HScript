@@ -1,6 +1,6 @@
 package ale.hscript.interp;
 
-import ale.hscript.utils.ErrorType;
+import ale.hscript.errors.ErrorType;
 
 import ale.hscript.parser.Property;
 
