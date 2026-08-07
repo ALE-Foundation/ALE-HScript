@@ -10,17 +10,13 @@ class Scope
 
     public var variables:Map<String, Variable>;
 
-    var bypassGetter:Map<String, Bool>;
-    var bypassSetter:Map<String, Bool>;
-
     public function new(?parent:Scope)
     {
+        trace('instance');
+
         this.parent = parent;
 
         variables = new Map<String, Variable>();
-
-        bypassGetter = new Map<String, Bool>();
-        bypassSetter = new Map<String, Bool>();
     }
 
     public function define(id:String, value:Dynamic, ?getter:Property = PDefault, ?setter:Property = PDefault, ?isFinal:Bool = false)
@@ -53,17 +49,17 @@ class Scope
                 theVar.value = value;
 
             case PSet:
-                if (scope.bypassSetter[id])
+                if (theVar.bypassSetter)
                 {
                     theVar.value = value;
                 } else {
-                    final oldBypass = scope.bypassSetter[id];
+                    final oldBypass = theVar.bypassSetter;
 
-                    scope.bypassSetter[id] = true;
+                    theVar.bypassSetter = true;
 
                     final res:Dynamic = Reflect.callMethod(null, scope.variables['set_' + id].value, [value]);
 
-                    scope.bypassSetter[id] = oldBypass;
+                    theVar.bypassSetter = oldBypass;
 
                     res;
                 }
@@ -90,17 +86,17 @@ class Scope
                 theVar.value;
 
             case PGet:
-                if (scope.bypassGetter[id])
+                if (theVar.bypassGetter)
                 {
                     theVar.value;
                 } else {
-                    final oldBypass = scope.bypassGetter[id];
+                    final oldBypass = theVar.bypassGetter;
 
-                    scope.bypassGetter[id] = true;
+                    theVar.bypassGetter = true;
 
                     final res:Dynamic = Reflect.callMethod(null, scope.variables['get_' + id].value, []);
 
-                    scope.bypassGetter[id] = oldBypass;
+                    theVar.bypassGetter = oldBypass;
 
                     res;
                 }
@@ -130,5 +126,12 @@ class Scope
             throw ErrorType.EUnknownVariable(id);
 
         return res;
+    }
+
+    public function reset(?parent:Scope)
+    {
+        this.parent = parent;
+
+        variables.clear();
     }
 }

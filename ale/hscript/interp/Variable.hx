@@ -6,5 +6,7 @@ typedef Variable = {
     value:Dynamic,
     getter:Property,
     setter:Property,
-    isFinal:Bool
+    isFinal:Bool,
+    ?bypassGetter:Bool,
+    ?bypassSetter:Bool
 }

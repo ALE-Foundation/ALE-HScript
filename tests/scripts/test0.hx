@@ -259,6 +259,28 @@ trace(cast('donde', String));
 
 trace(('tu ta' : String));
 
+____CT('Class Fields');
+
+var oso(get, set):String = 'oso';
+
+function get_oso():String
+{
+    trace(oso + ': sahur');
+
+    return oso;
+}
+
+function set_oso(value:String):String
+{
+    trace('tung: ' + value);
+
+    return oso = value;
+}
+
+oso = 'masha';
+
+trace(oso);
+
 ____CT('Standard Library');
 
 ____CT('- String');
