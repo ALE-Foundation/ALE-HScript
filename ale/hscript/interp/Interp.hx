@@ -88,12 +88,7 @@ class Interp
                     null;
 
                 case EImport(module):
-                    final cls = Type.resolveClass(module);
-
-                    if (cls == null)
-                        error(ETypeNotFound(module), expr);
-
-                    imports[module.split('.').pop()] = cls;
+                    imports[module.split('.').pop()] = resolveType(module, false);
 
                     null;
 
@@ -174,12 +169,7 @@ class Interp
                     res;
 
                 case EType(module):
-                    final res = resolveType(module);
-
-                    if (res == null)
-                        error(ETypeNotFound(module), expr);
-
-                    res;
+                    resolveType(module);
 
                 case EAssign(obj, value):
                     assign(obj, eval(value));
@@ -574,9 +564,9 @@ class Interp
         }
     }
 
-    function resolveType(mod:String):Class<Dynamic>
+    function resolveType(mod:String, ?allowPackage:Bool = true):Class<Dynamic>
     {
-        for (module in [mod, softPackage == null ? null : softPackage + '.' + mod, mod + EnumsMacro.SUFFIX])
+        for (module in [mod, softPackage == null || !allowPackage ? null : softPackage + '.' + mod, mod + EnumsMacro.SUFFIX])
             if (module != null)
                 for (method in [
                     () -> imports[module],
@@ -588,6 +578,8 @@ class Interp
                     if (res != null)
                         return res;
                 }
+
+        throw ErrorType.ETypeNotFound(mod);
 
         return null;
     }

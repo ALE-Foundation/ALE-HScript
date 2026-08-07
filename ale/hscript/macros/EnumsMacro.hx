@@ -74,7 +74,7 @@ class EnumsMacro
                         }
                     }
 
-                    final name:String = SUFFIX + enumDecl.name;
+                    final name:String = enumDecl.name + SUFFIX;
 
                     Context.defineType(
                         {
