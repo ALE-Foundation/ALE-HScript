@@ -1,7 +1,5 @@
 package;
 
-import cpp.CPPCrashHandler;
-
 import ale.hscript.Script;
 import ale.hscript.Config;
 
@@ -12,7 +10,7 @@ class Main
 	static function main()
 	{
 		#if cpp
-		CPPCrashHandler.runCPPCrashHandler();
+		cpp.CPPCrashHandler.runCPPCrashHandler();
 		#end
 
 		#if sys
