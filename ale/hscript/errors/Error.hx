@@ -92,7 +92,7 @@ class Error extends Exception
                 str;
 
             case TIdent(id):
-                id;
+                id ?? 'IDENT';
 
             case TPlus:
                 '+';

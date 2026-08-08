@@ -1,0 +1,6 @@
+package;
+
+abstract enum Abs
+{
+    
+}

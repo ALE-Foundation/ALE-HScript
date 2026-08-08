@@ -22,22 +22,17 @@ class Script
     }
 
     public function set(id:String, value:Dynamic):Void
-        interp.variables.define(id, value);
+        errorHandled(interp.variables.define(id, value));
 
-    public function get(id:String)
-        return interp.variables.get(id);
+    public function get(id:String):Dynamic
+        return errorHandled(interp.variables.get(id, false));
 
     public function call(id:String, ?args:Array<Dynamic>):Dynamic
     {
         if (!interp.variables.exists(id))
             return null;
 
-        final func:Dynamic = get(id);
-
-        if (func != null)
-            return Reflect.callMethod(null, func, args ?? []);
-
-        return null;
+        return errorHandled(() -> Reflect.callMethod(null, get(id), args ?? []));
     }
 
     public function execute():Dynamic      
@@ -46,16 +41,17 @@ class Script
     public var failedExecution(default, null):Bool = false;
 
     public function safeExecute():Dynamic
-    {
+        return errorHandled(() -> execute());
+
+    function errorHandled<T>(call:Void -> T):T
         try
         {
-            return execute();
+            return call();
         } catch(error:Dynamic) {
             failedExecution = true;
 
             Config.ERROR_HANDLER(error, interp.name);
-        }
 
-        return null;
-    }
+            return null;
+        }
 }

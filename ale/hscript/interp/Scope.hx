@@ -26,9 +26,6 @@ class Scope
         return superInstance = value;
     }
 
-    function superExists(id:String):Bool
-        return superInstance != null && (Reflect.getProperty(superInstance, id) != null || Reflect.hasField(superInstance, id) || superFields.contains(id));
-
     var superFields(default, null):Array<Dynamic>;
 
     public function new(?parent:Scope, ?superInstance:Dynamic, ?context:Dynamic)
@@ -52,21 +49,26 @@ class Scope
         return value;
     }
 
-    public function set(id:String, value:Dynamic):Dynamic
+    public function set(id:String, value:Dynamic, ?allowSuper:Bool = true):Dynamic
     {
         final scope = resolve(id);
 
         if (scope == null)
         {
-            if (superExists(id))
+            if (allowSuper)
             {
-                Reflect.setProperty(superInstance, id, value);
+                final superScope = resolveSuper();
 
-                return value;
+                if (superScope != null && superExists(id))
+                {
+                    Reflect.setProperty(superScope.superInstance, id, value);
+
+                    return value;
+                }
             }
 
             throw ErrorType.EUnknownVariable(id);
-            
+
             return null;
         }
 
@@ -107,17 +109,22 @@ class Scope
         }
     }
 
-    public function get(id:String):Dynamic
+    public function get(id:String, ?allowSuper:Bool = true):Dynamic
     {
         final scope = resolve(id);
 
         if (scope == null)
         {
-            if (superExists(id))
-                return Reflect.getProperty(superInstance, id);
+            if (allowSuper)
+            {
+                final superScope = resolveSuper();
 
-            throw ErrorType.EUnknownVariable(id);
+                if (superScope != null && superExists(id))
+                    return Reflect.getProperty(superScope.superInstance, id);
+            }
             
+            throw ErrorType.EUnknownVariable(id);
+
             return null;
         }
 
@@ -156,6 +163,16 @@ class Scope
 
     function resolve(id:String):Scope
         return variables.exists(id) ? this : parent?.resolve(id);
+
+    function resolveSuper():Scope
+        return superInstance != null ? this : parent?.resolveSuper();
+
+    function superExists(id:String):Bool
+    {
+        final s = resolveSuper();
+
+        return s != null && (Reflect.getProperty(s.superInstance, id) != null || Reflect.hasField(s.superInstance, id) || s.superFields.contains(id));
+    }
 
     public function reset(?parent:Scope, ?superInstance:Dynamic)
     {

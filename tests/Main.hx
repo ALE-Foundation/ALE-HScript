@@ -14,6 +14,15 @@ class Main
 		#end
 
 		#if sys
+		final script = new Script('super');
+		
+		script.safeExecute();
+		
+		script.call('new');
+		
+
+		return;
+
 		for (scr in sys.FileSystem.readDirectory(Config.SCRIPT_PATH))
 			if (!scr.startsWith('.') && scr.endsWith(Config.EXTENSION))
 				new Script(scr.replace(Config.EXTENSION, '')).safeExecute();

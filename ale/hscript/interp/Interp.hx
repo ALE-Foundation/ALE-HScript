@@ -84,6 +84,9 @@ class Interp
         {
             return switch (expr.type)
             {
+                case ETypedef(_, _):
+                    null;
+
                 case EEof:
                     null;
 
@@ -591,8 +594,6 @@ class Interp
             error(externalError, expr);
 
             null;
-        } catch(error:Exception) {
-            throw new Exception('${expr.line}:${expr.column}: ' + error.message, error.previous, error.native);
         }
     }
 

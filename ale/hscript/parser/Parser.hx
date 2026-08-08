@@ -354,7 +354,19 @@ class Parser
             case TFunction:
                 advance();
 
-                final id:String = parseIdent();
+                final id:String = switch (advance().type)
+                {
+                    case TIdent(id):
+                        id;
+
+                    case TNew:
+                        'new';
+
+                    default:
+                        expected(TVar, last());
+
+                        null;
+                }
 
                 final args:Array<FunctionArgument> = parseFunctionArguments();
 
