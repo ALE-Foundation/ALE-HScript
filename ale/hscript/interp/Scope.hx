@@ -105,7 +105,14 @@ class Scope
     }
 
     public function exists(id:String):Bool
-        return resolve(id) != null;
+        return try
+            {
+                resolve(id);
+
+                true;
+            } catch(_:ErrorType) {
+                false;
+            }
 
     function resolve(id:String):Scope
     {
