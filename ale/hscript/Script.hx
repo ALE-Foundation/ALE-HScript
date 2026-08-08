@@ -52,7 +52,7 @@ class Script
             return execute();
         } catch(error:Dynamic) {
             failedExecution = true;
-            
+
             Config.ERROR_HANDLER(error, interp.name);
         }
 

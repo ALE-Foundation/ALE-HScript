@@ -15,6 +15,7 @@ import ale.hscript.Config;
 import haxe.Constraints.IMap;
 import haxe.ds.GenericStack;
 import haxe.ds.ObjectMap;
+import haxe.Exception;
 import haxe.io.Path;
 import haxe.Log;
 
@@ -584,6 +585,10 @@ class Interp
             error(externalError, expr);
 
             null;
+        } catch(error:Exception) {
+            throw new Exception('${expr.line}:${expr.column}: ' + error.message, error.previous, error.native);
+        } catch (error:String) {
+            throw new Exception('${expr.line}:${expr.column}: ' + error);   
         }
     }
 

@@ -43,18 +43,5 @@ class Defaults
 
     public static final SCRIPT_NAME:String = 'ale_hscript';
 
-    public static final ERROR_HANDLER:Dynamic -> String -> Void = (error, name) -> {
-        final msg:StringBuf = new StringBuf();
-
-        msg.add(name + ': ');
-
-        if (error is Error)
-            msg.add(error.toString());
-        else if (error is Exception)
-            msg.add(error.message);
-        else
-            msg.add(Std.string(error));
-
-        Log.trace('[ ERROR ] ' + msg.toString(), null);
-    };
+    public static final ERROR_HANDLER:Dynamic -> String -> Void = (error, name) -> Log.trace('[ ERROR ] ' + name + ': ' + error.toString(), null);
 }

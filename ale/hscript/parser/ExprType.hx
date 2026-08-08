@@ -64,4 +64,9 @@ enum ExprType
     ENull;
     
     EEof;
+
+    EMetadata(id:String, args:Array<Expr>);
+
+    EAlias(id:String, type:Expr);
+    ETypedef(id:String, fields:Array<String>);
 }

@@ -8,6 +8,7 @@ import ale.hscript.errors.ErrorType;
 import ale.hscript.errors.Error;
 
 import haxe.ds.StringMap;
+import haxe.Exception;
 
 class Parser
 {
@@ -44,7 +45,7 @@ class Parser
     function requiresSemicolon(expr:ExprType):Bool
         return switch (expr)
         {
-            case EEof, EVarDecl(_, _, _, _, _), ESwitch(_, _, _), EIf(_, _, _), EWhile(_, _), EFor(_), EStructure(_), ETry(_, _), EBlock(_), EFunctionDecl(_, _), EFunction(_, _):
+            case EEof, EMetadata(_, _), EVarDecl(_, _, _, _, _), ESwitch(_, _, _), EIf(_, _, _), EWhile(_, _), EFor(_), EStructure(_), ETry(_, _), EBlock(_), EFunctionDecl(_, _), EFunction(_, _):
                 false;
 
             default:
@@ -161,6 +162,78 @@ class Parser
 
                 fastExpr(EVarDecl(id, val, getter, setter, cur.type == TFinal), cur);
 
+            case TTypedef:
+                advance();
+
+                final id:String = parseIdent();
+
+                expect(TEqual);
+
+                final pos:Int = index;
+                    
+                try
+                {
+                    return fastExpr(EAlias(id, parseType()), cur);
+                } catch(_:Dynamic) {
+                    try
+                    {
+                        index = pos;
+
+                        final fields:Array<String> = [];
+
+                        expect(TLBrace);
+
+                        while (!end() && !check(TRBrace))
+                        {
+                            match(TQuestion);
+
+                            fields.push(parseIdent());
+
+                            parseOptionalType();
+
+                            if (!match(TComma))
+                                break;
+                        }
+
+                        expect(TRBrace);
+
+                        return fastExpr(ETypedef(id, fields), cur);
+                    } catch(_:Dynamic) {
+                        index = pos;
+                        
+                        final fields:Array<String> = [];
+
+                        expect(TLBrace);
+
+                        while (!end() && !check(TRBrace))
+                        {
+                            switch (peek().type)
+                            {
+                                case TAt:
+                                    parseSemicolonStatement();
+
+                                case TVar:
+                                    advance();
+
+                                    fields.push(parseIdent());
+
+                                    parseOptionalType();
+
+                                    expect(TSemicolon);
+
+                                default:
+                                    expected(TVar, peek());
+                            }
+                        }
+
+                        expect(TRBrace);
+
+                        return fastExpr(ETypedef(id, fields), cur);
+                    }
+                }
+
+                null;
+                
             case TIf:
                 advance();
 
@@ -254,6 +327,30 @@ class Parser
                 advance();
 
                 parseStatement();
+
+            case TAt:
+                advance();
+
+                final id:StringBuf = new StringBuf();
+
+                if (match(TColon))
+                    id.addChar(':'.code);
+
+                id.add(parseIdent());
+
+                final pos:Int = index;
+
+                var args:Array<Expr> = null;
+
+                try
+                {
+                    if (check(TLParen))
+                        args = parseCallArguments();
+                } catch(_:Dynamic) {
+                    index = pos;
+                }
+
+                fastExpr(EMetadata(id.toString(), args), cur);
 
             case TFunction:
                 advance();
