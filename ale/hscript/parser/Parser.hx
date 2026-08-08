@@ -1046,9 +1046,9 @@ class Parser
     }
 
 
-    inline function semicolon(type:ExprType):Bool
+    inline function semicolon(type:ExprType):Null<Bool>
     {
-        final res:Bool = requiresSemicolon(type);
+        final res:Null<Bool> = requiresSemicolon(type);
 
         if (res == null)
             match(TSemicolon);
