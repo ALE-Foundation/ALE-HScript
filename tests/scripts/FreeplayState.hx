@@ -29,6 +29,7 @@ var bg:FlxSprite;
 
 var sprites:FlxTypedGroup<FlxTypedSpriteGroup<FlxSprite>>;
 
+/*
 var selInt(default, set):Int = Save.custom.data.freeplaySelInt ??= 0;
 function set_selInt(value:Int):Int
     return selInt = Save.custom.data.freeplaySelInt = value;
@@ -270,3 +271,4 @@ CoolUtil.createTouchButtons([
     { label: 'A', keys: ClientPrefs.controls.ui.accept },
     { label: 'B', keys: ClientPrefs.controls.ui.back }
 ], FlxG.width - 200, FlxG.height - 170);
+*/

@@ -462,12 +462,33 @@ class Parser
 
         while (!end())
         {
-            var prec:Int = precedence(peek().type);
+            var op:Token = advance();
+
+            if (op.type == TGreater)
+                if (match(TGreater))
+                {
+                    op.type = TDoubleGreater;
+
+                    if (match(TGreater))
+                    {
+                        op.type = TTripleGreater;
+
+                        if (match(TEqual))
+                            op.type = TTripleGreaterEqual;
+                    } else if (match(TEqual)) {
+                        op.type = TDoubleGreaterEqual;
+                    }
+                } else if (match(TEqual))
+                    op.type = TGreaterEqual;
+
+            var prec:Int = precedence(op.type);
 
             if (prec < minPrec)
-                break;
+            {
+                index--;
 
-            final op:Token = advance();
+                break;
+            }
 
             left = fastExprFromExpr(EBinOp(op.type, left, parseBinary(prec + 1)), left);
         }

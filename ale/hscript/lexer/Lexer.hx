@@ -231,22 +231,7 @@ class Lexer
                         TLess;
 
                 case '>'.code:
-                    if (match('>'.code))
-                    {
-                        if (match('>'.code))
-                        {
-                            if (match('='.code))
-                                TTripleGreaterEqual;
-                            else
-                                TTripleGreater;
-                        } else if (match('='.code))
-                            TDoubleGreaterEqual;
-                        else
-                            TDoubleGreater;
-                    } else if (match('='.code))
-                        TGreaterEqual;
-                    else
-                        TGreater;
+                    TGreater;
 
                 case '-'.code:
                     if (match('>'.code))

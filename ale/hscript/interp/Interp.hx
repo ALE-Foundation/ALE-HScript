@@ -136,8 +136,12 @@ class Interp
                     try
                     {
                         eval(body);
-                    } catch(s:ReturnSignal) {
-                        throw s;
+                    } catch (c:ContinueSignal) {
+                        throw c;
+                    } catch (b:BreakSignal) {
+                        throw b;
+                    } catch (r:ReturnSignal) {
+                        throw r;
                     } catch(e:Dynamic) {
                         final tryScope:Scope = createScope(scope);
 
@@ -581,14 +585,14 @@ class Interp
 
                     null;
             }
+        } catch (signal:ReturnSignal) {
+            throw signal;
         } catch(externalError:ErrorType) {
             error(externalError, expr);
 
             null;
         } catch(error:Exception) {
             throw new Exception('${expr.line}:${expr.column}: ' + error.message, error.previous, error.native);
-        } catch (error:String) {
-            throw new Exception('${expr.line}:${expr.column}: ' + error);   
         }
     }
 
