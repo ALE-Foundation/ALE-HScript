@@ -42,11 +42,14 @@ class Parser
     }
 
 
-    function requiresSemicolon(expr:ExprType):Bool
+    function requiresSemicolon(expr:ExprType):Null<Bool>
         return switch (expr)
         {
-            case EEof, ETypedef(_, _), EMetadata(_, _), EVarDecl(_, _, _, _, _), ESwitch(_, _, _), EIf(_, _, _), EWhile(_, _), EFor(_), EStructure(_), ETry(_, _), EBlock(_), EFunctionDecl(_, _), EFunction(_, _):
+            case EEof, ETypedef(_, _), EMetadata(_, _), ESwitch(_, _, _), EIf(_, _, _), EWhile(_, _), EFor(_), EStructure(_), ETry(_, _), EBlock(_), EFunctionDecl(_, _), EFunction(_, _):
                 false;
+
+            case EReturn(val), EVarDecl(_, val, _, _, _), EAssign(_, val):
+                val == null ? true : requiresSemicolon(val.type) ? true : null;
 
             default:
                 true;
@@ -155,14 +158,8 @@ class Parser
 
                 parseOptionalType();
 
-                final val:Null<Expr> = parseOptionalValue();
 
-                if (val == null)
-                    expect(TSemicolon);
-                else if (!semicolon(val.type))
-                    match(TSemicolon);
-
-                fastExpr(EVarDecl(id, val, getter, setter, cur.type == TFinal), cur);
+                fastExpr(EVarDecl(id, parseOptionalValue(), getter, setter, cur.type == TFinal), cur);
 
             case TTypedef:
                 advance();
@@ -378,61 +375,7 @@ class Parser
             case TSwitch:
                 advance();
 
-                match(TLParen);
-
-                final obj:Expr = parseExpr();
-
-                match(TRParen);
-
-                expect(TLBrace);
-
-                var cases:Array<SwitchCondition> = [];
-
-                var defaultExpr:Expr = null;
-
-                while (!end() && !check(TRBrace))
-                {
-                    var condition:Expr = null;
-
-                    var isDefault:Bool = false;
-
-                    switch (peek().type)
-                    {
-                        case TCase:
-                            advance();
-
-                            condition = parseExpr();
-
-                        case TIdent(val) if (val == 'default'):
-                            advance();
-
-                            isDefault = true;
-
-                        default:
-                            expected(TCase, peek());
-                    }
-
-                    expect(TColon);
-
-                    final parts:Array<Expr> = [];
-
-                    while (!end() && !checkIdent('default') && !check(TCase) && !check(TRBrace))
-                        parts.push(parseSemicolonStatement());
-
-                    final res:Expr = fastExpr(EBlock(parts), cur);
-                    
-                    if (isDefault)
-                        defaultExpr = res;
-                    else
-                        cases.push({
-                            condition: condition,
-                            body: res
-                        });
-                }
-
-                expect(TRBrace);
-
-                fastExpr(ESwitch(obj, cases, defaultExpr), cur);
+                parseSwitch(cur);
                 
             case TThrow:
                 advance();
@@ -570,6 +513,11 @@ class Parser
 
         return switch (cur.type)
         {
+            case TSwitch:
+                advance();
+
+                parseSwitch(cur);
+
             case TCast:
                 advance();
 
@@ -859,6 +807,66 @@ class Parser
         return res;
     }
 
+
+    function parseSwitch(cur:Token):Expr
+    {
+        match(TLParen);
+
+        final obj:Expr = parseExpr();
+
+        match(TRParen);
+
+        expect(TLBrace);
+
+        var cases:Array<SwitchCondition> = [];
+
+        var defaultExpr:Expr = null;
+
+        while (!end() && !check(TRBrace))
+        {
+            var condition:Expr = null;
+
+            var isDefault:Bool = false;
+
+            switch (peek().type)
+            {
+                case TCase:
+                    advance();
+
+                    condition = parseExpr();
+
+                case TIdent(val) if (val == 'default'):
+                    advance();
+
+                    isDefault = true;
+
+                default:
+                    expected(TCase, peek());
+            }
+
+            expect(TColon);
+
+            final parts:Array<Expr> = [];
+
+            while (!end() && !checkIdent('default') && !check(TCase) && !check(TRBrace))
+                parts.push(parseSemicolonStatement());
+
+            final res:Expr = fastExpr(EBlock(parts), cur);
+            
+            if (isDefault)
+                defaultExpr = res;
+            else
+                cases.push({
+                    condition: condition,
+                    body: res
+                });
+        }
+
+        expect(TRBrace);
+
+        return fastExpr(ESwitch(obj, cases), cur);
+    }
+
     
     function parseFunctionArguments():Array<FunctionArgument>
     {
@@ -1042,7 +1050,9 @@ class Parser
     {
         final res:Bool = requiresSemicolon(type);
 
-        if (res)
+        if (res == null)
+            match(TSemicolon);
+        else if (res)
             expect(TSemicolon);
 
         return res;
