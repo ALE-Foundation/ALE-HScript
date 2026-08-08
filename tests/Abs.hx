@@ -1,6 +1,0 @@
-package;
-
-abstract enum Abs
-{
-    
-}

@@ -1,5 +1,7 @@
 package;
 
+import FlxColor;
+
 import ale.hscript.Script;
 import ale.hscript.Config;
 

@@ -1,5 +1,6 @@
 package ale.hscript.interp;
 
+import ale.hscript.macros.AbstractsMacro;
 import ale.hscript.macros.TypeListMacro;
 import ale.hscript.macros.EnumsMacro;
 
@@ -624,7 +625,7 @@ class Interp
 
     function resolveType(mod:String, ?allowPackage:Bool = true):Class<Dynamic>
     {
-        for (module in [mod, softPackage == null || !allowPackage ? null : softPackage + '.' + mod, mod + EnumsMacro.SUFFIX])
+        for (module in [mod, softPackage == null || !allowPackage ? null : softPackage + '.' + mod, mod + EnumsMacro.SUFFIX, mod + AbstractsMacro.SUFFIX])
             if (module != null)
                 for (method in [
                     () -> imports[module],

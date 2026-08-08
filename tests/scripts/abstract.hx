@@ -1,1 +1,3 @@
-trace('oso');
+import FlxColor;
+
+trace(FlxColor.RED);
