@@ -16,7 +16,7 @@ class Main
 		#if sys
 		for (scr in sys.FileSystem.readDirectory(Config.SCRIPT_PATH))
 			if (!scr.startsWith('.') && scr.endsWith(Config.EXTENSION))
-				new Script(scr.replace(Config.EXTENSION, '')).safeExecute();
+				new Script(scr.replace(Config.EXTENSION, '')).execute();
 		#end
 	}
 }

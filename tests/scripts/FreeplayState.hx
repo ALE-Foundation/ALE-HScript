@@ -19,7 +19,7 @@ typedef JsonFreeplay = {
     var changeBGColor:Bool;
 
     var infoCorner:String;
-};
+}
 
 final config:JsonFreeplay = Paths.json('data/menus/freeplay');
 
