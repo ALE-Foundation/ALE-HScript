@@ -50,6 +50,7 @@ jobs:
       - name: Install Dependencies
         run: |
           haxelib dev ale-hscript .
+          haxelib git hxcppcrashhandler https://github.com/Slushi-Github/HxCPPCrashHandler
           ${{ matrix.dependencies }}
 
       - name: Build

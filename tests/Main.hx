@@ -1,5 +1,7 @@
 package;
 
+import cpp.CPPCrashHandler;
+
 import ale.hscript.Script;
 import ale.hscript.Config;
 
@@ -9,6 +11,10 @@ class Main
 {
 	static function main()
 	{
+		#if cpp
+		CPPCrashHandler.runCPPCrashHandler();
+		#end
+
 		#if sys
 		for (scr in sys.FileSystem.readDirectory(Config.SCRIPT_PATH))
 			if (!scr.startsWith('.') && scr.endsWith(Config.EXTENSION))

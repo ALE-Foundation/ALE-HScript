@@ -1,4 +1,8 @@
 -main Main
 -lib ale-hscript
+-lib hxcppcrashhandler
+-D HXCPP_STACK_TRACE
+-D HXCPP_STACK_LINE
+-D HXCPP_CHECK_POINTER
 -D dce=no
 -D message.reporting=pretty
