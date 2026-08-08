@@ -22,10 +22,10 @@ class Script
     }
 
     public function set(id:String, value:Dynamic):Void
-        errorHandled(interp.variables.define(id, value));
+        errorHandled(() -> interp.variables.define(id, value));
 
     public function get(id:String):Dynamic
-        return errorHandled(interp.variables.get(id, false));
+        return errorHandled(() -> interp.variables.get(id));
 
     public function call(id:String, ?args:Array<Dynamic>):Dynamic
     {

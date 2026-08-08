@@ -5,6 +5,13 @@ import ale.hscript.Config;
 
 using StringTools;
 
+class Oso
+{
+	public var oso:String = 'donde';
+
+	public function new() {}
+}
+
 class Main
 {
 	static function main()
@@ -14,18 +21,9 @@ class Main
 		#end
 
 		#if sys
-		final script = new Script('super');
-		
-		script.safeExecute();
-		
-		script.call('new');
-		
-
-		return;
-
 		for (scr in sys.FileSystem.readDirectory(Config.SCRIPT_PATH))
 			if (!scr.startsWith('.') && scr.endsWith(Config.EXTENSION))
-				new Script(scr.replace(Config.EXTENSION, '')).safeExecute();
+				new Script(scr.replace(Config.EXTENSION, ''), null, new Oso()).safeExecute();
 		#end
 	}
 }

@@ -1,4 +1,15 @@
-function new()
 {
-    trace(oso);
+    {
+        oso = 'masha';
+
+        {
+            {
+                {
+                    {
+                        trace(oso);
+                    }
+                }
+            }
+        }
+    }
 }

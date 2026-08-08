@@ -10,29 +10,9 @@ class Scope
 
     public var variables:Map<String, Variable>;
 
-    public var superInstance(default, set):Dynamic;
-    function set_superInstance(value:Dynamic)
-    {
-        superFields = null;
-
-        if (value != null)
-        {
-            final cls:Class<Dynamic> = Type.getClass(value);
-
-            if (cls != null)
-                superFields = Type.getInstanceFields(cls);
-        }
-
-        return superInstance = value;
-    }
-
-    var superFields(default, null):Array<Dynamic>;
-
-    public function new(?parent:Scope, ?superInstance:Dynamic, ?context:Dynamic)
+    public function new(?parent:Scope)
     {
         this.parent = parent;
-
-        this.superInstance = superInstance;
 
         variables = new Map<String, Variable>();
     }
@@ -49,28 +29,9 @@ class Scope
         return value;
     }
 
-    public function set(id:String, value:Dynamic, ?allowSuper:Bool = true):Dynamic
+    public function set(id:String, value:Dynamic):Dynamic
     {
         final scope = resolve(id);
-
-        if (scope == null)
-        {
-            if (allowSuper)
-            {
-                final superScope = resolveSuper();
-
-                if (superScope != null && superExists(id))
-                {
-                    Reflect.setProperty(superScope.superInstance, id, value);
-
-                    return value;
-                }
-            }
-
-            throw ErrorType.EUnknownVariable(id);
-
-            return null;
-        }
 
         final theVar = scope.variables[id];
 
@@ -109,24 +70,9 @@ class Scope
         }
     }
 
-    public function get(id:String, ?allowSuper:Bool = true):Dynamic
+    public function get(id:String):Dynamic
     {
         final scope = resolve(id);
-
-        if (scope == null)
-        {
-            if (allowSuper)
-            {
-                final superScope = resolveSuper();
-
-                if (superScope != null && superExists(id))
-                    return Reflect.getProperty(superScope.superInstance, id);
-            }
-            
-            throw ErrorType.EUnknownVariable(id);
-
-            return null;
-        }
 
         final theVar = scope.variables[id];
 
@@ -162,23 +108,18 @@ class Scope
         return resolve(id) != null;
 
     function resolve(id:String):Scope
-        return variables.exists(id) ? this : parent?.resolve(id);
-
-    function resolveSuper():Scope
-        return superInstance != null ? this : parent?.resolveSuper();
-
-    function superExists(id:String):Bool
     {
-        final s = resolveSuper();
+        final res:Scope = variables.exists(id) ? this : parent?.resolve(id);
 
-        return s != null && (Reflect.getProperty(s.superInstance, id) != null || Reflect.hasField(s.superInstance, id) || s.superFields.contains(id));
+        if (res == null)
+            throw ErrorType.EUnknownVariable(id);
+
+        return res;
     }
 
-    public function reset(?parent:Scope, ?superInstance:Dynamic)
+    public function reset(?parent:Scope)
     {
         this.parent = parent;
-
-        this.superInstance = superInstance;
 
         variables.clear();
     }

@@ -29,6 +29,27 @@ class Interp
 
     public var scope:Scope;
 
+    public var superInstance(default, set):Dynamic;
+    function set_superInstance(value:Dynamic)
+    {
+        superFields = null;
+
+        if (value != null)
+        {
+            final cls:Class<Dynamic> = Type.getClass(value);
+
+            if (cls != null)
+                superFields = Type.getInstanceFields(cls);
+        }
+
+        return superInstance = value;
+    }
+
+    var superFields(default, null):Array<Dynamic>;
+
+    function superExists(id:String):Bool
+        return superInstance != null && (Reflect.getProperty(superInstance, id) != null || Reflect.hasField(superInstance, id) || superFields.contains(id));
+
     public var softPackage:String;
 
     final scopePool:GenericStack<Scope>;
@@ -41,7 +62,9 @@ class Interp
 
         imports = new Map<String, Class<Dynamic>>();
 
-        variables = scope = new Scope(null, superInstance);
+        variables = scope = new Scope(null);
+
+        this.superInstance = superInstance;
 
         scopePool = new GenericStack<Scope>();
 
@@ -349,10 +372,12 @@ class Interp
                     {
                         scope.get(id);
                     } catch(e:ErrorType) {
-                        if (imports.exists(id))
+                        if (superExists(id))
+                            Reflect.getProperty(superInstance, id);
+                        else if (imports.exists(id))
                             imports[id];
                         else {
-                            error(e, expr);
+                            throw e;
 
                             null;
                         }
@@ -664,7 +689,21 @@ class Interp
         return switch (obj.type)
         {
             case EVar(id):
-                scope.set(id, value);
+                try
+                {
+                    scope.set(id, value);
+                } catch(e:ErrorType) {
+                    if (superExists(id))
+                    {
+                        Reflect.setProperty(superInstance, id, value);
+
+                        value;
+                    } else {
+                        throw e;
+
+                        null;
+                    }
+                }
 
             case EField(obj, id):
                 Reflect.setProperty(eval(obj), id, value);
