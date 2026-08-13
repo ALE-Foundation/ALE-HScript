@@ -436,9 +436,9 @@ class Parser
                 } else if (match(TEqual))
                     op.type = TGreaterEqual;
 
-            final prec:Int = precedence(op.type);
+            final info:Null<Precedence> = _precedenceMap[op.type];
 
-            if (prec < minPrec)
+            if (info == null || info.value < minPrec)
             {
                 index--;
 
@@ -451,12 +451,12 @@ class Parser
 
                 expect(TColon);
 
-                left = fastExprFromExpr(ETernOp(left, ifTrue, parseBinary(prec)), left);
+                left = fastExprFromExpr(ETernOp(left, ifTrue, parseBinary(info.value)), left);
 
                 continue;
             }
 
-            left = fastExprFromExpr(EBinOp(op.type, left, parseBinary(prec + 1)), left);
+            left = fastExprFromExpr(EBinOp(op.type, left, parseBinary(info.right ? info.value : info.value + 1)), left);
         }
 
         return left;
@@ -1144,65 +1144,81 @@ class Parser
 
     var _precedenceCount:Int = 0;
 
-    var _precedenceMap:Map<TokenType, Int> = [];
+    var _precedenceMap:Map<TokenType, Precedence> = [];
 
-    function addPrecedence(type:TokenType, ?repeat:Bool = false)
-        _precedenceMap[type] = repeat ? _precedenceCount : ++_precedenceCount;
+    function addPrecedence(types:Array<TokenType>, ?right:Bool = false)
+    {
+        for (type in types)
+            _precedenceMap[type] = {
+                value: _precedenceCount,
+                right: right
+            };
+
+        _precedenceCount++;
+    }
 
     function initPrecedence()
     {
-        addPrecedence(TEqual);
+        addPrecedence([
+            TPercentEqual,
+            TStarEqual,
+            TSlashEqual,
+            TPlusEqual,
+            TMinusEqual,
+            TDoubleLessEqual,
+            TDoubleGreaterEqual,
+            TTripleGreaterEqual,
+            TAmpersandEqual,
+            TPipeEqual,
+            TCaretEqual,
+            TDoubleQuestionEqual
+        ], true);
 
-        addPrecedence(TQuestion);
+        addPrecedence([TQuestion], true);
 
-        addPrecedence(TPlusEqual, true);
-        addPrecedence(TMinusEqual, true);
-        addPrecedence(TStarEqual, true);
-        addPrecedence(TSlashEqual, true);
-        addPrecedence(TPercentEqual, true);
-        addPrecedence(TAmpersandEqual, true);
-        addPrecedence(TPipeEqual, true);
-        addPrecedence(TCaretEqual, true);
-        addPrecedence(TDoubleLessEqual, true);
-        addPrecedence(TDoubleGreaterEqual, true);
-        addPrecedence(TTripleGreaterEqual, true);
-        addPrecedence(TDoubleQuestionEqual, true);
+        addPrecedence([TAt], true);
 
-        addPrecedence(TTripleDot);
+        addPrecedence([TDoubleQuestion]);
 
-        addPrecedence(TDoubleQuestion);
+        addPrecedence([TDoublePipe]);
 
-        addPrecedence(TDoublePipe);
+        addPrecedence([TDoubleAmpersand]);
 
-        addPrecedence(TDoubleAmpersand);
+        addPrecedence([TTripleDot]);
 
-        addPrecedence(TPipe);
+        addPrecedence([
+            TDoubleEqual,
+            TExclamationEqual,
+            TLess,
+            TLessEqual,
+            TGreater,
+            TGreaterEqual
+        ]);
 
-        addPrecedence(TCaret);
+        addPrecedence([
+            TAmpersand,
+            TPipe,
+            TCaret
+        ]);
 
-        addPrecedence(TAmpersand);
+        addPrecedence([
+            TDoubleLess,
+            TDoubleGreater,
+            TTripleGreater
+        ]);
 
-        addPrecedence(TDoubleEqual);
-        addPrecedence(TExclamationEqual, true);
+        addPrecedence([
+            TPlus,
+            TMinus
+        ]);
 
-        addPrecedence(TLess);
-        addPrecedence(TGreater, true);
-        addPrecedence(TLessEqual, true);
-        addPrecedence(TGreaterEqual, true);
-        addPrecedence(TIs, true);
+        addPrecedence([
+            TStar,
+            TSlash
+        ]);
 
-        addPrecedence(TDoubleLess);
-        addPrecedence(TDoubleGreater, true);
-        addPrecedence(TTripleGreater, true);
-
-        addPrecedence(TPlus);
-        addPrecedence(TMinus, true);
-
-        addPrecedence(TStar);
-        addPrecedence(TSlash, true);
-        addPrecedence(TPercent, true);
+        addPrecedence([
+            TPercent
+        ]);
     }
-
-    function precedence(token:TokenType):Int
-        return _precedenceMap[token] ?? -1;
 }

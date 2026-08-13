@@ -1,1 +1,1 @@
-trace(new StringBuf() is haxe.ds.StringMap);
+trace([for (index => obj in ['oso', 'donde', 'tu', 'ta']) obj + ' -> ' + index]);
