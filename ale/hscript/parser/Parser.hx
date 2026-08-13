@@ -436,13 +436,24 @@ class Parser
                 } else if (match(TEqual))
                     op.type = TGreaterEqual;
 
-            var prec:Int = precedence(op.type);
+            final prec:Int = precedence(op.type);
 
             if (prec < minPrec)
             {
                 index--;
 
                 break;
+            }
+
+            if (op.type == TQuestion)
+            {
+                final ifTrue:Expr = parseBinary();
+
+                expect(TColon);
+
+                left = fastExprFromExpr(ETernOp(left, ifTrue, parseBinary(prec)), left);
+
+                continue;
             }
 
             left = fastExprFromExpr(EBinOp(op.type, left, parseBinary(prec + 1)), left);
@@ -499,17 +510,6 @@ class Parser
                     expect(TRBracket);
 
                     expr = fastExprFromExpr(EArrayAccess(expr, key), expr);
-
-                case TQuestion:
-                    advance();
-
-                    final ifTrue:Expr = parseExpr();
-
-                    expect(TColon);
-                    
-                    final ifFalse:Expr = parseExpr();
-
-                    expr = fastExprFromExpr(ETernOp(expr, ifTrue, ifFalse), expr);
 
                 default:
                     return expr;
@@ -1152,6 +1152,9 @@ class Parser
     function initPrecedence()
     {
         addPrecedence(TEqual);
+
+        addPrecedence(TQuestion);
+
         addPrecedence(TPlusEqual, true);
         addPrecedence(TMinusEqual, true);
         addPrecedence(TStarEqual, true);
@@ -1164,7 +1167,6 @@ class Parser
         addPrecedence(TDoubleGreaterEqual, true);
         addPrecedence(TTripleGreaterEqual, true);
         addPrecedence(TDoubleQuestionEqual, true);
-        addPrecedence(TIs, true);
 
         addPrecedence(TTripleDot);
 
@@ -1187,6 +1189,7 @@ class Parser
         addPrecedence(TGreater, true);
         addPrecedence(TLessEqual, true);
         addPrecedence(TGreaterEqual, true);
+        addPrecedence(TIs, true);
 
         addPrecedence(TDoubleLess);
         addPrecedence(TDoubleGreater, true);

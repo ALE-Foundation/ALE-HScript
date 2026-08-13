@@ -162,7 +162,7 @@ trace((10 + 10) * 10);
 
 ____CT('- - - Ternary');
 
-trace(true ? 10 : 20);
+trace(20 >= 10 ? 10 : 20);
 trace(if (false) 10 else 20);
 
 ____CT('- Local Functions');
