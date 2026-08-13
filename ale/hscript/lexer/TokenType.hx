@@ -104,6 +104,7 @@ enum TokenType
     TImplements;
     TImport;
     TIn;
+    TIs;
     TInline;
     TInterface;
     TMacro;

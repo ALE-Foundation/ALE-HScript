@@ -597,6 +597,9 @@ class Interp
                                 case TTripleDot:
                                     new IntIterator(l, r);
 
+                                case TIs:
+                                    Std.isOfType(l, r);
+
                                 default:
                                     error(EInvalidOp(op), expr);
                                     

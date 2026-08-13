@@ -25,6 +25,7 @@ class TokenUtil
         'implements' => TImplements,
         'import' => TImport,
         'in' => TIn,
+        'is' => TIs,
         'inline' => TInline,
         'interface' => TInterface,
         'macro' => TMacro,
