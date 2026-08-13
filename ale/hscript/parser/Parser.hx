@@ -234,78 +234,16 @@ class Parser
                 null;
                 
             case TIf:
-                advance();
-
-                expect(TLParen);
-
-                final condition:Expr = parseExpr();
-
-                expect(TRParen);
-
-                final body:Expr = parseBody();
-
-                var elseBody:Expr = null;
-
-                if (check(TElse))
-                {
-                    advance();
-
-                    elseBody = parseBody();
-                }
-
-                fastExpr(EIf(condition, body, elseBody), cur);
+                parseIf(true);
 
             case TFor:
-                advance();
-
-                expect(TLParen);
-
-                var indexId:String = null;
-
-                var iterId:String = parseIdent();
-
-                if (check(TFatArrow))
-                {
-                    advance();
-
-                    indexId = iterId;
-
-                    iterId = parseIdent();
-                }
-
-                expect(TIn);
-
-                final iter:Expr = parseExpr();
-
-                expect(TRParen);
-
-                fastExpr(EFor(indexId, iterId, iter, parseBody()), cur);
+                parseFor(true);
 
             case TDo:
-                advance();
-
-                final body:Expr = parseExpr();
-
-                expect(TWhile);
-
-                expect(TLParen);
-
-                final condition:Expr = parseExpr();
-
-                expect(TRParen);
-
-                fastExpr(EDoWhile(condition, body), cur);
+                parseDoWhile();
 
             case TWhile:
-                advance();
-
-                expect(TLParen);
-
-                final condition:Expr = parseExpr();
-
-                expect(TRParen);
-
-                fastExpr(EWhile(condition, parseBody()), cur);
+                parseWhile(true);
 
             case TTry:
                 advance();
@@ -385,8 +323,6 @@ class Parser
                 fastExpr(EReturn(res), cur);
 
             case TSwitch:
-                advance();
-
                 parseSwitch(cur);
                 
             case TThrow:
@@ -526,8 +462,6 @@ class Parser
         return switch (cur.type)
         {
             case TSwitch:
-                advance();
-
                 parseSwitch(cur);
 
             case TCast:
@@ -600,26 +534,7 @@ class Parser
                 }
                 
             case TIf:
-                advance();
-
-                expect(TLParen);
-
-                final condition:Expr = parseExpr();
-
-                expect(TRParen);
-
-                final body:Expr = parseBody(false);
-
-                var elseBody:Expr = null;
-
-                if (check(TElse))
-                {
-                    advance();
-
-                    elseBody = parseBody(false);
-                }
-
-                fastExpr(EIf(condition, body, elseBody), cur);
+                parseIf(false);
 
             case TFunction:
                 advance();
@@ -676,6 +591,30 @@ class Parser
 
             case TLBracket:
                 advance();
+
+                final prevCur:Token = peek();
+
+                final prevVal:Expr = switch (prevCur.type)
+                {
+                    case TFor:
+                        parseFor(false);
+
+                    case TDo:
+                        parseDoWhile();
+
+                    case TWhile:
+                        parseWhile(false);
+
+                    default:
+                        null;
+                }
+
+                if (prevVal != null)
+                {
+                    expect(TRBracket);
+
+                    return fastExpr(EArrayComprehension(prevVal), prevCur);
+                }
 
                 final arrayMembers:Array<Expr> = [];
                 final mapMembers:Map<Expr, Expr> = [];
@@ -759,6 +698,145 @@ class Parser
     }
 
 
+    function parseFor(stmt:Bool):Expr
+    {
+        final cur:Token = advance();
+
+        expect(TLParen);
+
+        var indexId:String = null;
+        var iterId:String = parseIdent();
+
+        if (match(TFatArrow))
+        {
+            indexId = iterId;
+            iterId = parseIdent();
+        }
+
+        expect(TIn);
+
+        final iter = parseExpr();
+
+        expect(TRParen);
+
+        return fastExpr(
+            EFor(indexId, iterId, iter, parseBody(stmt)),
+            cur
+        );
+    }
+
+    function parseWhile(stmt:Bool):Expr
+    {
+        final cur:Token = advance();
+
+        expect(TLParen);
+
+        final condition = parseExpr();
+
+        expect(TRParen);
+
+        return fastExpr(EWhile(condition, parseBody(stmt)), cur);
+    }
+
+    function parseDoWhile():Expr
+    {
+        final cur:Token = advance();
+
+        final body = parseExpr();
+
+        expect(TWhile);
+
+        expect(TLParen);
+
+        final condition = parseExpr();
+
+        expect(TRParen);
+
+        return fastExpr(EDoWhile(condition, body), cur);
+    }
+
+    function parseIf(stmt:Bool):Expr
+    {
+        final cur:Token = advance();
+
+        expect(TLParen);
+
+        final condition = parseExpr();
+
+        expect(TRParen);
+
+        final body = parseBody(stmt);
+
+        var elseBody:Expr = null;
+
+        if (match(TElse))
+            elseBody = parseBody(stmt);
+
+        return fastExpr(EIf(condition, body, elseBody), cur);
+    }
+
+    function parseSwitch(cur:Token):Expr
+    {
+        final cur:Token = advance();
+        
+        match(TLParen);
+
+        final obj:Expr = parseExpr();
+
+        match(TRParen);
+
+        expect(TLBrace);
+
+        var cases:Array<SwitchCondition> = [];
+
+        var defaultExpr:Expr = null;
+
+        while (!end() && !check(TRBrace))
+        {
+            var condition:Expr = null;
+
+            var isDefault:Bool = false;
+
+            switch (peek().type)
+            {
+                case TCase:
+                    advance();
+
+                    condition = parseExpr();
+
+                case TIdent(val) if (val == 'default'):
+                    advance();
+
+                    isDefault = true;
+
+                default:
+                    expected(TCase, peek());
+            }
+
+            expect(TColon);
+
+            final parts:Array<Expr> = [];
+
+            while (!end() && !checkIdent('default') && !check(TCase) && !check(TRBrace))
+                parts.push(parseSemicolonStatement());
+
+            final res:Expr = fastExpr(EBlock(parts), cur);
+            
+            if (isDefault)
+                defaultExpr = res;
+            else
+                cases.push({
+                    condition: condition,
+                    body: res
+                });
+        }
+
+        expect(TRBrace);
+
+        return fastExpr(ESwitch(obj, cases), cur);
+    }
+
+
     function expectProperty():Property
         return switch (advance().type)
         {
@@ -817,66 +895,6 @@ class Parser
         }
 
         return res;
-    }
-
-
-    function parseSwitch(cur:Token):Expr
-    {
-        match(TLParen);
-
-        final obj:Expr = parseExpr();
-
-        match(TRParen);
-
-        expect(TLBrace);
-
-        var cases:Array<SwitchCondition> = [];
-
-        var defaultExpr:Expr = null;
-
-        while (!end() && !check(TRBrace))
-        {
-            var condition:Expr = null;
-
-            var isDefault:Bool = false;
-
-            switch (peek().type)
-            {
-                case TCase:
-                    advance();
-
-                    condition = parseExpr();
-
-                case TIdent(val) if (val == 'default'):
-                    advance();
-
-                    isDefault = true;
-
-                default:
-                    expected(TCase, peek());
-            }
-
-            expect(TColon);
-
-            final parts:Array<Expr> = [];
-
-            while (!end() && !checkIdent('default') && !check(TCase) && !check(TRBrace))
-                parts.push(parseSemicolonStatement());
-
-            final res:Expr = fastExpr(EBlock(parts), cur);
-            
-            if (isDefault)
-                defaultExpr = res;
-            else
-                cases.push({
-                    condition: condition,
-                    body: res
-                });
-        }
-
-        expect(TRBrace);
-
-        return fastExpr(ESwitch(obj, cases), cur);
     }
 
     

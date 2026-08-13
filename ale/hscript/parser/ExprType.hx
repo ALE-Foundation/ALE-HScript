@@ -20,6 +20,7 @@ enum ExprType
     EString(str:String);
     ENumber(num:Float);
     EArray(members:Array<Expr>);
+    EArrayComprehension(expr:Expr);
     EMap(members:Map<Expr, Expr>);
     EStructure(values:Map<String, Expr>);
 

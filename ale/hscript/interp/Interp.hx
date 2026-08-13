@@ -192,6 +192,24 @@ class Interp
                 case EArray(exprs):
                     exprs.map(expr -> eval(expr));
 
+                case EArrayComprehension(body):
+                    switch (body.type)
+                    {
+                        case EFor(indexId, iterId, iter, body):
+                            evalFor(indexId, iterId, iter, body);
+
+                        case EWhile(condition, body):
+                            evalWhile(condition, body);
+
+                        case EDoWhile(condition, body):
+                            evalDoWhile(condition, body);
+
+                        default:
+                            error(EInvalidExpression(body.type), body);
+
+                            null;
+                    }
+
                 case EMap(exprs):
                     final res:ObjectMap<Dynamic, Dynamic> = new ObjectMap<Dynamic, Dynamic>();
 
@@ -248,32 +266,13 @@ class Interp
                     else
                         null;
 
-                case EWhile(condition, expr):
-                    while (eval(condition))
-                    {
-                        try
-                        {
-                            eval(expr);
-                        } catch (c:ContinueSignal) {
-                            continue;
-                        } catch (b:BreakSignal) {
-                            break;
-                        }
-                    }
+                case EWhile(condition, body):
+                    evalWhile(condition, body);
 
                     null;
 
-                case EDoWhile(condition, expr):
-                    do {
-                        try
-                        {
-                            eval(expr);
-                        } catch (c:ContinueSignal) {
-                            continue;
-                        } catch (b:BreakSignal) {
-                            break;
-                        }
-                    } while(eval(condition));
+                case EDoWhile(condition, body):
+                    evalDoWhile(condition, body);
 
                     null;
 
@@ -379,53 +378,7 @@ class Interp
                     }
 
                 case EFor(indexId, iterId, iter, body):
-                    final oldScope:Scope = scope;
-                        
-                    if (indexId == null)
-                    {
-                        final it = makeIterator(eval(iter));
-
-                        while (it.hasNext())
-                        {
-                            final newScope:Scope = createScope(scope);
-
-                            newScope.define(iterId, it.next());
-
-                            try
-                            {
-                                eval(body, newScope);
-                            } catch (c:ContinueSignal) {
-                                continue;
-                            } catch (b:BreakSignal) {
-                                break;
-                            }
-                        }
-
-                        scope = oldScope;
-                    } else {
-                        final it = makeKeyValueIterator(eval(iter));
-
-                        while (it.hasNext())
-                        {
-                            final newScope:Scope = createScope(scope);
-
-                            final pair = it.next();
-
-                            newScope.define(indexId, pair.key);
-                            newScope.define(iterId, pair.value);
-
-                            try
-                            {
-                                eval(body, newScope);
-                            } catch (c:ContinueSignal) {
-                                continue;
-                            } catch (b:BreakSignal) {
-                                break;
-                            }
-                        }
-
-                        scope = oldScope;
-                    }
+                    evalFor(indexId, iterId, iter, body);
 
                     null;
 
@@ -623,6 +576,100 @@ class Interp
             null;
         }
     }
+
+
+    function evalWhile(condition:Expr, body:Expr):Array<Dynamic>
+    {
+        final res:Array<Dynamic> = [];
+                    
+        while (eval(condition))
+        {
+            try
+            {
+                res.push(eval(body));
+            } catch (c:ContinueSignal) {
+                continue;
+            } catch (b:BreakSignal) {
+                break;
+            }
+        }
+
+        return res;
+    }
+
+    function evalDoWhile(condition:Expr, body:Expr):Array<Dynamic>
+    {
+        final res:Array<Dynamic> = [];
+
+        do {
+            try
+            {
+                res.push(eval(body));
+            } catch (c:ContinueSignal) {
+                continue;
+            } catch (b:BreakSignal) {
+                break;
+            }
+        } while(eval(condition));
+
+        return res;
+    }
+
+    function evalFor(indexId:String, iterId:String, iter:Expr, body:Expr):Array<Dynamic>
+    {
+        final res:Array<Dynamic> = [];
+
+        final oldScope:Scope = scope;
+            
+        if (indexId == null)
+        {
+            final it = makeIterator(eval(iter));
+
+            while (it.hasNext())
+            {
+                final newScope:Scope = createScope(scope);
+
+                newScope.define(iterId, it.next());
+
+                try
+                {
+                    res.push(eval(body, newScope));
+                } catch (c:ContinueSignal) {
+                    continue;
+                } catch (b:BreakSignal) {
+                    break;
+                }
+            }
+
+            scope = oldScope;
+        } else {
+            final it = makeKeyValueIterator(eval(iter));
+
+            while (it.hasNext())
+            {
+                final newScope:Scope = createScope(scope);
+
+                final pair = it.next();
+
+                newScope.define(indexId, pair.key);
+                newScope.define(iterId, pair.value);
+
+                try
+                {
+                    res.push(eval(body, newScope));
+                } catch (c:ContinueSignal) {
+                    continue;
+                } catch (b:BreakSignal) {
+                    break;
+                }
+            }
+
+            scope = oldScope;
+        }
+
+        return res;
+    }
+
 
     function resolveType(mod:String, ?allowPackage:Bool = true):Class<Dynamic>
     {
