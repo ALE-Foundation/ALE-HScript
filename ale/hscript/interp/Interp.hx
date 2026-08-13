@@ -53,8 +53,6 @@ class Interp
 
     public var softPackage:String;
 
-    final scopePool:GenericStack<Scope>;
-
     var usings:Array<Dynamic> = [];
 
     public function new(name:String, ?superInstance:Dynamic)
@@ -67,16 +65,17 @@ class Interp
 
         this.superInstance = superInstance;
 
-        scopePool = new GenericStack<Scope>();
-
         for (cls in Config.IMPORTS)
             imports[Type.getClassName(cls).split('.').pop()] = cls;
         
+        for (cls in Config.ABSTRACTS)
+            imports[cls.split('.').pop()] = resolveType(cls);
+
         for (key => val in Config.TYPEDEFS)
             imports[key] = val;
 
         for (key => val in Config.VARIABLES)
-            imports[key] = val;
+            variables.define(key, val);
     }
 
     public function execute(exprs:Array<Expr>):Dynamic
@@ -170,13 +169,13 @@ class Interp
                     } catch (r:ReturnSignal) {
                         throw r;
                     } catch(e:Dynamic) {
+                        final oldScope:Scope = scope;
+
                         final tryScope:Scope = createScope(scope);
 
                         tryScope.define(arg.id, e);
 
                         eval(failed, tryScope);
-
-                        releaseScope(tryScope);
                     }
 
                     null;
@@ -228,15 +227,15 @@ class Interp
                     return Type.createInstance(resolvedClass, args.map(arg -> eval(arg)));
                 
                 case EFunction(arguments, block):
+                    final capturedScope:Scope = scope;
+
                     Reflect.makeVarArgs((args:Array<Dynamic>) -> {
-                        final funcScope:Scope = createScope(scope);
+                        final funcScope:Scope = createScope(capturedScope);
 
                         for (index => arg in arguments)
                             funcScope.define(arguments[index].id, args[index] ?? eval(arguments[index].value));
 
                         final res = eval(block, funcScope);
-
-                        releaseScope(funcScope);
 
                         res;
                     });
@@ -280,8 +279,6 @@ class Interp
 
                 case EBlock(exprs):
                     final oldScope:Scope = scope;
-
-                    final owned = newScope == null;
                     
                     scope = newScope ?? createScope(scope);
 
@@ -295,10 +292,7 @@ class Interp
                         res = e.value;
                     }
 
-                    if (owned)
-                        releaseScope(scope, oldScope);
-                    else
-                        scope = oldScope;
+                    scope = oldScope;
 
                     res;
 
@@ -386,8 +380,6 @@ class Interp
 
                 case EFor(indexId, iterId, iter, body):
                     final oldScope:Scope = scope;
-
-                    final newScope:Scope = createScope(scope);
                         
                     if (indexId == null)
                     {
@@ -395,6 +387,8 @@ class Interp
 
                         while (it.hasNext())
                         {
+                            final newScope:Scope = createScope(scope);
+
                             newScope.define(iterId, it.next());
 
                             try
@@ -406,11 +400,15 @@ class Interp
                                 break;
                             }
                         }
+
+                        scope = oldScope;
                     } else {
                         final it = makeKeyValueIterator(eval(iter));
 
                         while (it.hasNext())
                         {
+                            final newScope:Scope = createScope(scope);
+
                             final pair = it.next();
 
                             newScope.define(indexId, pair.key);
@@ -425,9 +423,9 @@ class Interp
                                 break;
                             }
                         }
-                    }
 
-                    releaseScope(newScope, oldScope);
+                        scope = oldScope;
+                    }
 
                     null;
 
@@ -730,27 +728,7 @@ class Interp
     inline function error(type:ErrorType, expr:Expr)
         throw new Error(type, expr.line, expr.column);
 
+
     function createScope(parent:Scope):Scope
-    {
-        var scope:Scope;
-
-        if (scopePool.isEmpty())
-            scope = new Scope();
-        else
-            scope = scopePool.pop();
-
-        scope.reset(parent);
-
-        return scope;
-    }
-
-    function releaseScope(garbageScope:Scope, ?newScope:Scope)
-    {
-        garbageScope.reset();
-
-        scopePool.add(garbageScope);
-
-        if (newScope != null)
-            scope = newScope;
-    }
+        return new Scope(parent);
 }

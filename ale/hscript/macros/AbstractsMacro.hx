@@ -20,13 +20,12 @@ class AbstractsMacro
                 case TAbstract(ref):
                     final abs = ref.get();
 
-                    if (abs.params.length > 0 || abs.impl == null)
-                        continue;
-
-                    if (abs.name != 'FlxColor')
+                    if (abs.params.length > 0 || abs.impl == null || abs.isPrivate || abs.name == 'XmlType' || abs.module.startsWith('cpp.') || abs.module.startsWith('hxvlc.externs.'))
                         continue;
 
                     final wrapped:String = '__ale_hscript_abstract_wrapped';
+                    
+                    final absPath:TypePath = Macros.getPath(abs.name, abs.module);
 
                     final fields:Array<Field> = [
                         {
@@ -37,10 +36,7 @@ class AbstractsMacro
                                 args: [
                                     {
                                         name: 'value',
-                                        type: TPath({
-                                            pack: abs.pack,
-                                            name: abs.name
-                                        })
+                                        type: TPath(absPath)
                                     }
                                 ],
                                 expr: macro {
@@ -58,10 +54,7 @@ class AbstractsMacro
                                     name: ':unreflective'
                                 }
                             ],
-                            kind: FVar(TPath({
-                                pack: abs.pack,
-                                name: abs.name
-                            }))
+                            kind: FVar(TPath(absPath))
                         }
                     ];
 
@@ -72,9 +65,6 @@ class AbstractsMacro
 
                     for (field in abs.impl.get().statics.get())
                     {
-                        if (field.name != 'RED')
-                            continue;
-
                         switch (field.type)
                         {
                             case TAbstract(a, params) if (a.toString() == abs.name):
@@ -87,10 +77,7 @@ class AbstractsMacro
                                     kind: FProp(
                                         'get',
                                         'never',
-                                        TPath({
-                                            pack: abs.pack,
-                                            name: abs.name
-                                        })
+                                        TPath(absPath)
                                     ),
                                     pos: Context.currentPos()
                                 });
@@ -100,12 +87,7 @@ class AbstractsMacro
                                     access: [AStatic],
                                     kind: FFun({
                                         args: [],
-                                        /*
-                                        ret: TPath({
-                                            pack: pack,
-                                            name: name
-                                        }),
-                                        */
+                                        ret: TPath(absPath),
                                         expr: {
                                             pos: Context.currentPos(),
                                             expr: EReturn(
@@ -155,10 +137,7 @@ class AbstractsMacro
                                     pack: ['ale', 'hscript', 'macros'],
                                     name: 'AbstractWrapper',
                                     params: [
-                                        TPType(TPath({
-                                            pack: abs.pack,
-                                            name: abs.name
-                                        }))
+                                        TPType(TPath(absPath))
                                     ]
                                 }
                             ],

@@ -1,11 +1,17 @@
 package;
 
-import FlxColor;
-
 import ale.hscript.Script;
 import ale.hscript.Config;
 
 using StringTools;
+
+class Oso
+{
+	public var oso:String;
+
+	public function new(str:String)
+		oso = str;
+}
 
 class Main
 {
