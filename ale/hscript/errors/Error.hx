@@ -39,6 +39,9 @@ class Error extends Exception
             case EUnterminatedComment:
                 'Unterminated comment';
 
+            case EUnterminatedRegex:
+                'Unterminated regular expression';
+
             case EInvalidNumber:
                 'Invalid number';
 

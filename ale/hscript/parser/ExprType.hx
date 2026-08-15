@@ -24,6 +24,7 @@ enum ExprType
     EArrayComprehension(expr:Expr);
     EMap(members:Map<Expr, Expr>);
     EStructure(values:Map<String, Expr>);
+    ERegex(value:EReg);
 
     EAssign(obj:Expr, value:Expr);
 

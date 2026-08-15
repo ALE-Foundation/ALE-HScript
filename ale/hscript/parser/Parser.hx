@@ -682,6 +682,9 @@ class Parser
 
             case TString(str):
                 fastAdvanceExpr(EString(str), cur);
+            
+            case TRegex(value):
+                fastAdvanceExpr(ERegex(value), cur);
 
             case TSingleQuote:
                 advance();

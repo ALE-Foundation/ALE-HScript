@@ -318,6 +318,9 @@ class Interp
                 case ENumber(num):
                     num;
 
+                case ERegex(value):
+                    value;
+
                 case ECall(object, args):
                     final solvedArgs:Array<Dynamic> = args.map(arg -> eval(arg));
 

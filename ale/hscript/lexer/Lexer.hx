@@ -198,6 +198,61 @@ class Lexer
             var tokenLine:Int = line;
             var tokenColumn:Int = column;
 
+            if (cur == '~'.code && match('/'.code))
+            {
+                advance();
+
+                final pattern:StringBuf = new StringBuf();
+
+                var escaped:Bool = false;
+
+                while (true)
+                {
+                    final c = peek();
+
+                    if (c == -1)
+                        throw error(EUnterminatedRegex);
+
+                    if (escaped)
+                    {
+                        pattern.addChar(advance());
+
+                        escaped = false;
+
+                        continue;
+                    }
+
+                    if (c == '\\'.code)
+                    {
+                        pattern.addChar(advance());
+
+                        escaped = true;
+                        
+                        continue;
+                    }
+
+                    if (c == '/'.code)
+                        break;
+
+                    pattern.addChar(advance());
+                }
+
+                advance();
+
+                final flags:StringBuf = new StringBuf();
+
+                while (isRegexFlag(peek()))
+                    flags.addChar(advance());
+
+                result.push({
+                    type: TRegex(new EReg(pattern.toString(), flags.toString())),
+                    line: tokenLine,
+                    column: tokenColumn
+                });
+
+                continue;
+            }
+
             final symbolToken:TokenType = switch (cur)
             {
                 case ':'.code:
@@ -593,6 +648,9 @@ class Lexer
 
     inline function hexValue(c:Int):Int
         return c <= '9'.code ? c - '0'.code : c <= 'F'.code ? c - 'A'.code + 10 : c - 'a'.code + 10;
+
+    inline function isRegexFlag(c:Int):Bool
+        return c == 'i'.code || c == 'g'.code || c == 'm'.code || c == 's'.code || c == 'u'.code;
 
     inline function isLower(c:Int):Bool
         return c >= 'a'.code && c <= 'z'.code;

@@ -12,6 +12,7 @@ enum ErrorType
     EInvalidEscape(char:Int);
     EUnterminatedString;
     EUnterminatedComment;
+    EUnterminatedRegex;
     EInvalidNumber;
 
     EExpected(want:TokenType, got:TokenType);

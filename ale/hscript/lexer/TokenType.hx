@@ -5,6 +5,7 @@ enum TokenType
     TNumber(value:Float);
     TString(value:String);
     TIdent(value:String);
+    TRegex(value:EReg);
     
     TPlus;
     TMinus;
