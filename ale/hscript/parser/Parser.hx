@@ -678,6 +678,50 @@ class Parser
             case TString(str):
                 fastAdvanceExpr(EString(str), cur);
 
+            case TSingleQuote:
+                advance();
+
+                var parts:Array<Expr> = [];
+
+                while (!check(TSingleQuote))
+                    parts.push(parseExpr());
+
+                expect(TSingleQuote);
+
+                fastExpr(
+                    parts.length <= 0 ? EString('') :
+                    switch (parts[0].type)
+                    {
+                        case EString(_) if (parts.length == 1):
+                            parts[0].type;
+
+                        default:
+                            EInterpolatedString(parts);
+                    },
+                    cur
+                );
+
+            case TDoubleQuote:
+                advance();
+
+                final res:Expr = fastExpr(EString(
+                    switch (advance().type)
+                    {
+                        case TString(str):
+                            str;
+
+                        default:
+                            expected(TString(null), last());
+
+                            null;
+                    }),
+                    cur
+                );
+
+                expect(TDoubleQuote);
+
+                res;
+
             case TNumber(num):
                 fastAdvanceExpr(ENumber(num), cur);
 

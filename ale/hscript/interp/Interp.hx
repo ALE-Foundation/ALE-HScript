@@ -307,6 +307,14 @@ class Interp
                 case EString(str):
                     str;
 
+                case EInterpolatedString(parts):
+                    final buf:StringBuf = new StringBuf();
+
+                    for (part in parts)
+                        buf.add(eval(part));
+
+                    buf.toString();
+
                 case ENumber(num):
                     num;
 

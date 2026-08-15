@@ -89,7 +89,7 @@ class Error extends Exception
                 Std.string(val);
 
             case TString(str):
-                str;
+                str ?? 'STRING';
 
             case TIdent(id):
                 id ?? 'IDENT';

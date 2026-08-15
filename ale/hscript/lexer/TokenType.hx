@@ -6,82 +6,62 @@ enum TokenType
     TString(value:String);
     TIdent(value:String);
     
-    // Symbols
-
-    TPlus; // +
-    TMinus; // -
-    TStar; // *
-    TSlash; // /
-    TPercent; // %
-
-    TEqual; // =
-    TDoubleEqual; // ==
-    TExclamationEqual; // !=
-
-    TGreater; // >
-    TLess; // <
-    TGreaterEqual; // >=
-    TLessEqual; // <=
-
-    TAmpersand; // &
-    TDoubleAmpersand; // &&
-
-    TPipe; // |
-    TDoublePipe; // ||
-
-    TCaret; // ^
-    TTilde; // ~
-    TExclamation; // !
-
-    TDoubleLess; // <<
-    TDoubleGreater; // >>
-    TTripleGreater; // >>>
-
-    TPlusEqual; // +=
-    TMinusEqual; // -=
-    TStarEqual; // *=
-    TSlashEqual; // /=
-    TPercentEqual; // %=
-
-    TAmpersandEqual; // &=
-    TPipeEqual; // |=
-    TCaretEqual; // ^=
-
-    TDoubleLessEqual; // <<=
-    TDoubleGreaterEqual; // >>=
-    TTripleGreaterEqual; // >>>=
-
-    TDoubleQuestionEqual; // ??=
-
-    TDoublePlus; // ++
-    TDoubleMinus; // --
-
-    TDoubleQuestion; // ??
-    TQuestionDot; // ?.
-
-    TArrow; // ->
-    TFatArrow; // =>
-
-    TLParen; // (
-    TRParen; // )
-
-    TLBrace; // {
-    TRBrace; // }
-
-    TLBracket; // [
-    TRBracket; // ]
-
-    TDot; // .
-    TComma; // ,
-    TColon; // :
-    TSemicolon; // ;
-    TQuestion; // ?
+    TPlus;
+    TMinus;
+    TStar;
+    TSlash;
+    TPercent;
+    TEqual;
+    TDoubleEqual;
+    TExclamationEqual;
+    TGreater;
+    TLess;
+    TGreaterEqual;
+    TLessEqual;
+    TAmpersand;
+    TDoubleAmpersand;
+    TPipe;
+    TDoublePipe;
+    TCaret;
+    TTilde;
+    TExclamation;
+    TDoubleLess;
+    TDoubleGreater;
+    TTripleGreater;
+    TPlusEqual;
+    TMinusEqual;
+    TStarEqual;
+    TSlashEqual;
+    TPercentEqual;
+    TAmpersandEqual;
+    TPipeEqual;
+    TCaretEqual;
+    TDoubleLessEqual;
+    TDoubleGreaterEqual;
+    TTripleGreaterEqual;
+    TDoubleQuestionEqual;
+    TDoublePlus;
+    TDoubleMinus;
+    TDoubleQuestion;
+    TQuestionDot;
+    TArrow;
+    TFatArrow;
+    TLParen;
+    TRParen;
+    TLBrace;
+    TRBrace;
+    TLBracket;
+    TRBracket;
+    TDot;
+    TComma;
+    TColon;
+    TSemicolon;
+    TQuestion;
     TTripleDot;
-
-    TAt; // @
-    TDollar; // $
-
-    // Keywords
+    TAt;
+    TDollar;
+    TDoubleQuote;
+    TSingleQuote;
 
     TAbstract;
     TBreak;
@@ -128,8 +108,6 @@ enum TokenType
     TUsing;
     TVar;
     TWhile;
-
-    // Misc.
 
     TEof;
 }

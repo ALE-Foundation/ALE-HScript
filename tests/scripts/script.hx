@@ -1,18 +1,10 @@
-trace([for (i in -5...5) i]);
+var oso:Int = 10;
 
-var i = 0;
+trace("$oso");
+trace("${oso += 2}");
+trace('${oso += 2}');
+trace('$oso as');
+trace('$ ');
+trace('$');
 
-trace([
-    while (i < 10)
-    {
-        i++;
-    }
-]);
-
-i = 0;
-
-trace([
-    do {
-        ++i;
-    } while (i < 10)
-]);
+trace('${new haxe.ds.StringMap()}');

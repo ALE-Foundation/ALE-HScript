@@ -17,6 +17,8 @@ class Lexer
         length = source.length;
     }
 
+    var readingString:Null<Int> = null;
+    var interpolationDepth:Int = 0;
 
     public function tokenize():Array<Token>
     {
@@ -24,7 +26,7 @@ class Lexer
 
         while (index < length)
         {
-            final cur:Int = peek();
+            var cur:Int = peek();
 
             if (isSpace(cur))
             {
@@ -33,123 +35,168 @@ class Lexer
                 continue;
             }
 
-            if (cur == '/'.code)
+            var start:Int = index;
+
+            var tokenLine:Int = line;
+            var tokenColumn:Int = column;
+
+            if (readingString == null)
             {
-                final next = next();
-
-                if (next == '/'.code)
+                if (cur == '/'.code)
                 {
-                    advance();
-                    advance();
+                    final next = next();
 
-                    while (peek() != '\n'.code && peek() != -1)
+                    if (next == '/'.code)
+                    {
+                        advance();
                         advance();
 
-                    continue;
-                }
+                        while (peek() != '\n'.code && peek() != -1)
+                            advance();
 
-                if (next == '*'.code)
-                {
-                    advance();
-                    advance();
+                        continue;
+                    }
 
-                    while (true)
+                    if (next == '*'.code)
                     {
-                        if (peek() == -1)
-                            error(EUnterminatedComment);
+                        advance();
+                        advance();
 
-                        if (peek() == '*'.code && index + 1 < length && source.fastCodeAt(index + 1) == '/'.code)
+                        while (true)
+                        {
+                            if (peek() == -1)
+                                error(EUnterminatedComment);
+
+                            if (peek() == '*'.code && index + 1 < length && source.fastCodeAt(index + 1) == '/'.code)
+                            {
+                                advance();
+                                advance();
+
+                                break;
+                            }
+
+                            advance();
+                        }
+
+                        continue;
+                    }
+                }
+            }
+            
+            if (readingString != null)
+            {
+                final res:StringBuf = new StringBuf();
+
+                while (peek() != readingString)
+                {
+                    var char:Int = advance();
+
+                    if (index >= length)
+                        error(EUnterminatedString);
+
+                    if (readingString == "'".code && char == '$'.code)
+                    {
+                        if (peek() == '{'.code)
                         {
                             advance();
-                            advance();
+
+                            interpolationDepth = 1;
+                            readingString = null;
 
                             break;
                         }
 
-                        advance();
+                        if (isIdentStart(peek()))
+                        {
+                            final start:Int = index;
+
+                            final tokenLine:Int = line;
+                            final tokenColumn:Int = tokenColumn;
+
+                            advance();
+
+                            while (isIdentPart(peek()))
+                                advance();
+
+                            final ident:String = source.substr(start, index - start);
+
+                            result.push({
+                                type: TokenUtil.stringToTokenType.exists(ident) ? TokenUtil.stringToTokenType[ident] : TIdent(ident),
+                                line: tokenLine,
+                                column: tokenColumn
+                            });
+
+                            continue;
+                        }
                     }
 
-                    continue;
+                    res.addChar(
+                        switch (char)
+                        {
+                            case '\\'.code:
+                                final escape:Int = advance();
+
+                                switch (escape)
+                                {
+                                    case 't'.code:
+                                        '\t'.code;
+
+                                    case 'n'.code:
+                                        '\n'.code;
+
+                                    case 'r'.code:
+                                        '\r'.code;
+
+                                    case '"'.code:
+                                        '\"'.code;
+
+                                    case "'".code:
+                                        '\''.code;
+
+                                    case '\\'.code:
+                                        '\\'.code;
+
+                                    case 'x'.code:
+                                        readHex(2);
+
+                                    case 'u'.code:
+                                        if (peek() == '{'.code)
+                                        {
+                                            advance();
+
+                                            readUnicode();
+                                        } else
+                                            readHex(4);
+
+                                    case c if (c >= '0'.code && c <= '7'.code):
+                                        readOctal(escape);
+
+                                    default:
+                                        error(EInvalidEscape(escape));
+
+                                        0;
+                                }
+
+                            default:
+                                char;
+                        }
+                    );
                 }
-            }
 
-            final start:Int = index;
-
-            final tokenLine:Int = line;
-            final tokenColumn:Int = column;
-
-            if (isDigitStart(cur))
-            {
-                if (cur == '0'.code && (match('x'.code) || match('X'.code)))
-                {
-                    advance();
-
-                    while (isHex(peek()))
-                        advance();
-
-                    final num:Null<Int> = Std.parseInt(source.substr(start, index - start));
-
-                    if (num == null)
-                        error(EInvalidNumber);
-
+                if (res.length > 0)
                     result.push({
-                        type: TNumber(num),
+                        type: TString(res.toString()),
                         line: tokenLine,
                         column: tokenColumn
                     });
 
-                    continue;
-                }
-
-                var usedPoint:Bool = false;
-                var usedExponent:Bool = false;
-
-                while (true)
-                {
-                    if (isDigit(peek()))
-                    {
-                        advance();
-
-                        continue;
-                    }
-
-                    if (!usedPoint && peek() == '.'.code && next() != '.'.code)
-                    {
-                        usedPoint = true;
-
-                        advance();
-
-                        continue;
-                    }
-
-                    if (!usedExponent && (peek() == 'e'.code || peek() == 'E'.code))
-                    {
-                        usedExponent = true;
-
-                        advance();
-
-                        if (peek() == '+'.code || peek() == '-'.code)
-                            advance();
-
-                        continue;
-                    }
-
-                    break;
-                }
-
-                final num:Null<Float> = Std.parseFloat(source.substr(start, index - start));
-
-                if (num == null)
-                    error(EInvalidNumber);
-
-                result.push({
-                    type: TNumber(num),
-                    line: tokenLine,
-                    column: tokenColumn
-                });
-
-                continue;
+                cur = peek();
             }
+
+            var start:Int = index;
+
+            var tokenLine:Int = line;
+            var tokenColumn:Int = column;
 
             final symbolToken:TokenType = switch (cur)
             {
@@ -175,9 +222,24 @@ class Lexer
                     TRParen;
 
                 case '{'.code:
+                    if (interpolationDepth > 0)
+                        interpolationDepth++;
+                    
                     TLBrace;
 
                 case '}'.code:
+                    if (interpolationDepth > 0)
+                    {
+                        interpolationDepth--;
+
+                        if (interpolationDepth == 0)
+                            readingString = "'".code;
+
+                        advance();
+
+                        continue;
+                    }
+
                     TRBrace;
 
                 case '['.code:
@@ -294,6 +356,16 @@ class Lexer
                 case '~'.code:
                     TTilde;
 
+                case '"'.code:
+                    readingString = readingString == null ? '"'.code : null;
+
+                    TDoubleQuote;
+
+                case "'".code:
+                    readingString = readingString == null ? "'".code : null;
+
+                    TSingleQuote;
+
                 default:
                     null;
             };
@@ -311,76 +383,72 @@ class Lexer
                 continue;
             }
 
-            if (cur == '\''.code || cur == '"'.code)
+            if (isDigitStart(cur))
             {
-                advance();
-
-                final res:StringBuf = new StringBuf();
-
-                while (peek() != cur)
+                if (cur == '0'.code && (match('x'.code) || match('X'.code)))
                 {
-                    final char:Int = advance();
+                    advance();
 
-                    if (index >= length)
-                        error(EUnterminatedString);
+                    while (isHex(peek()))
+                        advance();
 
-                    res.addChar(
-                        switch (char)
-                        {
-                            case '\\'.code:
-                                final escape:Int = advance();
+                    final num:Null<Int> = Std.parseInt(source.substr(start, index - start));
 
-                                switch (escape)
-                                {
-                                    case 't'.code:
-                                        '\t'.code;
+                    if (num == null)
+                        error(EInvalidNumber);
 
-                                    case 'n'.code:
-                                        '\n'.code;
+                    result.push({
+                        type: TNumber(num),
+                        line: tokenLine,
+                        column: tokenColumn
+                    });
 
-                                    case 'r'.code:
-                                        '\r'.code;
-
-                                    case '"'.code:
-                                        '\"'.code;
-
-                                    case "'".code:
-                                        '\''.code;
-
-                                    case '\\'.code:
-                                        '\\'.code;
-
-                                    case 'x'.code:
-                                        readHex(2);
-
-                                    case 'u'.code:
-                                        if (peek() == '{'.code)
-                                        {
-                                            advance();
-
-                                            readUnicode();
-                                        } else
-                                            readHex(4);
-
-                                    case c if (c >= '0'.code && c <= '7'.code):
-                                        readOctal(escape);
-
-                                    default:
-                                        error(EInvalidEscape(escape));
-
-                                        0;
-                                }
-
-                            default:
-                                char;
-                        }
-                    );
+                    continue;
                 }
 
-                advance();
+                var usedPoint:Bool = false;
+                var usedExponent:Bool = false;
+
+                while (true)
+                {
+                    if (isDigit(peek()))
+                    {
+                        advance();
+
+                        continue;
+                    }
+
+                    if (!usedPoint && peek() == '.'.code && next() != '.'.code)
+                    {
+                        usedPoint = true;
+
+                        advance();
+
+                        continue;
+                    }
+
+                    if (!usedExponent && (peek() == 'e'.code || peek() == 'E'.code))
+                    {
+                        usedExponent = true;
+
+                        advance();
+
+                        if (peek() == '+'.code || peek() == '-'.code)
+                            advance();
+
+                        continue;
+                    }
+
+                    break;
+                }
+
+                final num:Null<Float> = Std.parseFloat(source.substr(start, index - start));
+
+                if (num == null)
+                    error(EInvalidNumber);
 
                 result.push({
-                    type: TString(res.toString()),
+                    type: TNumber(num),
                     line: tokenLine,
                     column: tokenColumn
                 });

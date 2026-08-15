@@ -18,6 +18,7 @@ enum ExprType
     EBlock(exprs:Array<Expr>);
 
     EString(str:String);
+    EInterpolatedString(parts:Array<Expr>);
     ENumber(num:Float);
     EArray(members:Array<Expr>);
     EArrayComprehension(expr:Expr);
