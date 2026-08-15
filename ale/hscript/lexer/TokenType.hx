@@ -111,5 +111,7 @@ enum TokenType
     TVar;
     TWhile;
 
+    TInterpolationStart;
+    TInterpolationEnd;
     TEof;
 }

@@ -85,6 +85,8 @@ class Lexer
             
             if (readingString != null)
             {
+                var initInterp:Bool = false;
+
                 final res:StringBuf = new StringBuf();
 
                 while (peek() != readingString)
@@ -102,6 +104,8 @@ class Lexer
 
                             interpolationDepth = 1;
                             readingString = null;
+
+                            initInterp = true;
 
                             break;
                         }
@@ -186,6 +190,13 @@ class Lexer
                 if (res.length > 0)
                     result.push({
                         type: TString(res.toString()),
+                        line: tokenLine,
+                        column: tokenColumn
+                    });
+
+                if (initInterp)
+                    result.push({
+                        type: TInterpolationStart,
                         line: tokenLine,
                         column: tokenColumn
                     });
@@ -288,7 +299,15 @@ class Lexer
                         interpolationDepth--;
 
                         if (interpolationDepth == 0)
+                        {
+                            result.push({
+                                type: TInterpolationEnd,
+                                line: tokenLine,
+                                column: tokenColumn
+                            });
+
                             readingString = "'".code;
+                        }
 
                         advance();
 

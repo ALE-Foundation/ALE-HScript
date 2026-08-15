@@ -692,7 +692,14 @@ class Parser
                 var parts:Array<Expr> = [];
 
                 while (!check(TSingleQuote))
-                    parts.push(parseExpr());
+                    if (match(TInterpolationStart))
+                    {
+                        parts.push(parseExpr());
+
+                        expect(TInterpolationEnd);
+                    } else {
+                        parts.push(parseExpr());
+                    }
 
                 expect(TSingleQuote);
 
