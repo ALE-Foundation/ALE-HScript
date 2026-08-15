@@ -1,0 +1,1 @@
+trace('ALE Psych ' + CoolVars.engineVersion + '\n' + (CoolVars.touch ? '' : 'Press [Ctrl + Shift + ${[for (key in ClientPrefs.controls.engine.switch_mod) if (key == null || key == 0) continue else FlxKey.toStringMap.get(key)].join(' / ')}] to open the Mods Menu' + '\n') + config.text);

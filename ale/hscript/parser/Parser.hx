@@ -237,62 +237,6 @@ class Parser
                 }
 
                 null;
-                
-            case TIf:
-                parseIf(true);
-
-            case TFor:
-                parseFor(true);
-
-            case TDo:
-                parseDoWhile();
-
-            case TWhile:
-                parseWhile(true);
-
-            case TTry:
-                advance();
-
-                final body:Expr = parseBody();
-
-                expect(TCatch);
-
-                expect(TLParen);
-
-                final arg:FunctionArgument = parseFunctionArgument();
-
-                expect(TRParen);
-
-                fastExpr(ETry(body, arg, parseBody()), cur);
-
-            case TUntyped:
-                advance();
-
-                parseStatement();
-
-            case TAt:
-                advance();
-
-                final id:StringBuf = new StringBuf();
-
-                if (match(TColon))
-                    id.addChar(':'.code);
-
-                id.add(parseIdent());
-
-                final pos:Int = index;
-
-                var args:Array<Expr> = null;
-
-                try
-                {
-                    if (check(TLParen))
-                        args = parseCallArguments();
-                } catch(_:Dynamic) {
-                    index = pos;
-                }
-
-                fastExpr(EMetadata(id.toString(), args), cur);
 
             case TFunction:
                 advance();
@@ -317,6 +261,38 @@ class Parser
 
                 fastExpr(EFunctionDecl(id, fastExpr(EFunction(args, parseBody()), cur)), cur);
 
+            case TIf:
+                parseIf(true);
+
+            case TFor:
+                parseFor(true);
+
+            case TDo:
+                parseDoWhile();
+
+            case TWhile:
+                parseWhile(true);
+
+            case TUntyped:
+                advance();
+
+                parseStatement();
+
+            case TTry:
+                advance();
+
+                final body:Expr = parseBody();
+
+                expect(TCatch);
+
+                expect(TLParen);
+
+                final arg:FunctionArgument = parseFunctionArgument();
+
+                expect(TRParen);
+
+                fastExpr(ETry(body, arg, parseBody()), cur);
+
             case TReturn:
                 advance();
 
@@ -326,20 +302,11 @@ class Parser
                     res = parseExpr();
 
                 fastExpr(EReturn(res), cur);
-
-            case TSwitch:
-                parseSwitch(cur);
                 
             case TThrow:
                 advance();
 
                 fastExpr(EThrow(parseExpr()), cur);
-
-            case TBreak:
-                fastAdvanceExpr(EBreak, cur);
-
-            case TContinue:
-                fastAdvanceExpr(EContinue, cur);
 
             case TEof:
                 fastAdvanceExpr(EEof, cur);
@@ -466,6 +433,27 @@ class Parser
 
         return switch (cur.type)
         {
+            case TTry:
+                advance();
+
+                final body:Expr = parseBody(false);
+
+                expect(TCatch);
+
+                expect(TLParen);
+
+                final arg:FunctionArgument = parseFunctionArgument();
+
+                expect(TRParen);
+
+                fastExpr(ETry(body, arg, parseBody(false)), cur);
+
+            case TBreak:
+                fastAdvanceExpr(EBreak, cur);
+
+            case TContinue:
+                fastAdvanceExpr(EContinue, cur);
+
             case TSwitch:
                 parseSwitch(cur);
 
@@ -932,10 +920,9 @@ class Parser
 
     function parseBody(?stmt:Bool = true):Expr
     {
-        var res:Expr = parseStatement();
+        trace(stmt);
 
-        if (stmt)
-            semicolon(res.type);
+        var res:Expr = stmt ? parseSemicolonStatement() : parseExpr();
 
         if (!res.type.match(EBlock(_)))
         {
