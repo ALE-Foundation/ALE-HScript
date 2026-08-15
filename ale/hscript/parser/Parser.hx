@@ -116,7 +116,12 @@ class Parser
                     break;
             }
 
-            return fastExpr(EImport(str.toString()), cur);
+            var alias:Null<String> = null;
+
+            if (match(TAs))
+                alias = parseIdent();
+
+            return fastExpr(EImport(str.toString(), alias), cur);
         }
 
         allowImports = false;

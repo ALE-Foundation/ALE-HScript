@@ -1,10 +1,3 @@
-var oso:Int = 10;
+import haxe.ds.StringMap as OsoMap;
 
-trace("$oso");
-trace("${oso += 2}");
-trace('${oso += 2}');
-trace('$oso as');
-trace('$ ');
-trace('$');
-
-trace('${new haxe.ds.StringMap()}');
+trace(new OsoMap());

@@ -64,6 +64,7 @@ enum TokenType
     TSingleQuote;
 
     TAbstract;
+    TAs;
     TBreak;
     TCase;
     TCast;

@@ -118,8 +118,8 @@ class Interp
 
                     null;
 
-                case EImport(module):
-                    imports[module.split('.').pop()] = resolveType(module, false);
+                case EImport(module, alias):
+                    imports[alias ?? module.split('.').pop()] = resolveType(module, false);
 
                     null;
 

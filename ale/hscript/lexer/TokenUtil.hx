@@ -5,6 +5,7 @@ class TokenUtil
 {
     static final stringToTokenType:Map<String, TokenType> = [
         'abstract' => TAbstract,
+        'as' => TAs,
         'break' => TBreak,
         'case' => TCase,
         'cast' => TCast,
