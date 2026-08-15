@@ -51,7 +51,7 @@ trace(true);
 
 ____CT('- - EReg');
 
-// trace(~/haxe/gi);
+trace(~/ñ/ig.match('oso donde tu ta oso') || ~/oso/.match('oso tengo hambre oso'));
 
 ____CT('- - Null');
 
