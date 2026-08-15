@@ -1273,6 +1273,7 @@ class Parser
         addPrecedence([TTripleDot]);
 
         addPrecedence([
+            TIs,
             TDoubleEqual,
             TExclamationEqual,
             TLess,
