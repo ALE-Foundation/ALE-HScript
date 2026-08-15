@@ -308,6 +308,30 @@ class Parser
 
                 fastExpr(EThrow(parseExpr()), cur);
 
+            case TAt:
+                advance();
+
+                final id:StringBuf = new StringBuf();
+
+                if (match(TColon))
+                    id.addChar(':'.code);
+
+                id.add(parseIdent());
+
+                final pos:Int = index;
+
+                var args:Array<Expr> = null;
+
+                try
+                {
+                    if (check(TLParen))
+                        args = parseCallArguments();
+                } catch(_:Dynamic) {
+                    index = pos;
+                }
+
+                fastExpr(EMetadata(id.toString(), args), cur);
+
             case TEof:
                 fastAdvanceExpr(EEof, cur);
 
@@ -920,8 +944,6 @@ class Parser
 
     function parseBody(?stmt:Bool = true):Expr
     {
-        trace(stmt);
-
         var res:Expr = stmt ? parseSemicolonStatement() : parseExpr();
 
         if (!res.type.match(EBlock(_)))
