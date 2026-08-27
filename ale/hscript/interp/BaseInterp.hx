@@ -12,7 +12,7 @@ import ale.hscript.errors.ErrorType;
 
 abstract class BaseInterp
 {
-    public final name:String;
+    public var name:String;
 
     public var imports:Map<String, Class<Dynamic>>;
 
@@ -45,7 +45,7 @@ abstract class BaseInterp
 
     var usings:Array<Dynamic> = [];
 
-    public function new(name:String, ?superInstance:Dynamic)
+    public function new(?name:String, ?superInstance:Dynamic)
     {
         this.name = name;
 

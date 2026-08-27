@@ -12,7 +12,7 @@ class Script
 
     public final interp:BaseInterp;
 
-    public function new(script:String, ?name:String, ?superInstance:Dynamic, ?context:Dynamic)
+    public function new(script:String, ?name:String, ?interp:BaseInterp, ?superInstance:Dynamic, ?context:Dynamic)
     {
         final path:String = Config.SCRIPT_PATH + script + Config.EXTENSION;
 
@@ -20,7 +20,11 @@ class Script
 
         content = isFile ? Config.FILE_READER(path) : script;
 
-        interp = new ASTWalker((name ?? (isFile ? script : Config.SCRIPT_NAME)) + Config.EXTENSION, superInstance);
+        interp ??= new ASTWalker();
+        interp.name ??= (name ?? (isFile ? script : Config.SCRIPT_NAME)) + Config.EXTENSION;
+        interp.superInstance ??= superInstance;
+
+        this.interp = interp;
     }
 
     public function set(id:String, value:Dynamic):Void
