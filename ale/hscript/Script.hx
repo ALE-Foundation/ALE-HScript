@@ -4,11 +4,13 @@ import ale.hscript.lexer.*;
 import ale.hscript.parser.*;
 import ale.hscript.interp.*;
 
+import ale.hscript.interp.ast.ASTWalker;
+
 class Script
 {
     public final content:String;
 
-    public final interp:Interp;
+    public final interp:BaseInterp;
 
     public function new(script:String, ?name:String, ?superInstance:Dynamic, ?context:Dynamic)
     {
@@ -18,7 +20,7 @@ class Script
 
         content = isFile ? Config.FILE_READER(path) : script;
 
-        interp = new Interp((name ?? (isFile ? script : Config.SCRIPT_NAME)) + Config.EXTENSION, superInstance);
+        interp = new ASTWalker((name ?? (isFile ? script : Config.SCRIPT_NAME)) + Config.EXTENSION, superInstance);
     }
 
     public function set(id:String, value:Dynamic):Void
