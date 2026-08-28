@@ -1,6 +1,6 @@
 package ale.hscript.interp.bytecode;
 
-enum abstract Inst(Int) from Int to Int
+enum abstract Inst(Null<Int>) from Null<Int> to Null<Int>
 {
     var IVarDecl;
     var IFunctionDecl;

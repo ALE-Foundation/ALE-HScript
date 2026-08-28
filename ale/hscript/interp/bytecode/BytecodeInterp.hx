@@ -123,8 +123,10 @@ class BytecodeInterp extends BaseInterp
 
                 final code:Code = constant();
 
+                final curScope:Scope = scope;
+
                 push(Reflect.makeVarArgs(useArgs -> {
-                    final newScope:Scope = createScope(scope);
+                    final newScope:Scope = createScope(curScope);
 
                     for (i => arg in args)
                         newScope.define(arg.id, useArgs[i] ?? arg.value);
