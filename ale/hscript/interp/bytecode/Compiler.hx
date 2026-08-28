@@ -159,9 +159,15 @@ class Compiler
             case ENumber(num):
                 pushConstant(num);
 
-            /*
+                
             case EArray(members):
+                reverseEach(members, mem -> emitExpr(mem));
 
+                emit(IArray);
+
+                emitConstant(members.length);
+
+            /*
             case EArrayComprehension(expr):
 
             case EMap(members):

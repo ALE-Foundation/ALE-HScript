@@ -96,6 +96,12 @@ class BytecodeInterp extends BaseInterp
             case IField:
                 push(Reflect.getProperty(pop(), constant()));
 
+            case IType:
+                push(resolveType(constant()));
+
+            case IArrayAccess:
+                push(pop()[pop()]);
+
                 
             case ICall:
                 final fn = pop();
@@ -137,6 +143,16 @@ class BytecodeInterp extends BaseInterp
             case IBlock:
                 executeScopeCode(constant());
 
+
+            case IArray:
+                var count:Int = constant();
+
+                final res:Array<Dynamic> = [];
+
+                while (count-- > 0)
+                    res.push(pop());
+
+                push(res);
 
             case IStructure:
                 final length:Int = constant();
