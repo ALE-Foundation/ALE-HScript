@@ -9,19 +9,20 @@ class Compiler
 {
     public function new() {}
 
+    var code:Code;
+
     public final instructions:Array<Int> = [];
 
     public final constants:Array<Dynamic> = [];
     
-    public function compile(source:Array<Expr>):Compiler
+    public function compile(source:Array<Expr>):Code
     {
-        instructions.resize(0);
-        constants.resize(0);
+        code = new Code();
 
         for (expr in source)
             emitExpr(expr);
 
-        return this;
+        return code;
     }
 
     function emitExpr(expr:Expr)
@@ -94,6 +95,28 @@ class Compiler
 
                 emitConstant(args.length);
 
+
+            /*
+            case EFunction(args, block):
+            */
+
+            case EBlock(exprs):
+                emit(IBlock);
+
+                final oldCode:Code = code;
+
+                final blockCode = new Code();
+
+                code = blockCode;
+
+                for (expr in exprs)
+                    emitExpr(expr);
+
+                code = oldCode;
+
+                emitConstant(blockCode);
+
+
             case EString(str):
                 pushConstant(str);
 
@@ -136,10 +159,10 @@ class Compiler
     }
 
     function emit(type:Inst)
-        instructions.push(type);
+        code.instructions.push(type);
 
     function emitConstant(value:Dynamic)
-        instructions.push(addConstant(value));
+        code.instructions.push(addConstant(value));
 
     function reverseEach<T>(arr:Array<T>, fn:T -> Void)
     {
@@ -158,9 +181,9 @@ class Compiler
 
     function addConstant(value:Dynamic):Int
     {
-        constants.push(value);
+        code.constants.push(value);
 
-        return constants.length - 1;
+        return code.constants.length - 1;
     }
 
     inline function error(type:ErrorType, expr:Expr)

@@ -1,18 +1,9 @@
-var oso:String = {
-    donde: {
-        tuta: 'ay si'
-    },
-    masha: 'tengo hambre',
-    en: {
-        la: {
-            radio: {
-                hay: {
-                    un: 'pollito'
-                }
-            }
-        }
-    }
-};
+var oso:String = 'oso';
 
+{
+    var oso:String = 'donde';
+    
+    trace(oso);
+}
 
-trace(oso.en.la.radio.hay);
+trace(oso);

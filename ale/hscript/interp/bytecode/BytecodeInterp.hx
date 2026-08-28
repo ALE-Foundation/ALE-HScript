@@ -6,42 +6,46 @@ import ale.hscript.interp.*;
 
 class BytecodeInterp extends BaseInterp
 {
-    var compiler:Compiler;
+    var code:Code;
 
     var instructions(get, never):Array<Int>;
     inline function get_instructions():Array<Int>
-        return compiler.instructions;
+        return code.instructions;
 
     var constants(get, never):Array<Dynamic>;
     inline function get_constants():Array<Dynamic>
-        return compiler.constants;
+        return code.constants;
 
     var ip:Int;
 
     var stack:Array<Dynamic>;
 
     override function init()
-    {
         scope.define('trace', Reflect.makeVarArgs(args -> haxe.Log.trace(args.join(','), null)));
-    }
 
     public function execute(exprs:Array<Expr>):Dynamic
     {
-        compiler = new Compiler().compile(exprs);
-
-        haxe.Log.trace(
-            '\nInstructions: ' + instructions + '\n\n' +
-            'Constants: ' + constants + '\n'
-        , null);
-
+        ip = 0;
         stack = [];
 
-        ip = 0;
+        executeCode(new Compiler().compile(exprs));
 
+        return null;
+    }
+
+    function executeCode(newCode:Code)
+    {
+        final oldCode:Code = code;
+        final oldIP:Int = ip;
+
+        code = newCode;
+        ip = 0;
+        
         while (ip < instructions.length)
             eval(read());
 
-        return null;
+        code = oldCode;
+        ip = oldIP;
     }
 
     inline function read():Int
@@ -56,7 +60,7 @@ class BytecodeInterp extends BaseInterp
     inline function push(obj:Dynamic):Dynamic
         return stack.push(obj);
 
-    function eval(inst:Inst)
+    function eval(inst:Inst, ?newScope:Scope)
     {
         switch (inst)
         {
@@ -66,12 +70,14 @@ class BytecodeInterp extends BaseInterp
             case IVarDecl:
                 scope.define(constant(), pop(), constant(), constant(), constant());
 
+
             case IVar:
                 push(scope.get(constant()));
 
             case IField:
                 push(Reflect.getProperty(pop(), constant()));
 
+                
             case ICall:
                 final fn = pop();
 
@@ -83,6 +89,17 @@ class BytecodeInterp extends BaseInterp
                     args.push(pop());
 
                 Reflect.callMethod(null, fn, args);
+
+
+            case IBlock:
+                final oldScope:Scope = scope;
+
+                scope = newScope ?? createScope(scope);
+
+                executeCode(constant());
+
+                scope = oldScope;
+
 
             case IStructure:
                 final length:Int = constant();
