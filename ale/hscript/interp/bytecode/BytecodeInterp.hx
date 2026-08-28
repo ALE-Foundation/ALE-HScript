@@ -29,7 +29,10 @@ class BytecodeInterp extends BaseInterp
     {
         compiler = new Compiler().compile(exprs);
 
-        trace(instructions);
+        haxe.Log.trace(
+            '\nInstructions: ' + instructions + '\n\n' +
+            'Constants: ' + constants + '\n'
+        , null);
 
         stack = [];
 
@@ -47,28 +50,49 @@ class BytecodeInterp extends BaseInterp
     inline function constant():Dynamic
         return constants[read()];
 
+    inline function pop():Dynamic
+        return stack.pop();
+
+    inline function push(obj:Dynamic):Dynamic
+        return stack.push(obj);
+
     function eval(inst:Inst)
     {
         switch (inst)
         {
-            case CONST:
-                stack.push(constant());
+            case IPush:
+                push(constant());
 
-            case SET_VAR:
-                scope.define(constant(), stack.pop());
+            case IVarDecl:
+                scope.define(constant(), pop(), constant(), constant(), constant());
 
-            case GET_VAR:
-                stack.push(scope.get(constant()));
+            case IVar:
+                push(scope.get(constant()));
 
-            case CALL:
-                var count:Int = read();
+            case IField:
+                push(Reflect.getProperty(pop(), constant()));
+
+            case ICall:
+                final fn = pop();
+
+                var count:Int = constant();
 
                 final args:Array<Dynamic> = [];
 
                 while (count-- > 0)
-                    args.unshift(stack.pop());
+                    args.push(pop());
 
-                Reflect.callMethod(null, stack.pop(), args);
+                Reflect.callMethod(null, fn, args);
+
+            case IStructure:
+                final length:Int = constant();
+
+                final res:Dynamic = {};
+
+                for (i in 0...length)
+                    Reflect.setField(res, constant(), pop());
+
+                push(res);
 
             default:
         }

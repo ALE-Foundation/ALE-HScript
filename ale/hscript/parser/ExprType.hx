@@ -7,69 +7,81 @@ enum ExprType
     EVarDecl(id:String, value:Expr, ?getter:Property, ?setter:Property, ?isFinal:Bool);
     EFunctionDecl(id:String, value:Expr);
 
-    EVar(id:String);
-    EField(object:Null<Expr>, property:String);
+    ETypedef(id:String, fields:Array<String>);
+    EAlias(id:String, type:Expr);
 
-    ECall(object:Expr, arguments:Array<Expr>);
+    
+    EVar(id:String);
+    EField(object:Expr, property:String);
+    EType(module:String);
+
     EArrayAccess(object:Expr, key:Expr);
 
-    EFunction(arguments:Array<FunctionArgument>, block:Expr);
+    
+    ECall(object:Expr, arguments:Array<Expr>);
+    ENew(cls:Expr, args:Array<Expr>);
 
+    
+    EFunction(arguments:Array<FunctionArgument>, block:Expr);
     EBlock(exprs:Array<Expr>);
+
 
     EString(str:String);
     EInterpolatedString(parts:Array<Expr>);
     ENumber(num:Float);
+
     EArray(members:Array<Expr>);
     EArrayComprehension(expr:Expr);
     EMap(members:Map<Expr, Expr>);
     EStructure(values:Map<String, Expr>);
+
     ERegex(value:EReg);
 
+    ETrue;
+    EFalse;
+    ENull;
+
+    
     EAssign(obj:Expr, value:Expr);
 
-    EType(module:String);
-
-    ENew(cls:Expr, args:Array<Expr>);
-
-    ETry(body:Expr, arg:FunctionArgument, failed:Expr);
-
-    EFor(indexId:String, iterId:String, iter:Expr, body:Expr);
-
-    EIf(condition:Expr, expr:Expr, ?elseExpr:Expr);
-    EWhile(condition:Expr, expr:Expr);
-    EDoWhile(condition:Expr, expr:Expr);
-
-    EThrow(value:Expr);
-
-    ESwitch(obj:Expr, cases:Array<SwitchCondition>, ?defaultExpr:Expr);
-
-    EReturn(value:Expr);
-    EContinue;
-    EBreak;
-
-    ECast(obj:Expr, ?type:Expr);
 
     EBinOp(op:TokenType, left:Expr, right:Expr);
     EPrefix(op:TokenType, left:Expr);
     EPostfix(op:TokenType, right:Expr);
     ETernOp(condition:Expr, ifTrue:Expr, ifFalse:Expr);
 
+
+    EIf(condition:Expr, expr:Expr, ?elseExpr:Expr);
+
+    EWhile(condition:Expr, expr:Expr);
+    EDoWhile(condition:Expr, expr:Expr);
+
+    EFor(indexId:String, iterId:String, iter:Expr, body:Expr);
+
+    ESwitch(obj:Expr, cases:Array<SwitchCondition>, ?defaultExpr:Expr);
+
+    ETry(body:Expr, arg:FunctionArgument, failed:Expr);
+
+
+    EReturn(value:Expr);
+    EThrow(value:Expr);
+
+    EContinue;
+    EBreak;
+
+
+    ECast(obj:Expr, ?type:Expr);
+
+
     EPackage(module:String);
-    
+
     EImport(module:String, ?alias:String);
     EPackageImport(module:String);
 
     EUsing(module:Expr);
 
-    EFalse;
-    ETrue;
-    ENull;
-    
-    EEof;
 
     EMetadata(id:String, args:Array<Expr>);
 
-    EAlias(id:String, type:Expr);
-    ETypedef(id:String, fields:Array<String>);
+    EEof;
 }

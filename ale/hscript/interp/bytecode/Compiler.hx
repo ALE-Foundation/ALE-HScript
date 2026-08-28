@@ -25,32 +25,78 @@ class Compiler
     {
         switch (expr.type)
         {
-            case ENumber(value):
-                emit(CONST);
-                emit(addConstant(value));
+            case EVarDecl(id, value, getter, setter, isFinal):
+                emitExpr(value);
+                
+                emit(IVarDecl);
 
-            case EString(value):
-                emit(CONST);
-                emit(addConstant(value));
+                emitConstant(id);
 
-            case EVarDecl(name, value, _, _, _):
+                emitConstant(getter);
+                emitConstant(setter);
+                emitConstant(isFinal);
+
+            case EFunctionDecl(id, value):
                 emitExpr(value);
 
-                emit(SET_VAR);
-                emit(addConstant(name));
+                emit(IFunctionDecl);
 
-            case EVar(name):
-                emit(GET_VAR);
-                emit(addConstant(name));
+                emitConstant(id);
 
-            case ECall(object, args):
+            case EVar(id):
+                emit(IVar);
+
+                emitConstant(id);
+
+            case EField(object, property):
                 emitExpr(object);
-                
-                for (arg in args)
-                    emitExpr(arg);
 
-                emit(CALL);
-                emit(args.length);
+                emit(IField);
+
+                emitConstant(property);
+
+            case ECall(obj, arguments):
+                reverseEach(arguments, arg -> emitExpr(arg));
+
+                emitExpr(obj);
+
+                emit(ICall);
+
+                emitConstant(arguments.length);
+
+            case EString(str):
+                pushConstant(str);
+
+            /*
+            case EInterpolatedString(parts):
+            */
+
+            case ENumber(num):
+                pushConstant(num);
+
+            /*
+            case EArray(members):
+
+            case EArrayComprehension(expr):
+
+            case EMap(members):
+            */
+
+            case EStructure(values):
+                final keys:Array<String> = [];
+
+                for (id => expr in values)
+                {
+                    emitExpr(expr);
+
+                    keys.push(id);
+                }
+
+                emit(IStructure);
+
+                emitConstant(keys.length);
+
+                reverseEach(keys, key -> emitConstant(key));
 
             default:
         }
@@ -58,6 +104,24 @@ class Compiler
 
     function emit(type:Inst)
         instructions.push(type);
+
+    function emitConstant(value:Dynamic)
+        instructions.push(addConstant(value));
+
+    function reverseEach<T>(arr:Array<T>, fn:T -> Void)
+    {
+        var i:Int = arr.length;
+
+        while (i-- > 0)
+            fn(arr[i]);
+    }
+
+    function pushConstant(value:Dynamic)
+    {
+        emit(IPush);
+
+        emitConstant(value);
+    }
 
     function addConstant(value:Dynamic):Int
     {

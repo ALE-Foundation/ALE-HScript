@@ -2,11 +2,80 @@ package ale.hscript.interp.bytecode;
 
 enum abstract Inst(Int) from Int to Int
 {
-    var CONST;
+    var IVarDecl;
+    var IFunctionDecl;
 
-    var SET_VAR;
+    var ITypedef;
+    var IAlias;
 
-    var GET_VAR;
 
-    var CALL;
+    var IVar;
+    var IField;
+    var IType;
+
+    var IArrayAccess;
+
+    
+    var ICall;
+    var INew;
+
+
+    var IFunction;
+    var IBlock;
+
+    
+    var IInterpolatedString;
+
+
+    var IArray;
+    var IArrayComprehension;
+    var IMap;
+    var IStructure;
+
+    
+    var IAssign;
+
+    
+    var IBinOp;
+    var IPrefix;
+    var IPostfix;
+    var ITernOp;
+
+
+    var IIf;
+    
+    var IWhile;
+    var IDoWhile;
+
+    var IFor;
+
+    var ISwitch;
+    
+    var ITry;
+
+
+    var IReturn;
+    var IThrow;
+
+    var IContinue;
+    var IBreak;
+
+
+    var ICast;
+
+
+    var IPackage;
+
+    var IImport;
+    var IPackageImport;
+
+    var IUsing;
+
+
+    var IMetadata;
+    
+    var IEof;
+
+
+    var IPush;
 }
