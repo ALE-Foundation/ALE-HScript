@@ -43,5 +43,5 @@ class Defaults
 
     public static final SCRIPT_NAME:String = 'ale_hscript';
 
-    public static final ERROR_HANDLER:Dynamic -> String -> Void = (error, name) -> Log.trace('[ ERROR ] ' + name + ': ' + error.toString(), null);
+    public static final ERROR_HANDLER:Dynamic -> String -> Void = (error, name) -> Log.trace('[ ERROR ] ' + name + ': ' + error?.toString() ?? error, null);
 }

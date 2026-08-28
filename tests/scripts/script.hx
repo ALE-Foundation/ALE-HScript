@@ -1,3 +1,3 @@
-var oso:Int = 10;
+var oso:Int = 'oso';
 
 trace(oso);
