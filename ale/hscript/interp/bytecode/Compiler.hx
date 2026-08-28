@@ -1,5 +1,8 @@
 package ale.hscript.interp.bytecode;
 
+import ale.hscript.errors.ErrorType;
+import ale.hscript.errors.Error;
+
 import ale.hscript.parser.Expr;
 
 class Compiler
@@ -43,6 +46,12 @@ class Compiler
 
                 emitConstant(id);
 
+
+            case ETypedef(_):
+
+            case EAlias(_, _):
+
+
             case EVar(id):
                 emit(IVar);
 
@@ -55,6 +64,18 @@ class Compiler
 
                 emitConstant(property);
 
+            case EType(module):
+                emit(IType);
+
+                emitConstant(module);
+
+            case EArrayAccess(obj, key):
+                emitExpr(key);
+                emitExpr(obj);
+
+                emit(IArrayAccess);
+
+
             case ECall(obj, arguments):
                 reverseEach(arguments, arg -> emitExpr(arg));
 
@@ -63,6 +84,15 @@ class Compiler
                 emit(ICall);
 
                 emitConstant(arguments.length);
+
+            case ENew(cls, args):
+                reverseEach(args, arg -> emitExpr(arg));
+
+                emitExpr(cls);
+
+                emit(INew);
+
+                emitConstant(args.length);
 
             case EString(str):
                 pushConstant(str);
@@ -98,7 +128,10 @@ class Compiler
 
                 reverseEach(keys, key -> emitConstant(key));
 
+            case EEof:
+
             default:
+                error(EInvalidExpression(expr.type), expr);
         }
     }
 
@@ -129,4 +162,7 @@ class Compiler
 
         return constants.length - 1;
     }
+
+    inline function error(type:ErrorType, expr:Expr)
+        throw new Error(type, expr.line, expr.column);
 }
