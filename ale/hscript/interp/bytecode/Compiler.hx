@@ -69,7 +69,12 @@ class Compiler
 
             case ETypedef(_):
 
-            case EAlias(_, _):
+            case EAlias(id, type):
+                emitExpr(type);
+
+                emit(IAlias);
+
+                emitConstant(id);
 
 
             case EVar(id):
@@ -152,9 +157,12 @@ class Compiler
             case EString(str):
                 pushConstant(str);
 
-            /*
             case EInterpolatedString(parts):
-            */
+                reverseEach(parts, part -> emitExpr(part));
+
+                emit(IInterpolatedString);
+
+                emitConstant(parts.length);
 
             case ENumber(num):
                 pushConstant(num);
@@ -168,10 +176,24 @@ class Compiler
                 emitConstant(members.length);
 
             /*
-            case EArrayComprehension(expr):
+            case EArrayComprehension(body):
+            */
 
             case EMap(members):
-            */
+                var count:Int = 0;
+
+                for (key => value in members)
+                {
+                    emitExpr(value);
+
+                    emitExpr(key);
+
+                    count++;
+                }
+
+                emit(IMap);
+
+                emitConstant(count);
 
             case EStructure(values):
                 final keys:Array<String> = [];

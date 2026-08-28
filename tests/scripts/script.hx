@@ -1,3 +1,4 @@
-trace(['ola', {
-    oso: 'khorix'
-}][1]);
+trace([
+    'oso' => 10,
+    10 => 'donde'
+]['oso']);

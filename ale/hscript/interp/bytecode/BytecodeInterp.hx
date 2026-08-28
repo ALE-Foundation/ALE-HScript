@@ -4,6 +4,9 @@ import ale.hscript.parser.Expr;
 
 import ale.hscript.interp.*;
 
+import haxe.Constraints.IMap;
+import haxe.ds.ObjectMap;
+
 class BytecodeInterp extends BaseInterp
 {
     var code:Code;
@@ -74,6 +77,7 @@ class BytecodeInterp extends BaseInterp
 
     inline function push(obj:Dynamic):Dynamic
         return stack.push(obj);
+    
 
     function eval(inst:Inst, ?newScope:Scope)
     {
@@ -89,6 +93,10 @@ class BytecodeInterp extends BaseInterp
             case IFunctionDecl:
                 scope.define(constant(), pop(), PDefault, PNever);
 
+            
+            case IAlias:
+                imports[constant()] = pop();
+
 
             case IVar:
                 push(scope.get(constant()));
@@ -100,7 +108,19 @@ class BytecodeInterp extends BaseInterp
                 push(resolveType(constant()));
 
             case IArrayAccess:
-                push(pop()[pop()]);
+                final obj:Dynamic = pop();
+
+                final key:Dynamic = pop();
+
+                push(
+                    if (Std.isOfType(obj, Array))
+                        obj[key]
+                    else if (Std.isOfType(obj, IMap))
+                        cast(obj, IMap<Dynamic, Dynamic>).get(key)
+                    else {
+                        null;
+                    }
+                );
 
                 
             case ICall:
@@ -114,6 +134,18 @@ class BytecodeInterp extends BaseInterp
                     args.push(pop());
 
                 Reflect.callMethod(null, fn, args);
+
+            case INew:
+                final type:Class<Dynamic> = pop();
+
+                var count:Int = constant();
+
+                final args:Array<Dynamic> = [];
+
+                while (count-- > 0)
+                    args.push(pop());
+
+                push(Type.createInstance(type, args));
 
 
             case IFunction:
@@ -144,6 +176,17 @@ class BytecodeInterp extends BaseInterp
                 executeScopeCode(constant());
 
 
+            case IInterpolatedString:
+                final res:StringBuf = new StringBuf();
+
+                var count:Int = constant();
+
+                while (count-- > 0)
+                    res.add(pop());
+
+                push(res.toString());
+
+
             case IArray:
                 var count:Int = constant();
 
@@ -151,6 +194,20 @@ class BytecodeInterp extends BaseInterp
 
                 while (count-- > 0)
                     res.push(pop());
+
+                push(res);
+
+            /*
+            case IArrayComprehension:
+            */
+
+            case IMap:
+                var count:Int = constant();
+
+                final res:ObjectMap<Dynamic, Dynamic> = new ObjectMap();
+
+                while (count-- > 0)
+                    res.set(pop(), pop());
 
                 push(res);
 
