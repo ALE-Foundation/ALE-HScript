@@ -33,6 +33,20 @@ class BytecodeInterp extends BaseInterp
         return null;
     }
 
+
+    function executeScopeCode(newCode:Code, ?newScope:Scope)
+    {
+        newScope ??= createScope(scope);
+
+        final oldScope:Scope = scope;
+
+        scope = newScope;
+
+        executeCode(newCode);
+
+        scope = oldScope;
+    }
+
     function executeCode(newCode:Code)
     {
         final oldCode:Code = code;
@@ -40,13 +54,14 @@ class BytecodeInterp extends BaseInterp
 
         code = newCode;
         ip = 0;
-        
+
         while (ip < instructions.length)
             eval(read());
 
         code = oldCode;
         ip = oldIP;
     }
+
 
     inline function read():Int
         return instructions[ip++];
@@ -67,8 +82,12 @@ class BytecodeInterp extends BaseInterp
             case IPush:
                 push(constant());
 
+
             case IVarDecl:
                 scope.define(constant(), pop(), constant(), constant(), constant());
+
+            case IFunctionDecl:
+                scope.define(constant(), pop(), PDefault, PNever);
 
 
             case IVar:
@@ -91,14 +110,30 @@ class BytecodeInterp extends BaseInterp
                 Reflect.callMethod(null, fn, args);
 
 
+            case IFunction:
+                var argCount:Int = constant();
+
+                final args:Array<FunctionArgument> = [];
+
+                while (argCount-- > 0)
+                    args.push({
+                        id: constant(),
+                        value: pop()
+                    });
+
+                final code:Code = constant();
+
+                push(Reflect.makeVarArgs(useArgs -> {
+                    final newScope:Scope = createScope(scope);
+
+                    for (i => arg in args)
+                        newScope.define(arg.id, useArgs[i] ?? arg.value);
+
+                    executeScopeCode(code, newScope);
+                }));
+
             case IBlock:
-                final oldScope:Scope = scope;
-
-                scope = newScope ?? createScope(scope);
-
-                executeCode(constant());
-
-                scope = oldScope;
+                executeScopeCode(constant());
 
 
             case IStructure:
@@ -110,6 +145,10 @@ class BytecodeInterp extends BaseInterp
                     Reflect.setField(res, constant(), pop());
 
                 push(res);
+
+
+            case null:
+                push(null);
 
             default:
         }

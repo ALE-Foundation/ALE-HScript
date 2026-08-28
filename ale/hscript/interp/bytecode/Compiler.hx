@@ -16,17 +16,36 @@ class Compiler
     public final constants:Array<Dynamic> = [];
     
     public function compile(source:Array<Expr>):Code
+        return compileCode(() -> {
+            for (expr in source)
+                emitExpr(expr);
+        });
+
+    function compileCode(func:Void -> Void, ?newCode:Code):Code
     {
-        code = new Code();
+        final oldCode:Code = code;
 
-        for (expr in source)
-            emitExpr(expr);
+        newCode ??= new Code();
 
-        return code;
+        code = newCode;
+
+        func();
+
+        code = oldCode;
+
+        return newCode;
     }
 
     function emitExpr(expr:Expr)
     {
+        if (expr == null)
+        {
+            emit(IPush);
+            emitConstant(null);
+         
+            return;
+        }
+
         switch (expr.type)
         {
             case EVarDecl(id, value, getter, setter, isFinal):
@@ -96,25 +115,38 @@ class Compiler
                 emitConstant(args.length);
 
 
-            /*
             case EFunction(args, block):
-            */
+                reverseEach(args, arg -> emitExpr(arg.value));
+
+                emit(IFunction);
+
+                emitConstant(args.length);
+
+                for (arg in args)
+                    emitConstant(arg.id);
+
+                emitConstant(switch (block.type)
+                {
+                    case EBlock(exprs):
+                        compileCode(() -> {
+                            for (expr in exprs)
+                                emitExpr(expr);
+                        });
+
+                    default:
+                        error(EInvalidExpression(block.type), block);
+
+                        null;
+                });
+
 
             case EBlock(exprs):
                 emit(IBlock);
 
-                final oldCode:Code = code;
-
-                final blockCode = new Code();
-
-                code = blockCode;
-
-                for (expr in exprs)
-                    emitExpr(expr);
-
-                code = oldCode;
-
-                emitConstant(blockCode);
+                emitConstant(compileCode(() -> {
+                    for (expr in exprs)
+                        emitExpr(expr);
+                }));
 
 
             case EString(str):
@@ -162,7 +194,11 @@ class Compiler
         code.instructions.push(type);
 
     function emitConstant(value:Dynamic)
-        code.instructions.push(addConstant(value));
+    {
+        code.constants.push(value);
+
+        code.instructions.push(code.constants.length - 1);
+    }
 
     function reverseEach<T>(arr:Array<T>, fn:T -> Void)
     {
@@ -177,13 +213,6 @@ class Compiler
         emit(IPush);
 
         emitConstant(value);
-    }
-
-    function addConstant(value:Dynamic):Int
-    {
-        code.constants.push(value);
-
-        return code.constants.length - 1;
     }
 
     inline function error(type:ErrorType, expr:Expr)

@@ -1,9 +1,5 @@
-var oso:String = 'oso';
+function oso(masha:String, ?tengo:String = 'hambre')
+    trace(masha, tengo);
 
-{
-    var oso:String = 'donde';
-    
-    trace(oso);
-}
-
-trace(oso);
+oso('donde');
+oso('donde', 'tuta');
