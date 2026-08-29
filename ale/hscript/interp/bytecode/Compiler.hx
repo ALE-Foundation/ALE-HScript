@@ -9,31 +9,19 @@ class Compiler
 {
     public function new() {}
 
-    var code:Code;
-
     public final instructions:Array<Int> = [];
 
     public final constants:Array<Dynamic> = [];
     
-    public function compile(source:Array<Expr>):Code
-        return compileCode(() -> {
-            for (expr in source)
-                emitExpr(expr);
-        });
-
-    function compileCode(func:Void -> Void, ?newCode:Code):Code
+    public function compile(source:Array<Expr>):Compiler
     {
-        final oldCode:Code = code;
+        instructions.resize(0);
+        constants.resize(0);
 
-        newCode ??= new Code();
+        for (expr in source)
+            emitExpr(expr);
 
-        code = newCode;
-
-        func();
-
-        code = oldCode;
-
-        return newCode;
+        return this;
     }
 
     function emitExpr(expr:Expr)
@@ -123,35 +111,32 @@ class Compiler
             case EFunction(args, block):
                 reverseEach(args, arg -> emitExpr(arg.value));
 
+                final jump:Int = emitJump();
+                final start:Int = instructions.length;
+
+                emitExpr(block);
+
+                emit(IExit);
+
+                patchJump(jump);
+
                 emit(IFunction);
+
+                emitConstant(start);
 
                 emitConstant(args.length);
 
                 for (arg in args)
                     emitConstant(arg.id);
 
-                emitConstant(switch (block.type)
-                {
-                    case EBlock(exprs):
-                        compileCode(() -> {
-                            for (expr in exprs)
-                                emitExpr(expr);
-                        });
-
-                    default:
-                        error(EInvalidExpression(block.type), block);
-
-                        null;
-                });
-
 
             case EBlock(exprs):
-                emit(IBlock);
+                emit(IEnterScope);
 
-                emitConstant(compileCode(() -> {
-                    for (expr in exprs)
-                        emitExpr(expr);
-                }));
+                for (expr in exprs)
+                    emitExpr(expr);
+
+                emit(IExitScope);
 
 
             case EString(str):
@@ -211,21 +196,56 @@ class Compiler
 
                 reverseEach(keys, key -> emitConstant(key));
 
+
+            case ERegex(val):
+                pushConstant(val);
+
+            case ETrue:
+                pushConstant(true);
+
+            case EFalse:
+                pushConstant(false);
+
+            case ENull:
+                pushConstant(null);
+
+
+            case EAssign(obj, value):
+                emitExpr(value);
+                emitExpr(obj);
+
+                emit(IAssign);
+
+
             case EEof:
+
 
             default:
                 error(EInvalidExpression(expr.type), expr);
         }
     }
 
-    function emit(type:Inst)
-        code.instructions.push(type);
-
-    function emitConstant(value:Dynamic)
+    function emitJump():Int
     {
-        code.constants.push(value);
+        emit(IJump);
 
-        code.instructions.push(code.constants.length - 1);
+        return emitConstant(null);
+    }
+
+    function patchJump(pos:Int)
+        constants[pos] = instructions.length;
+    
+
+    function emit(type:Inst)
+        instructions.push(type);
+
+    function emitConstant(value:Dynamic):Int
+    {
+        constants.push(value);
+
+        instructions.push(constants.length - 1);
+
+        return constants.length - 1;
     }
 
     function reverseEach<T>(arr:Array<T>, fn:T -> Void)

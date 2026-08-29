@@ -1,4 +1,10 @@
-trace([
-    'oso' => 10,
-    10 => 'donde'
-]['oso']);
+function oso(tengo:String, ?hambre:String = 'oso')
+    trace(tengo, hambre);
+
+oso('quiero leche');
+
+trace('me pica la cola');
+
+oso('oso', 'tengo hambre');
+
+trace('cuando nopor vi');

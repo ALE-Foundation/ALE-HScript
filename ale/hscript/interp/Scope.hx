@@ -6,7 +6,7 @@ import ale.hscript.parser.Property;
 
 class Scope
 {
-    var parent:Scope;
+    public var parent:Scope;
 
     public var variables:Map<String, Variable>;
 
