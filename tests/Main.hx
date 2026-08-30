@@ -22,31 +22,20 @@ class Main
 		#end
 
 		#if sys
-		var executed:Array<String> = [];
-
 		for (scr in FileSystem.readDirectory(Config.SCRIPT_PATH))
 			if (!scr.startsWith('.'))
 				if (scr.endsWith(Config.EXTENSION))
 				{
 					final name:String = scr.replace(Config.EXTENSION, '');
 
-					if (executed.contains(name))
+					if (FileSystem.exists(Config.SCRIPT_PATH + name + Config.COMPILED_EXTENSION))
 						continue;
 
-					executed.push(name);
-					
 					new Serializer(name).save();
 
 					new Script(name).safeExecute();
 				} else if (scr.endsWith(Config.COMPILED_EXTENSION)) {
-					final name:String = scr.replace(Config.COMPILED_EXTENSION, '');
-
-					if (executed.contains(name))
-						continue;
-
-					executed.push(name);
-					
-					new Script(name).safeExecute();
+					new Script(scr.replace(Config.COMPILED_EXTENSION, '')).safeExecute();
 				}
 		#end
 	}
