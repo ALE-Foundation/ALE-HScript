@@ -10,15 +10,22 @@ import haxe.ds.ObjectMap;
 
 class BytecodeInterp extends Interp
 {
-    var compiler:Compiler;
+    public function new(?name:String, ?superInstance:Dynamic)
+    {
+        super(name, superInstance);
+
+        scope.define('trace', Reflect.makeVarArgs(args -> haxe.Log.trace(args.join(','), null)));
+    }
+
+    var code:Code;
 
     var instructions(get, never):Array<Int>;
     inline function get_instructions():Array<Int>
-        return compiler.instructions;
+        return code.instructions;
 
     var constants(get, never):Array<Dynamic>;
     inline function get_constants():Array<Dynamic>
-        return compiler.constants;
+        return code.constants;
 
     var ip:Int;
 
@@ -26,13 +33,18 @@ class BytecodeInterp extends Interp
 
     var callStack:GenericStack<CallFrame>;
 
-    override function init()
-        scope.define('trace', Reflect.makeVarArgs(args -> haxe.Log.trace(args.join(','), null)));
-
     public function execute(exprs:Array<Expr>):Dynamic
     {
-        compiler = new Compiler().compile(exprs);
-        
+        code = new Compiler().compile(exprs);
+
+        return interpret();
+    }
+
+    public function interpret(?code:Code):Dynamic
+    {
+        if (code != null)
+            this.code = code;
+
         ip = 0;
         stack = [];
         callStack = new GenericStack<CallFrame>();

@@ -1,9 +1,13 @@
 package ale.hscript;
 
+import haxe.io.Bytes;
+
 class Config
 {
     public static var FILE_CHECKER:String -> Bool = Defaults.FILE_CHECKER;
-    public static var FILE_READER:String -> String = Defaults.FILE_READER;
+    
+    public static var CONTENT_READER:String -> String = Defaults.CONTENT_READER;
+    public static var BYTES_READER:String -> Bytes = Defaults.BYTES_READER;
     
     public static var IMPORTS:Array<Class<Dynamic>> = Defaults.IMPORTS;
     public static var ABSTRACTS:Array<String> = Defaults.ABSTRACTS;
@@ -24,7 +28,9 @@ class Config
     public static function reset()
     {
         FILE_CHECKER = Defaults.FILE_CHECKER;
-        FILE_READER = Defaults.FILE_READER;
+
+        CONTENT_READER = Defaults.CONTENT_READER;
+        BYTES_READER = Defaults.BYTES_READER;
 
         IMPORTS = Defaults.IMPORTS;
         ABSTRACTS = Defaults.ABSTRACTS;
@@ -32,6 +38,7 @@ class Config
         VARIABLES = Defaults.VARIABLES;
 
         EXTENSION = Defaults.EXTENSION;
+        COMPILED_EXTENSION = Defaults.COMPILED_EXTENSION;
 
         SCRIPT_PATH = Defaults.SCRIPT_PATH;
         MODULE_PATH = Defaults.MODULE_PATH;

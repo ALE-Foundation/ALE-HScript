@@ -1,8 +1,8 @@
 package ale.hscript.serialization;
 
 import ale.hscript.bytecode.Compiler;
+import ale.hscript.bytecode.Code;
 
-import ale.hscript.parser.Property;
 import ale.hscript.parser.Parser;
 
 import ale.hscript.lexer.Lexer;
@@ -22,32 +22,32 @@ class Serializer
 
     public function new(script:String, ?name:String)
     {
-        final data = Util.resolveScript(script, name);
+        final data = Util.resolveSourceData(script, name);
 
         this.source = data.source;
         this.name = data.name;
         this.compiledPath = data.compiledPath;
     }
 
-    var compiler:Compiler;
+    var code:Code;
 
     public function compile()
-        compiler = new Compiler().compile(new Parser(new Lexer(source).tokenize()).parse());
+        code = new Compiler().compile(new Parser(new Lexer(source).tokenize()).parse());
 
     var bytes:Bytes;
 
     public function serialize()
     {
-        if (compiler == null)
+        if (code == null)
             compile();
 
         final buffer:BytesBuffer = new BytesBuffer();
 
         buffer.addString('ALEHXC');
 
-        buffer.addInt32(compiler.constants.length);
+        buffer.addInt32(code.constants.length);
 
-        for (const in compiler.constants)
+        for (const in code.constants)
             switch (Type.typeof(const))
             {
                 case TNull:
@@ -77,9 +77,9 @@ class Serializer
                     throw 'Unsupported constant type';
             }
 
-        buffer.addInt32(compiler.instructions.length);
+        buffer.addInt32(code.instructions.length);
 
-        for (inst in compiler.instructions)
+        for (inst in code.instructions)
             buffer.addInt32(inst);
 
         bytes = buffer.getBytes();

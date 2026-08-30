@@ -13,7 +13,7 @@ class Compiler
 
     public final constants:Array<Dynamic> = [];
     
-    public function compile(source:Array<Expr>):Compiler
+    public function compile(source:Array<Expr>):Code
     {
         instructions.resize(0);
         constants.resize(0);
@@ -21,7 +21,10 @@ class Compiler
         for (expr in source)
             emitExpr(expr);
 
-        return this;
+        return {
+            instructions: instructions,
+            constants: constants
+        };
     }
 
     function emitExpr(expr:Expr)

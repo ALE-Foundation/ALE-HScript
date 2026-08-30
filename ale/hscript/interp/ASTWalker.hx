@@ -15,6 +15,7 @@ import haxe.ds.ObjectMap;
 
 import haxe.Log;
 
+@:deprecated
 class ASTWalker extends Interp
 {
     public function execute(exprs:Array<Expr>):Dynamic

@@ -66,12 +66,8 @@ abstract class Interp
 
         for (key => val in Config.VARIABLES)
             variables.define(key, val);
-
-        init();
     }
 
-    function init() {}
-    
 
     abstract public function execute(exprs:Array<Expr>):Dynamic;
 

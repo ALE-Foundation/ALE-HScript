@@ -1,6 +1,6 @@
 package ale.hscript.parser;
 
-enum abstract Property(Int) from Int to Int
+enum abstract Property(Null<Int>) from Null<Int> to Null<Int>
 {
     var PNull;
     var PDefault;

@@ -19,12 +19,17 @@ class Main
 
 		#if sys
 		for (scr in sys.FileSystem.readDirectory(Config.SCRIPT_PATH))
-			if (!scr.startsWith('.') && scr.endsWith(Config.EXTENSION))
-			{
-				final name:String = scr.replace(Config.EXTENSION, '');
+			if (!scr.startsWith('.'))
+				if (scr.endsWith(Config.EXTENSION))
+				{
+					final name:String = scr.replace(Config.EXTENSION, '');
+					
+					new Serializer(name).save();
 
-				new Serializer(name).save();
-			}
+					new Script(name).safeExecute();
+				} else if (scr.endsWith(Config.COMPILED_EXTENSION)) {
+					new Script(scr.replace(Config.COMPILED_EXTENSION, '')).execute();
+				}
 		#end
 	}
 }

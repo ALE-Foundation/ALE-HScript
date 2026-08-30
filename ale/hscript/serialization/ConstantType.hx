@@ -7,5 +7,4 @@ enum abstract ConstantType(Int) from Int to Int
     var CInt;
     var CFloat;
     var CString;
-    var CProperty;
 }
