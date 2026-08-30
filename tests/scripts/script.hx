@@ -23,9 +23,28 @@ typedef Masha = {
     leche:Int
 }
 
-
 // EAlias
 
 typedef Alias = Math;
 
 trace(Alias.sin(10));
+
+// EVar
+
+var oso:String = 'masha';
+
+trace(oso);
+
+// EField
+
+var oso:String = 'osooo';
+
+trace(oso.length);
+
+// EType
+
+trace(haxe.ds.ObjectMap);
+
+// EArrayAccess
+
+trace('leche de oso'.split(' ')[2]);
