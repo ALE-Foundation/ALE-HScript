@@ -1,27 +1,27 @@
 package ale.hscript;
 
+import ale.hscript.interp.ASTWalker;
+
+import ale.hscript.utils.Util;
+
 import ale.hscript.lexer.*;
 import ale.hscript.parser.*;
 import ale.hscript.interp.*;
 
-import ale.hscript.interp.ast.ASTWalker;
-
 class Script
 {
-    public final content:String;
+    public final source:String;
 
-    public final interp:BaseInterp;
+    public final interp:Interp;
 
-    public function new(script:String, ?name:String, ?interp:BaseInterp, ?superInstance:Dynamic, ?context:Dynamic)
+    public function new(script:String, ?name:String, ?interp:Interp, ?superInstance:Dynamic, ?context:Dynamic)
     {
-        final path:String = Config.SCRIPT_PATH + script + Config.EXTENSION;
+        final data = Util.resolveScript(script, name);
 
-        final isFile:Bool = Config.FILE_CHECKER != null && Config.FILE_CHECKER(path);
-
-        content = isFile ? Config.FILE_READER(path) : script;
+        source = data.source;
 
         interp ??= new ASTWalker();
-        interp.name ??= (name ?? (isFile ? script : Config.SCRIPT_NAME)) + Config.EXTENSION;
+        interp.name ??= data.name;
         interp.superInstance ??= superInstance;
 
         this.interp = interp;
@@ -42,7 +42,7 @@ class Script
     }
 
     public function execute():Dynamic      
-        return interp.execute(new Parser(new Lexer(content).tokenize()).parse());
+        return interp.execute(new Parser(new Lexer(source).tokenize()).parse());
 
     public var failedExecution(default, null):Bool = false;
 

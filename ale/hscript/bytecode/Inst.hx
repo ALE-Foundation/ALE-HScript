@@ -1,4 +1,4 @@
-package ale.hscript.interp.bytecode;
+package ale.hscript.bytecode;
 
 enum abstract Inst(Null<Int>) from Null<Int> to Null<Int>
 {

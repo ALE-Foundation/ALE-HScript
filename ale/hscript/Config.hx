@@ -11,6 +11,7 @@ class Config
     public static var VARIABLES:Map<String, Dynamic> = Defaults.VARIABLES;
     
     public static var EXTENSION:String = Defaults.EXTENSION;
+    public static var COMPILED_EXTENSION:String = Defaults.COMPILED_EXTENSION;
 
     public static var SCRIPT_PATH:String = Defaults.SCRIPT_PATH;
     public static var MODULE_PATH:String = Defaults.MODULE_PATH;

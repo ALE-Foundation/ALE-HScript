@@ -1,4 +1,4 @@
-package ale.hscript.interp.ast;
+package ale.hscript.interp;
 
 import ale.hscript.interp.*;
 
@@ -15,7 +15,7 @@ import haxe.ds.ObjectMap;
 
 import haxe.Log;
 
-class ASTWalker extends BaseInterp
+class ASTWalker extends Interp
 {
     public function execute(exprs:Array<Expr>):Dynamic
     {

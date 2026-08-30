@@ -10,7 +10,7 @@ import ale.hscript.macros.EnumsMacro;
 
 import ale.hscript.errors.ErrorType;
 
-abstract class BaseInterp
+abstract class Interp
 {
     public var name:String;
 

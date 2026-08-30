@@ -37,6 +37,7 @@ class Defaults
     public static final VARIABLES:Map<String, Dynamic> = [];
 
     public static final EXTENSION:String = '.hx';
+    public static final COMPILED_EXTENSION:String = '.hxc';
 
     public static final SCRIPT_PATH:String = 'scripts/';
     public static final MODULE_PATH:String = 'classes/';

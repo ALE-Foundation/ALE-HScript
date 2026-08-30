@@ -1,14 +1,14 @@
-package ale.hscript.interp.bytecode;
+package ale.hscript.interp;
 
 import ale.hscript.parser.Expr;
 
-import ale.hscript.interp.*;
+import ale.hscript.bytecode.*;
 
 import haxe.Constraints.IMap;
 import haxe.ds.GenericStack;
 import haxe.ds.ObjectMap;
 
-class BytecodeInterp extends BaseInterp
+class BytecodeInterp extends Interp
 {
     var compiler:Compiler;
 

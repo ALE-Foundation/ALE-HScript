@@ -1,10 +1,10 @@
 package ale.hscript.parser;
 
-enum Property
+enum abstract Property(Int) from Int to Int
 {
-    PNull;
-    PDefault;
-    PNever;
-    PGet;
-    PSet;
+    var PNull;
+    var PDefault;
+    var PNever;
+    var PGet;
+    var PSet;
 }

@@ -1,5 +1,7 @@
+var oso(never, never):String = 10;
+
 function oso(tengo:String, ?hambre:String = 'oso')
-    trace(tengo, hambre);
+    trace(tengo, hambre, oso);
 
 oso('quiero leche');
 

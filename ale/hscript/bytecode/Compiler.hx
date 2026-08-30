@@ -1,4 +1,4 @@
-package ale.hscript.interp.bytecode;
+package ale.hscript.bytecode;
 
 import ale.hscript.errors.ErrorType;
 import ale.hscript.errors.Error;

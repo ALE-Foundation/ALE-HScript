@@ -1,4 +1,4 @@
-package ale.hscript.interp.bytecode;
+package ale.hscript.bytecode;
 
 typedef FunctionArgument = {
     id:String,
