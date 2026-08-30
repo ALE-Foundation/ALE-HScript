@@ -68,16 +68,15 @@ class Parser
     var allowPackage:Bool = true;
     var allowImports:Bool = true;
     var allowUsings:Bool = true;
+    var allowTypedefs:Bool = true;
     
     function parseStatement():Expr
     {
         final cur:Token = peek();
 
-        if (allowPackage && check(TPackage))
+        if (allowPackage && match(TPackage))
         {
             allowPackage = false;
-
-            advance();
 
             final str:StringBuf = new StringBuf();
 
@@ -96,10 +95,8 @@ class Parser
 
         allowPackage = false;
 
-        if (allowImports && check(TImport))
+        if (allowImports && match(TImport))
         {
-            advance();
-
             final str:StringBuf = new StringBuf();
 
             while (!end() && !check(TStar))
@@ -126,12 +123,8 @@ class Parser
 
         allowImports = false;
 
-        if (allowUsings && check(TUsing))
-        {
-            advance();
-
+        if (allowUsings && match(TUsing))
             return fastExpr(EUsing(parseType()), cur);
-        }
 
         allowUsings = false;
 
@@ -664,6 +657,13 @@ class Parser
 
             case TIdent(id):
                 advance();
+
+                if (check(TArrow))
+                {
+                    advance();
+
+                    return fastExpr(EFunction([{id: id, value: null}], parseBody(false)), cur);
+                }
 
                 final typeRes:StringBuf = new StringBuf();
 

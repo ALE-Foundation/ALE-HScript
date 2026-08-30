@@ -28,7 +28,7 @@ class Lexer
         {
             var cur:Int = peek();
 
-            if (isSpace(cur))
+            if (readingString == null && isSpace(cur))
             {
                 advance();
 

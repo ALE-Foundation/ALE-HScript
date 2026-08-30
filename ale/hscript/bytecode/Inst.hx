@@ -4,7 +4,6 @@ enum abstract Inst(Null<Int>) from Null<Int> to Null<Int>
 {
     var IPush;
     var IJump;
-    var IExit;
 
     var IVarDecl;
     var IFunctionDecl;

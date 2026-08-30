@@ -35,7 +35,7 @@ class Main
 
 					executed.push(name);
 
-					new Serializer(name).save();
+					// new Serializer(name).save();
 
 					new Script(name).safeExecute();
 				} else if (scr.endsWith(Config.COMPILED_EXTENSION)) {
