@@ -4,6 +4,8 @@ enum abstract Inst(Null<Int>) from Null<Int> to Null<Int>
 {
     var IPush;
     var IJump;
+    var IEnterScope;
+    var IExitScope;
 
     var IVarDecl;
     var IFunctionDecl;
@@ -19,9 +21,6 @@ enum abstract Inst(Null<Int>) from Null<Int> to Null<Int>
     var INew;
 
     var IFunction;
-
-    var IEnterScope;
-    var IExitScope;
     
     var IInterpolatedString;
 
@@ -51,7 +50,6 @@ enum abstract Inst(Null<Int>) from Null<Int> to Null<Int>
     var IBreak;
 
     var ICast;
-
 
     var IPackage;
     var IImport;

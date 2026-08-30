@@ -39,6 +39,81 @@ class Compiler
 
         switch (expr.type)
         {
+            case EVarDecl(id, value, getter, setter, isFinal):
+                emitExpr(value);
+
+                emit(IVarDecl);
+
+                emitConstant(id);
+                emitConstant(getter);
+                emitConstant(setter);
+                emitConstant(isFinal);
+
+            case EFunctionDecl(id, value):
+                emitExpr(value);
+
+                emit(IFunctionDecl);
+
+                emitConstant(id);
+
+
+            case EVar(id):
+                emit(IVar);
+
+                emitConstant(id);
+
+
+            case EFunction(args, body):
+                reverseEach(args, arg -> emitExpr(arg.value));
+
+                final jump:Int = emitJump();
+
+                final start:Int = instructions.length;
+
+                emitExpr(body);
+
+                emitJumpExit();
+
+                patchJump(jump);
+
+                emit(IFunction);
+
+                emitConstant(args.length);
+
+                for (arg in args)
+                    emitConstant(arg.id);
+
+                emitConstant(start);
+
+            case EBlock(exprs):
+                emit(IEnterScope);
+
+                for (expr in exprs)
+                    emitExpr(expr);
+
+                emit(IExitScope);
+
+
+            case ECall(obj, args):
+                emitArray(args);
+
+                emitExpr(obj);
+
+                emit(ICall);
+
+                emitConstant(args.length);
+
+
+            case EString(str):
+                pushConstant(str);
+
+            case ENumber(num):
+                pushConstant(num);
+
+            case ENull:
+                pushConstant(null);
+            
+
             case EEof:
 
             default:
@@ -51,6 +126,13 @@ class Compiler
         emit(IJump);
 
         return emitConstant(null);
+    }
+
+    function emitJumpExit()
+    {
+        emitExpr(null);
+
+        emit(IReturn);
     }
 
     function patchJump(pos:Int)
@@ -68,6 +150,10 @@ class Compiler
 
         return constants.length - 1;
     }
+
+    inline function emitArray(arr:Array<Expr>)
+        reverseEach(arr, expr -> emitExpr(expr));
+        
 
     function reverseEach<T>(arr:Array<T>, fn:T -> Void)
     {
