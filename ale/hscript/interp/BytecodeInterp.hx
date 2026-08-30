@@ -112,8 +112,33 @@ class BytecodeInterp extends Interp
                 scope.define(constant(), pop(), null, PNever, false);
 
 
+            case IAlias:
+                imports[constant()] = pop();
+            
+
             case IVar:
-                push(scope.get(constant()));
+                final id:String = constant();
+
+                push(try
+                {
+                    scope.get(id);
+                } catch(e:ErrorType) {
+                    if (superExists(id))
+                        Reflect.getProperty(superInstance, id);
+                    else if (imports.exists(id))
+                        imports[id];
+                    else {
+                        throw e;
+
+                        null;
+                    }
+                });
+
+            case IField:
+                push(Reflect.getProperty(pop(), constant()));
+
+            case IType:
+                push(resolveType(constant()));
 
             
             case IFunction:

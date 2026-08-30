@@ -14,3 +14,18 @@ oso('a');
 oso('a', 'b');
 oso('a', null, 20);
 oso('a', 'b', 20);
+
+
+// ETypedef
+
+typedef Masha = {
+    ?id:String,
+    leche:Int
+}
+
+
+// EAlias
+
+typedef Alias = Math;
+
+trace(Alias.sin(10));

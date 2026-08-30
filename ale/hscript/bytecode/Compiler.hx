@@ -57,10 +57,33 @@ class Compiler
                 emitConstant(id);
 
 
+            case ETypedef(_, _):
+
+            
+            case EAlias(id, type):
+                emitExpr(type);
+
+                emit(IAlias);
+
+                emitConstant(id);
+
+
             case EVar(id):
                 emit(IVar);
 
                 emitConstant(id);
+
+            case EField(obj, prop):
+                emitExpr(obj);
+
+                emit(IField);
+
+                emitConstant(prop);
+
+            case EType(module):
+                emit(IType);
+
+                emitConstant(module);
 
 
             case EFunction(args, body):
