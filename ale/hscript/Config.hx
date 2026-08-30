@@ -9,6 +9,8 @@ class Config
     public static var CONTENT_READER:String -> String = Defaults.CONTENT_READER;
     public static var BYTES_READER:String -> Bytes = Defaults.BYTES_READER;
     
+    public static var BYTES_WRITER:String -> Bytes -> Void = Defaults.BYTES_WRITER;
+
     public static var IMPORTS:Array<Class<Dynamic>> = Defaults.IMPORTS;
     public static var ABSTRACTS:Array<String> = Defaults.ABSTRACTS;
     public static var TYPEDEFS:Map<String, Class<Dynamic>> = Defaults.TYPEDEFS;
@@ -31,6 +33,8 @@ class Config
 
         CONTENT_READER = Defaults.CONTENT_READER;
         BYTES_READER = Defaults.BYTES_READER;
+
+        BYTES_WRITER = Defaults.BYTES_WRITER;
 
         IMPORTS = Defaults.IMPORTS;
         ABSTRACTS = Defaults.ABSTRACTS;

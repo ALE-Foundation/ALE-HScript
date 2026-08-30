@@ -9,6 +9,8 @@ import ale.hscript.lexer.Lexer;
 
 import ale.hscript.utils.Util;
 
+import ale.hscript.Config;
+
 import haxe.io.BytesBuffer;
 import haxe.io.Bytes;
 

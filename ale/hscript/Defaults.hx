@@ -22,6 +22,8 @@ class Defaults
     static final CONTENT_READER:String -> String = #if sys File.getContent #else null #end ;
     static final BYTES_READER:String -> Bytes = #if sys File.getBytes #else null #end ;
 
+    static final BYTES_WRITER:String -> Bytes -> Void = #if sys File.saveBytes #else null #end ;
+
     static final IMPORTS:Array<Class<Dynamic>> = [
         Array,
         Date,
