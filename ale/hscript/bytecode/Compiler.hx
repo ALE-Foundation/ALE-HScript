@@ -85,6 +85,31 @@ class Compiler
 
                 emitConstant(module);
 
+            case EArrayAccess(obj, key):
+                emitExpr(key);
+                emitExpr(obj);
+
+                emit(IArrayAccess);
+
+
+            case ECall(obj, args):
+                emitArray(args);
+
+                emitExpr(obj);
+
+                emit(ICall);
+
+                emitConstant(args.length);
+
+            case ENew(cls, args):
+                emitArray(args);
+
+                emitExpr(cls);
+
+                emit(INew);
+
+                emitConstant(args.length);
+
 
             case EFunction(args, body):
                 reverseEach(args, arg -> emitExpr(arg.value));
@@ -116,15 +141,11 @@ class Compiler
 
                 emit(IExitScope);
 
+            
+            case EReturn(val):
+                emitExpr(val);
 
-            case ECall(obj, args):
-                emitArray(args);
-
-                emitExpr(obj);
-
-                emit(ICall);
-
-                emitConstant(args.length);
+                emit(IReturn);
 
 
             case EString(str):

@@ -140,6 +140,19 @@ class BytecodeInterp extends Interp
             case IType:
                 push(resolveType(constant()));
 
+            case IArrayAccess:
+                final obj:Dynamic = pop();
+                final key:Dynamic = pop();
+
+                push(obj is Array ? obj[key] : obj is IMap ? obj.get(key) : null);
+
+
+            case ICall:
+                push(Reflect.callMethod(null, pop(), array()));
+
+            case INew:
+                push(Type.createInstance(pop(), array()));
+
             
             case IFunction:
                 var count:Int = constant();
@@ -166,10 +179,6 @@ class BytecodeInterp extends Interp
 
                     ip = start;
                 }));
-
-
-            case ICall:
-                push(Reflect.callMethod(null, pop(), array()));
 
 
             case IReturn:

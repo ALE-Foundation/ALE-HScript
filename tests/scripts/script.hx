@@ -48,3 +48,20 @@ trace(haxe.ds.ObjectMap);
 // EArrayAccess
 
 trace('leche de oso'.split(' ')[2]);
+
+// ECall
+
+trace(Date.now());
+
+// ENew
+
+trace(new Date(2026, 11, 25, 0, 0, 0));
+
+// EFunction
+
+function oso(func:Void -> String)
+{
+    trace(func(), func, func());
+}
+
+oso(() -> 'donde');

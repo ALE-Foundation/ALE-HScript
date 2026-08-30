@@ -16,8 +16,10 @@ enum abstract Inst(Null<Int>) from Null<Int> to Null<Int>
     var IVar;
     var IField;
     var IType;
+    var IArrayAccess;
 
     var ICall;
+    var INew;
 
     var IFunction;
 
