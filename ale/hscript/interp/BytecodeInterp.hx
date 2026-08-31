@@ -219,6 +219,31 @@ class BytecodeInterp extends Interp
 
                 push(res);
 
+            
+            case IAssign:
+                push(scope.set(constant(), pop()));
+
+            case IFieldAssign:
+                final obj:Dynamic = pop();
+                final value:Dynamic = pop();
+
+                Reflect.setProperty(obj, constant(), value);
+
+                push(value);
+
+            case IArrayAssign:
+                final obj:Dynamic = pop();
+                final key:Dynamic = pop();
+                final value:Dynamic = pop();
+
+                if (obj is Array)
+                    obj[key] = value;
+                else if (obj is IMap)
+                    obj.set(key, value);
+
+                push(value);
+
+
             case IReturn:
                 restoreFromCallStack();
 

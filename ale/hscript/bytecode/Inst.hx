@@ -29,5 +29,9 @@ enum abstract Inst(Null<Int>) from Null<Int> to Null<Int>
     var IMap;
     var IStructure;
 
+    var IAssign;
+    var IFieldAssign;
+    var IArrayAssign;
+
     var IReturn;
 }

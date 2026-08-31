@@ -215,6 +215,34 @@ class Compiler
             case ENull:
                 pushConstant(null);
 
+
+            case EAssign(obj, value):
+                emitExpr(value);
+                
+                switch (obj.type)
+                {
+                    case EVar(id):
+                        emit(IAssign);
+
+                        emitConstant(id);
+
+                    case EField(obj, prop):
+                        emitExpr(obj);
+
+                        emit(IFieldAssign);
+
+                        emitConstant(prop);
+
+                    case EArrayAccess(obj, key):
+                        emitExpr(key);
+                        emitExpr(obj);
+
+                        emit(IArrayAssign);
+
+                    default:
+                        error(EInvalidAssignment, expr);
+                }
+
             
             case EReturn(val):
                 emitExpr(val);

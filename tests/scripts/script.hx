@@ -144,3 +144,34 @@ trace(false);
 // ENull
 
 trace(null);
+
+// EAssign
+
+var oso:String = 'oso';
+
+oso = 'donde';
+
+trace(oso);
+
+
+final masha:Array<String> = ['tengo', 'hambre', 'oso'];
+
+masha[0] = 'quiero';
+masha[1] = 'leche';
+
+trace(masha);
+
+
+final leche:Dynamic = {
+    oh: {
+        masha: {
+            yo: 'te',
+            puedo: 'da',
+            leche: {}
+        }
+    }
+};
+
+leche.oh.masha.leche = 'tengo mucha leche para tí';
+
+trace(leche);
