@@ -123,3 +123,24 @@ trace({
     },
     la: 'radio'
 });
+
+// ERegex
+
+final mailReg:EReg = ~/^[\w.+-]+@[\w-]+\.[\w.-]+$/;
+
+trace(mailReg.match('pollitoenlaradio@gmail.com'));
+trace(mailReg.match('los@pollitos'));
+
+trace("hola,123,mundo,456,Haxe,789".split(",").filter(s -> ~/^[0-9]+$/.match(s)));
+
+// ETrue
+
+trace(true);
+
+// EFalse
+
+trace(false);
+
+// ENull
+
+trace(null);

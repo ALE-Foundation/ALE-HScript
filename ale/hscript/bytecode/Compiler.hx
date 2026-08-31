@@ -31,8 +31,7 @@ class Compiler
     {
         if (expr == null)
         {
-            emit(IPush);
-            emitConstant(null);
+            pushConstant(null);
          
             return;
         }
@@ -202,15 +201,25 @@ class Compiler
                 for (key in keys)
                     emitConstant(key);
 
+
+            case ERegex(reg):
+                pushConstant(reg);
+
+
+            case ETrue:
+                pushConstant(true);
+
+            case EFalse:
+                pushConstant(false);
+
+            case ENull:
+                pushConstant(null);
+
             
             case EReturn(val):
                 emitExpr(val);
 
                 emit(IReturn);
-
-
-            case ENull:
-                pushConstant(null);
             
 
             case EEof:
