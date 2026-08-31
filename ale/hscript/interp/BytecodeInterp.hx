@@ -166,6 +166,7 @@ class BytecodeInterp extends Interp
                     });
 
                 final start:Int = constant();
+                final end:Int = constant();
 
                 final curScope:Scope = scope;
 
@@ -178,6 +179,11 @@ class BytecodeInterp extends Interp
                         scope.define(arg.id, uArgs[index] ?? arg.value);
 
                     ip = start;
+
+                    while (ip < end)
+                        eval(read());
+
+                    return pop();
                 }));
 
 

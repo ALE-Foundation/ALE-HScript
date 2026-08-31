@@ -124,6 +124,8 @@ class Compiler
 
                 patchJump(jump);
 
+                final end:Int = instructions.length;
+
                 emit(IFunction);
 
                 emitConstant(args.length);
@@ -132,6 +134,7 @@ class Compiler
                     emitConstant(arg.id);
 
                 emitConstant(start);
+                emitConstant(end);
 
             case EBlock(exprs):
                 emit(IEnterScope);
