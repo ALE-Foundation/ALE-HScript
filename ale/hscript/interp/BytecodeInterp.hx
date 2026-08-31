@@ -248,6 +248,32 @@ class BytecodeInterp extends Interp
                 restoreFromCallStack();
 
 
+            case ICast:
+                final obj:Dynamic = pop();
+                final type:Dynamic = pop();
+
+                push(type == null ? obj : Std.downcast(obj, type));
+
+                
+            case IPackage:
+                softPackage = constant();
+                
+            case IImport:
+                final alias:Null<String> = constant();
+                final module:String = constant();
+
+                imports[alias ?? module.split('.').pop()] = resolveType(module, false);
+
+            case IPackageImport:
+                final module:String = constant();
+
+                for (type in TypeListMacro.list[module])
+                    imports[type] = Type.resolveClass(module + '.' + type);
+
+            case IUsing:
+                usings.push(pop());
+
+
             case null:
                 push(null);
 

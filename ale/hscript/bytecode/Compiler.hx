@@ -248,9 +248,39 @@ class Compiler
                 emitExpr(val);
 
                 emit(IReturn);
-            
+
+
+            case ECast(obj, type):
+                emitExpr(type);
+                emitExpr(obj);
+
+                emit(ICast);
+
+
+            case EPackage(module):
+                emit(IPackage);
+
+                emitConstant(module);
+
+            case EImport(module, alias):
+                emit(IImport);
+
+                emitConstant(alias);
+                emitConstant(module);
+
+            case EPackageImport(module):
+                emit(IPackageImport);
+
+                emitConstant(module);
+
+            case EUsing(module):
+                emitExpr(module);
+
+                emit(IUsing);
+
 
             case EEof:
+
 
             default:
                 error(EInvalidExpression(expr.type), expr);

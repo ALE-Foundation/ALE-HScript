@@ -1,3 +1,20 @@
+// EPackage
+
+package haxe.io;
+
+// EImport
+
+import haxe.ds.StringMap as OsoMap;
+import haxe.ds.IntMap;
+
+// EPackageImport
+
+import ale.hscript.*;
+
+// EUsing
+
+using StringTools;
+
 // EVarDecl
 
 var oso:String = 'oso';
@@ -175,3 +192,10 @@ final leche:Dynamic = {
 leche.oh.masha.leche = 'tengo mucha leche para tí';
 
 trace(leche);
+
+// ECast
+
+final oso:String = cast 67;
+
+trace(cast(67, Int));
+

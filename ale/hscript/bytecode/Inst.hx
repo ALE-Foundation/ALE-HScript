@@ -34,4 +34,11 @@ enum abstract Inst(Null<Int>) from Null<Int> to Null<Int>
     var IArrayAssign;
 
     var IReturn;
+
+    var ICast;
+
+    var IPackage;
+    var IImport;
+    var IPackageImport;
+    var IUsing;
 }
