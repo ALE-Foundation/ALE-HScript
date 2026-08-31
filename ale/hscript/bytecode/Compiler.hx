@@ -144,18 +144,70 @@ class Compiler
 
                 emit(IExitScope);
 
+
+            case EString(str):
+                pushConstant(str);
+
+            case EInterpolatedString(parts):
+                emitArray(parts);
+
+                emit(IInterpolatedString);
+
+                emitConstant(parts.length);
+
+            case ENumber(num):
+                pushConstant(num);
+
+
+            case EArray(members):
+                emitArray(members);
+
+                emit(IArray);
+
+                emitConstant(members.length);
+
+            case EMap(members):
+                var count:Int = 0;
+
+                for (key => val in members)
+                {
+                    emitExpr(val);
+                    emitExpr(key);
+
+                    count++;
+                }
+
+                emit(IMap);
+
+                emitConstant(count);
+
+            case EStructure(values):
+                var keys:Array<String> = [];
+
+                var count:Int = 0;
+
+                for (key => value in values)
+                {
+                    keys.unshift(key);
+
+                    emitExpr(value);
+
+                    count++;
+                }
+
+                emit(IStructure);
+
+                emitConstant(count);
+
+                for (key in keys)
+                    emitConstant(key);
+
             
             case EReturn(val):
                 emitExpr(val);
 
                 emit(IReturn);
 
-
-            case EString(str):
-                pushConstant(str);
-
-            case ENumber(num):
-                pushConstant(num);
 
             case ENull:
                 pushConstant(null);

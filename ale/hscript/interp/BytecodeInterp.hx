@@ -186,6 +186,38 @@ class BytecodeInterp extends Interp
                     return pop();
                 }));
 
+            
+            case IInterpolatedString:
+                final buffer:StringBuf = new StringBuf();
+
+                for (part in array())
+                    buffer.add(part);
+
+                push(buffer.toString());
+
+
+            case IArray:
+                push(array());
+
+            case IMap:
+                final map:ObjectMap<Dynamic, Dynamic> = new ObjectMap<Dynamic, Dynamic>();
+
+                var count:Int = constant();
+
+                while (count-- > 0)
+                    map.set(pop(), pop());
+
+                push(map);
+
+            case IStructure:
+                final res:Dynamic = {};
+
+                var count:Int = constant();
+
+                while (count-- > 0)
+                    Reflect.setField(res, constant(), pop());
+
+                push(res);
 
             case IReturn:
                 restoreFromCallStack();

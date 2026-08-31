@@ -65,3 +65,61 @@ function oso(func:Void -> String)
 }
 
 oso(() -> 'donde');
+
+// EBlock
+
+var oso:Int = 10;
+
+{
+    trace(oso);
+
+    var oso:Int = 25;
+
+    trace(oso);
+}
+
+trace(oso);
+
+// EString
+
+trace('oso donde tu ta oso');
+
+// EInterpolatedString
+
+trace('en ${'la'} radio ${Math.sin(0.5)}');
+
+// ENumber
+
+trace(0xFF10);
+trace(100.0);
+trace(25.105);
+trace(10e-5);
+trace(10e5);
+
+// EArray
+
+trace([10, 20, 30, 40, 'ola']);
+
+// EArrayComprehension
+
+// EMap
+
+trace([
+    'el raton' => 'sni',
+    'barbie' => 'oh',
+    'el gorila' => 10,
+    'el burro' => Date.now()
+]);
+
+// EStructure
+
+trace({
+    en: {
+        hay: {
+            un: {
+                pollito: 'pio pio'
+            }
+        }
+    },
+    la: 'radio'
+});
