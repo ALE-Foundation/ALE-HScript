@@ -1,5 +1,3 @@
-
-/*
 // EPackage
 
 package haxe.io;
@@ -201,11 +199,8 @@ final oso:String = cast 67;
 
 trace(cast(67, Int));
 
-*/
-
 // EBinOp
 
-/*
 final oso:Int = 10;
 
 trace(7 % 5);
@@ -222,29 +217,25 @@ trace(10 >>> 2);
 trace(12 & 10);
 trace(12 | 10);
 trace(12 ^ 10);
-*/
 
-function oso()
-{
-    trace('donde');
+trace(false || true);
 
-    return true;
-}
-
-final oso = true && oso();
-
-trace(oso);
-
-// trace(false || true);
-
-/*
 function tung():Dynamic
 {
-    trace('osooo');
+    trace('masha');
 
     return 'oso';
 }
 
 trace(null ?? tung());
 trace(10 ?? tung());
-*/
+
+function tung():Bool
+{
+    trace('masha');
+
+    return true;
+}
+
+trace(true || tung());
+trace(false || tung());

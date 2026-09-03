@@ -88,7 +88,7 @@ class BytecodeInterp extends Interp
         final res:Array<Dynamic> = [];
 
         while (count-- > 0)
-            res.push(pop());
+            res.unshift(pop());
 
         return res;
     }
@@ -184,8 +184,8 @@ class BytecodeInterp extends Interp
                 push(resolveType(constant()));
 
             case IArrayAccess:
-                final obj:Dynamic = pop();
                 final key:Dynamic = pop();
+                final obj:Dynamic = pop();
 
                 push(obj is Array ? obj[key] : obj is IMap ? obj.get(key) : null);
 
@@ -203,7 +203,7 @@ class BytecodeInterp extends Interp
                 final args:Array<FunctionArgument> = [];
 
                 while (count-- > 0)
-                    args.push({
+                    args.unshift({
                         id: constant(),
                         value: pop()
                     });
@@ -261,7 +261,12 @@ class BytecodeInterp extends Interp
                 var count:Int = constant();
 
                 while (count-- > 0)
-                    map.set(pop(), pop());
+                {
+                    final value:Dynamic = pop();
+                    final key:Dynamic = pop();
+
+                    map.set(key, value);
+                }
 
                 push(map);
 
@@ -280,17 +285,17 @@ class BytecodeInterp extends Interp
                 push(scope.set(constant(), pop()));
 
             case IFieldAssign:
-                final obj:Dynamic = pop();
                 final value:Dynamic = pop();
+                final obj:Dynamic = pop();
 
                 Reflect.setProperty(obj, constant(), value);
 
                 push(value);
 
             case IArrayAssign:
-                final obj:Dynamic = pop();
-                final key:Dynamic = pop();
                 final value:Dynamic = pop();
+                final key:Dynamic = pop();
+                final obj:Dynamic = pop();
 
                 if (obj is Array)
                     obj[key] = value;

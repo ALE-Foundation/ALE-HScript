@@ -110,8 +110,8 @@ class Compiler
                 emitConstant(module);
 
             case EArrayAccess(obj, key):
-                emitExpr(key);
                 emitExpr(obj);
+                emitExpr(key);
 
                 emit(IArrayAccess);
 
@@ -136,7 +136,8 @@ class Compiler
 
 
             case EFunction(args, body):
-                reverseEach(args, arg -> emitExpr(arg.value));
+                for (arg in args)
+                    emitExpr(arg.value);
 
                 final jump:Int = emitJump();
 
@@ -154,8 +155,7 @@ class Compiler
 
                 emitConstant(args.length);
 
-                for (arg in args)
-                    emitConstant(arg.id);
+                reverseEach(args, arg -> emitConstant(arg.id));
 
                 emitConstant(start);
                 emitConstant(end);
@@ -195,8 +195,8 @@ class Compiler
 
                 for (key => val in members)
                 {
-                    emitExpr(val);
                     emitExpr(key);
+                    emitExpr(val);
 
                     count++;
                 }
@@ -241,26 +241,28 @@ class Compiler
                 pushConstant(null);
 
 
-            case EAssign(obj, value):
-                emitExpr(value);
-                
+            case EAssign(obj, value):                
                 switch (obj.type)
                 {
                     case EVar(id):
+                        emitExpr(value);
+
                         emit(IAssign);
 
                         emitConstant(id);
 
                     case EField(obj, prop):
                         emitExpr(obj);
+                        emitExpr(value);
 
                         emit(IFieldAssign);
 
                         emitConstant(prop);
 
                     case EArrayAccess(obj, key):
-                        emitExpr(key);
                         emitExpr(obj);
+                        emitExpr(key);
+                        emitExpr(value);
 
                         emit(IArrayAssign);
 
@@ -382,7 +384,8 @@ class Compiler
     }
 
     inline function emitArray(arr:Array<Expr>)
-        reverseEach(arr, expr -> emitExpr(expr));
+        for (expr in arr)
+            emitExpr(expr);
         
 
     function reverseEach<T>(arr:Array<T>, fn:T -> Void)
