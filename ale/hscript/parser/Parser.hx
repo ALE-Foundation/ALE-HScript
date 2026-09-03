@@ -1,11 +1,12 @@
 package ale.hscript.parser;
 
-import ale.hscript.lexer.TokenUtil;
 import ale.hscript.lexer.TokenType;
 import ale.hscript.lexer.Token;
 
 import ale.hscript.errors.ErrorType;
 import ale.hscript.errors.Error;
+
+import ale.hscript.utils.Util;
 
 import haxe.ds.StringMap;
 import haxe.Exception;

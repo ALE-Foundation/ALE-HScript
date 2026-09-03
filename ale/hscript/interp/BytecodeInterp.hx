@@ -33,9 +33,7 @@ class BytecodeInterp extends Interp
 
     var ip:Int;
 
-    var stack:Array<Dynamic>;
-
-    var callStack:GenericStack<CallFrame>;
+    var stack:GenericStack<Dynamic>;
 
     var scopeStack:GenericStack<Scope>;
 
@@ -46,20 +44,34 @@ class BytecodeInterp extends Interp
         return interpret();
     }
 
+    var stop:Bool = false;
+
     public function interpret(?code:Code):Dynamic
     {
         if (code != null)
             this.code = code;
 
         ip = 0;
-        stack = [];
-        callStack = new GenericStack<CallFrame>();
+        stack = new GenericStack<Dynamic>();
         scopeStack = new GenericStack<Scope>();
 
+        var result:Dynamic = null;
+
         while (ip < instructions.length)
+        {
             eval(read());
 
-        return null;
+            if (stop)
+            {
+                result = pop();
+
+                stop = false;
+
+                break;
+            }
+        }
+
+        return result;
     }
 
 
@@ -84,9 +96,13 @@ class BytecodeInterp extends Interp
     inline function pop():Dynamic
         return stack.pop();
 
-    inline function push(obj:Dynamic):Dynamic
-        return stack.push(obj);
+    inline function push(obj:Dynamic)
+        stack.add(obj);
+
+    inline function last():Dynamic
+        return stack.first();
     
+    var conditionalJump = false;
 
     function eval(inst:Inst)
     {
@@ -95,8 +111,35 @@ class BytecodeInterp extends Interp
             case IPush:
                 push(constant());
 
+            case IPop:
+                pop();
+
+
             case IJump:
                 ip = constant();
+
+            case IConditionalJump:
+                final value:Int = constant();
+                final newIp:Int = constant();
+
+                if (last() == value)
+                {
+                    conditionalJump = true;
+
+                    ip = newIp;
+                }
+
+            case IInverseConditionalJump:
+                final value:Int = constant();
+                final newIp:Int = constant();
+
+                if (last() != value)
+                {
+                    conditionalJump = true;
+
+                    ip = newIp;
+                }
+
 
             case IEnterScope:
                 scope = createScope(scope);
@@ -171,7 +214,8 @@ class BytecodeInterp extends Interp
                 final curScope:Scope = scope;
 
                 push(Reflect.makeVarArgs(uArgs -> {
-                    callStack.add({ip: ip, scope: scope});
+                    final lastScope:Scope = scope;
+                    final lastIp:Int = ip;
 
                     scope = createScope(curScope);
 
@@ -181,7 +225,19 @@ class BytecodeInterp extends Interp
                     ip = start;
 
                     while (ip < end)
-                        eval(read());
+                    {
+                        final inst:Inst = read();
+
+                        if (inst == IReturn)
+                        {
+                            scope = lastScope;
+                            ip = lastIp;
+
+                            break;
+                        }
+
+                        eval(inst);
+                    }
 
                     return pop();
                 }));
@@ -244,9 +300,93 @@ class BytecodeInterp extends Interp
                 push(value);
 
 
-            case IReturn:
-                restoreFromCallStack();
+            case IBinOp:
+                final op:Operator = constant();
 
+                if (conditionalJump)
+                {
+                    conditionalJump = false;
+                } else {
+                    final r:Dynamic = pop();
+                    final l:Dynamic = pop();
+
+                    push(switch (op)
+                    {
+                        case OPercent:
+                            l % r;
+
+                        case OStar:
+                            l * r;
+
+                        case OSlash:
+                            l / r;
+
+                        case OPlus:
+                            l + r;
+
+                        case OMinus:
+                            l - r;
+
+                        case ODoubleLess:
+                            Std.int(l) << Std.int(r);
+
+                        case ODoubleGreater:
+                            Std.int(l) >> Std.int(r);
+
+                        case OTripleGreater:
+                            Std.int(l) >>> Std.int(r);
+
+                        case OAmpersand:
+                            Std.int(l) & Std.int(r);
+
+                        case OPipe:
+                            Std.int(l) | Std.int(r);
+
+                        case OCaret:
+                            Std.int(l) ^ Std.int(r);
+
+                        case ODoubleAmpersand:
+                            l && r;
+
+                        case ODoublePipe:
+                            l || r;
+
+                        case ODoubleQuestion:
+                            l ?? r;
+                            
+                        case ODoubleEqual:
+                            l == r;
+
+                        case OExclamationEqual:
+                            l != r;
+
+                        case OLess:
+                            l < r;
+
+                        case OLessEqual:
+                            l <= r;
+
+                        case OGreater:
+                            l > r;
+
+                        case OGreaterEqual:
+                            l >= r;
+
+                        case OTripleDot:
+                            new IntIterator(l, r);
+
+                        case OIs:
+                            Std.isOfType(l, r);
+
+                        default:
+                            null;
+                    });
+                }
+
+
+            case IReturn:
+                stop = true;
+                
 
             case ICast:
                 final obj:Dynamic = pop();
@@ -279,14 +419,5 @@ class BytecodeInterp extends Interp
 
             default:
         }
-    }
-
-    inline function restoreFromCallStack()
-    {
-        final data:CallFrame = callStack.pop();
-
-        ip = data.ip;
-
-        scope = data.scope;
     }
 }

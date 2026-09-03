@@ -3,6 +3,8 @@ package ale.hscript.lexer;
 import ale.hscript.errors.ErrorType;
 import ale.hscript.errors.Error;
 
+import ale.hscript.utils.Util;
+
 using StringTools;
 
 class Lexer
@@ -125,7 +127,7 @@ class Lexer
                             final ident:String = source.substr(start, index - start);
 
                             result.push({
-                                type: TokenUtil.stringToTokenType.exists(ident) ? TokenUtil.stringToTokenType[ident] : TIdent(ident),
+                                type: Util.stringToTokenType.exists(ident) ? Util.stringToTokenType[ident] : TIdent(ident),
                                 line: tokenLine,
                                 column: tokenColumn
                             });
@@ -540,7 +542,7 @@ class Lexer
                 final ident:String = source.substr(start, index - start);
 
                 result.push({
-                    type: TokenUtil.stringToTokenType.exists(ident) ? TokenUtil.stringToTokenType[ident] : TIdent(ident),
+                    type: Util.stringToTokenType.exists(ident) ? Util.stringToTokenType[ident] : TIdent(ident),
                     line: tokenLine,
                     column: tokenColumn
                 });

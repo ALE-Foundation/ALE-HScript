@@ -3,7 +3,11 @@ package ale.hscript.bytecode;
 enum abstract Inst(Null<Int>) from Null<Int> to Null<Int>
 {
     var IPush;
+    var IPop;
+
     var IJump;
+    var IConditionalJump;
+    var IInverseConditionalJump;
 
     var IEnterScope;
     var IExitScope;
@@ -32,6 +36,8 @@ enum abstract Inst(Null<Int>) from Null<Int> to Null<Int>
     var IAssign;
     var IFieldAssign;
     var IArrayAssign;
+
+    var IBinOp;
 
     var IReturn;
 

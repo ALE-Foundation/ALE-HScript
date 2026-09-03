@@ -3,6 +3,8 @@ package ale.hscript.bytecode;
 import ale.hscript.errors.ErrorType;
 import ale.hscript.errors.Error;
 
+import ale.hscript.utils.Util;
+
 import ale.hscript.parser.Expr;
 
 class Compiler
@@ -13,18 +15,41 @@ class Compiler
 
     public final constants:Array<Dynamic> = [];
     
-    public function compile(source:Array<Expr>):Code
+    public function compile(exprs:Array<Expr>):Code
     {
         instructions.resize(0);
         constants.resize(0);
 
-        for (expr in source)
-            emitExpr(expr);
+        for (expr in exprs)
+            emitStatement(expr);
 
         return {
             instructions: instructions,
             constants: constants
         };
+    }
+
+    function emitStatement(expr:Expr)
+    {
+        emitExpr(expr);
+
+        if (!isVoidExpr(expr))
+            emit(IPop);
+    }
+
+    function isVoidExpr(expr:Expr):Bool
+    {
+        if (expr == null)
+            return false;
+
+        return switch (expr.type)
+        {
+            case EVarDecl(_, _, _, _, _), EFunctionDecl(_, _), ETypedef(_, _), EAlias(_, _), EPackage(_), EImport(_, _), EPackageImport(_), EUsing(_), EEof:
+                true;
+
+            default:
+                false;
+        }
     }
 
     function emitExpr(expr:Expr)
@@ -121,9 +146,9 @@ class Compiler
 
                 emitJumpExit();
 
-                patchJump(jump);
-
                 final end:Int = instructions.length;
+
+                patchJump(jump);
 
                 emit(IFunction);
 
@@ -139,7 +164,7 @@ class Compiler
                 emit(IEnterScope);
 
                 for (expr in exprs)
-                    emitExpr(expr);
+                    emitStatement(expr);
 
                 emit(IExitScope);
 
@@ -243,6 +268,36 @@ class Compiler
                         error(EInvalidAssignment, expr);
                 }
 
+
+            case EBinOp(op, left, right):
+                final opVal:Operator = Util.tokenTypeToOperator(op);
+
+                emitExpr(left);
+
+                final jumpIndex:Null<Int> = switch (opVal)
+                {
+                    case ODoubleAmpersand:
+                        emitConditionalJump(true, IInverseConditionalJump);
+
+                    case ODoublePipe:
+                        emitConditionalJump(true);
+
+                    case ODoubleQuestion:
+                        emitConditionalJump(null, IInverseConditionalJump);
+
+                    default:
+                        null;
+                }
+
+                emitExpr(right);
+
+                if (jumpIndex != null)
+                    patchJump(jumpIndex);
+
+                emit(IBinOp);
+
+                emitConstant(opVal);
+
             
             case EReturn(val):
                 emitExpr(val);
@@ -290,6 +345,15 @@ class Compiler
     function emitJump():Int
     {
         emit(IJump);
+
+        return emitConstant(null);
+    }
+
+    function emitConditionalJump(val:Dynamic, ?type:Inst = IConditionalJump):Int
+    {
+        emit(type);
+
+        emitConstant(val);
 
         return emitConstant(null);
     }

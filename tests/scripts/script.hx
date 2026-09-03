@@ -1,3 +1,5 @@
+
+/*
 // EPackage
 
 package haxe.io;
@@ -199,3 +201,50 @@ final oso:String = cast 67;
 
 trace(cast(67, Int));
 
+*/
+
+// EBinOp
+
+/*
+final oso:Int = 10;
+
+trace(7 % 5);
+trace(5 * 4);
+trace(10 / 2);
+trace(5 + 12);
+trace(5 - 20);
+trace('after all' + ' of the waster years');
+trace(oso + ' tristes tigres');
+
+trace(20 << 2);
+trace(20 >> 2);
+trace(10 >>> 2);
+trace(12 & 10);
+trace(12 | 10);
+trace(12 ^ 10);
+*/
+
+function oso()
+{
+    trace('donde');
+
+    return true;
+}
+
+final oso = true && oso();
+
+trace(oso);
+
+// trace(false || true);
+
+/*
+function tung():Dynamic
+{
+    trace('osooo');
+
+    return 'oso';
+}
+
+trace(null ?? tung());
+trace(10 ?? tung());
+*/
