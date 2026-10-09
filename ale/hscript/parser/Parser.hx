@@ -46,7 +46,7 @@ class Parser
     function requiresSemicolon(expr:ExprType):Null<Bool>
         return switch (expr)
         {
-            case EEof, ETypedef(_, _), EMetadata(_, _), ESwitch(_, _, _), EIf(_, _, _), EWhile(_, _), EFor(_), EStructure(_), ETry(_, _), EBlock(_), EFunctionDecl(_, _), EFunction(_, _):
+            case EClassDecl(_, _), EEof, ETypedef(_, _), EMetadata(_, _), ESwitch(_, _, _), EIf(_, _, _), EWhile(_, _), EFor(_), EStructure(_), ETry(_, _), EBlock(_), EFunctionDecl(_, _), EFunction(_, _):
                 false;
 
             case EReturn(val), EVarDecl(_, val, _, _, _), EAssign(_, val):
@@ -70,6 +70,10 @@ class Parser
     var allowImports:Bool = true;
     var allowUsings:Bool = true;
     var allowTypedefs:Bool = true;
+    var allowClasses:Bool = true;
+
+    var allowThis:Bool = false;
+    var allowSuper:Bool = false;
     
     function parseStatement():Expr
     {
@@ -129,6 +133,126 @@ class Parser
 
         allowUsings = false;
 
+        if (allowTypedefs && match(TTypedef))
+        {
+            final id:String = parseIdent();
+
+            expect(TEqual);
+
+            final pos:Int = index;
+                
+            try
+            {
+                return fastExpr(EAlias(id, parseType()), cur);
+            } catch(_:Dynamic) {
+                try
+                {
+                    index = pos;
+
+                    final fields:Array<String> = [];
+
+                    expect(TLBrace);
+
+                    while (!end() && !check(TRBrace))
+                    {
+                        match(TQuestion);
+
+                        fields.push(parseIdent());
+
+                        parseOptionalType();
+
+                        if (!match(TComma))
+                            break;
+                    }
+
+                    expect(TRBrace);
+
+                    return fastExpr(ETypedef(id, fields), cur);
+                } catch(_:Dynamic) {
+                    index = pos;
+                    
+                    final fields:Array<String> = [];
+
+                    expect(TLBrace);
+
+                    while (!end() && !check(TRBrace))
+                    {
+                        switch (peek().type)
+                        {
+                            case TAt:
+                                parseSemicolonStatement();
+
+                            case TVar:
+                                advance();
+
+                                fields.push(parseIdent());
+
+                                parseOptionalType();
+
+                                expect(TSemicolon);
+
+                            default:
+                                expected(TVar, peek());
+                        }
+                    }
+
+                    expect(TRBrace);
+
+                    return fastExpr(ETypedef(id, fields), cur);
+                }
+            }
+        }
+
+        allowTypedefs = false;
+
+        if (allowClasses && match(TClass))
+        {
+            allowClasses = false;
+
+            allowThis = true;
+
+            final id:String = parseIdent();
+
+            var parent:Expr = null;
+
+            if (match(TExtends))
+            {
+                parent = parseType();
+
+                allowSuper = true;
+            }
+
+            expect(TLBrace);
+
+            var body:Array<Expr> = [];
+
+            while (!end() && !check(TRBrace))
+            {
+                final cur:Token = peek();
+
+                switch (cur.type)
+                {
+                    case TVar, TFinal, TFunction:
+                        body.push(parseSemicolonStatement());
+
+                    default:
+                        error(EUnexpected(cur.type), cur);
+                }
+            }
+
+            expect(TRBrace);
+
+            allowSuper = false;
+
+            allowThis = false;
+
+            allowClasses = true;
+
+            return fastExpr(EClassDecl(id, body, parent), cur);
+        }
+
+        allowClasses = false;
+
         return switch (cur.type)
         {
             case TVar, TFinal:
@@ -157,80 +281,7 @@ class Parser
 
                 parseOptionalType();
 
-
                 fastExpr(EVarDecl(id, parseOptionalValue(), getter, setter, cur.type == TFinal), cur);
-
-            case TTypedef:
-                advance();
-
-                final id:String = parseIdent();
-
-                expect(TEqual);
-
-                final pos:Int = index;
-                    
-                try
-                {
-                    return fastExpr(EAlias(id, parseType()), cur);
-                } catch(_:Dynamic) {
-                    try
-                    {
-                        index = pos;
-
-                        final fields:Array<String> = [];
-
-                        expect(TLBrace);
-
-                        while (!end() && !check(TRBrace))
-                        {
-                            match(TQuestion);
-
-                            fields.push(parseIdent());
-
-                            parseOptionalType();
-
-                            if (!match(TComma))
-                                break;
-                        }
-
-                        expect(TRBrace);
-
-                        return fastExpr(ETypedef(id, fields), cur);
-                    } catch(_:Dynamic) {
-                        index = pos;
-                        
-                        final fields:Array<String> = [];
-
-                        expect(TLBrace);
-
-                        while (!end() && !check(TRBrace))
-                        {
-                            switch (peek().type)
-                            {
-                                case TAt:
-                                    parseSemicolonStatement();
-
-                                case TVar:
-                                    advance();
-
-                                    fields.push(parseIdent());
-
-                                    parseOptionalType();
-
-                                    expect(TSemicolon);
-
-                                default:
-                                    expected(TVar, peek());
-                            }
-                        }
-
-                        expect(TRBrace);
-
-                        return fastExpr(ETypedef(id, fields), cur);
-                    }
-                }
-
-                null;
 
             case TFunction:
                 advance();
@@ -456,6 +507,16 @@ class Parser
 
         return switch (cur.type)
         {
+            case TThis if (allowThis):
+                advance();
+
+                fastExpr(EThis, cur);
+
+            case TSuper if (allowSuper):
+                advance();
+
+                fastExpr(ESuper, cur);
+
             case TTry:
                 advance();
 

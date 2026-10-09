@@ -84,4 +84,10 @@ enum ExprType
     EMetadata(id:String, args:Array<Expr>);
 
     EEof;
+
+
+    EClassDecl(id:String, body:Array<Expr>, ?parent:Expr);
+
+    ESuper;
+    EThis;
 }

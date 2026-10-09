@@ -10,9 +10,15 @@ class Scope
 
     public var variables:Map<String, Variable>;
 
+    public var scriptedThis:ScriptedInstance;
+    public var scriptedSuper:ScriptedInstance;
+
     public function new(?parent:Scope)
     {
         this.parent = parent;
+
+        scriptedThis = parent?.scriptedThis;
+        scriptedSuper = parent?.scriptedSuper;
 
         variables = new Map<String, Variable>();
     }

@@ -37,6 +37,60 @@ class ASTWalker extends Interp
         }
     }
 
+    function createScriptedInstance(cls:ScriptedClass, args:Array<Dynamic>):ScriptedInstance
+    {
+        final instance = createScriptedSuper(cls, null);
+
+        final oldScope = scope;
+
+        scope = instance.scope;
+
+        try
+        {
+            if (instance.scope.variables.exists('new'))
+                Reflect.callMethod(instance, instance.scope.get('new'), args);
+        } catch (e:Dynamic) {
+            scope = oldScope;
+
+            throw e;
+        }
+
+        scope = oldScope;
+
+        return instance;
+    }
+
+    function createScriptedSuper(cls:ScriptedClass, instance:ScriptedInstance):ScriptedInstance
+    {
+        if (cls == null)
+            return null;
+
+        final parent = createScriptedSuper(cast cls.parent, instance);
+        final parentScope = createScope(parent != null ? parent.scope : cls.scope);
+        final parentInstance = new ScriptedInstance(cls, parentScope);
+
+        parentInstance.scriptedSuper = parent;
+        parentScope.scriptedThis = instance ?? parentInstance;
+        parentScope.scriptedSuper = parent;
+
+        final oldScope = scope;
+
+        scope = parentScope;
+
+        try
+        {
+            for (field in cls.body)
+                eval(field);
+        } catch (e:Dynamic) {
+            scope = oldScope;
+            throw e;
+        }
+
+        scope = oldScope;
+        
+        return parentInstance;
+    }
+
     function eval(expr:Expr, ?newScope:Scope):Dynamic
     {
         if (expr == null)
@@ -46,6 +100,15 @@ class ASTWalker extends Interp
         {
             return switch (expr.type)
             {
+                case EThis:
+                    scope.scriptedThis;
+
+                case ESuper:
+                    scope.scriptedSuper;
+
+                case EClassDecl(id, body, parent):
+                    imports[id] = new ScriptedClass(id, body, scope, eval(parent));
+
                 case ETypedef(_, _):
                     null;
 
@@ -178,7 +241,7 @@ class ASTWalker extends Interp
                     assign(obj, eval(value));
 
                 case ENew(cls, args):
-                    final resolvedClass = switch (cls.type)
+                    final resolvedClass:Dynamic = switch (cls.type)
                     {
                         case EType(module) if (module == 'Map' || module == 'haxe.ds.Map'):
                             return new Map<Dynamic, Dynamic>();
@@ -187,7 +250,12 @@ class ASTWalker extends Interp
                             eval(cls);
                     };
 
-                    return Type.createInstance(resolvedClass, args.map(arg -> eval(arg)));
+                    final solvedArgs = args.map(arg -> eval(arg));
+
+                    if (resolvedClass is ScriptedClass)
+                        return createScriptedInstance(resolvedClass, solvedArgs);
+
+                    return Type.createInstance(resolvedClass, solvedArgs);
                 
                 case EFunction(arguments, block):
                     final capturedScope:Scope = scope;
@@ -278,9 +346,30 @@ class ASTWalker extends Interp
                             Log.trace(name + ':'  + expr.line + ': ' + solvedArgs.join(','), null);
 
                             null;
+
+                        case ESuper:
+                            final parent = scope.scriptedSuper;
+
+                            if (parent == null)
+                                error(EInvalidExpression(expr.type), expr);
+
+                            final constructor = parent.scope.variables.get('new');
+
+                            if (constructor != null)
+                                Reflect.callMethod(parent, constructor.value, solvedArgs);
+
+                            null;
                         
                         case EField(target, id):
                             final obj:Dynamic = eval(target);
+
+                            if (obj is ScriptedInstance)
+                            {
+                                final method = obj.get(id);
+
+                                if (method != null)
+                                    return Reflect.callMethod(obj, method, solvedArgs);
+                            }
 
                             try
                             {
@@ -343,6 +432,8 @@ class ASTWalker extends Interp
 
                     if (obj is String && id == 'code')
                         obj.charCodeAt(0);
+                    else if (obj is ScriptedInstance)
+                        obj.get(id);
                     else
                         Reflect.getProperty(obj, id);
 
@@ -647,7 +738,12 @@ class ASTWalker extends Interp
                 }
 
             case EField(obj, id):
-                Reflect.setProperty(eval(obj), id, value);
+                final target = eval(obj);
+
+                if (target is ScriptedInstance)
+                    target.set(id, value);
+                else
+                    Reflect.setProperty(target, id, value);
 
                 value;
 

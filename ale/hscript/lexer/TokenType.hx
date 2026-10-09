@@ -100,6 +100,7 @@ enum TokenType
     TPublic;
     TReturn;
     TStatic;
+    TSuper;
     TSwitch;
     TThis;
     TThrow;

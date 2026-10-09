@@ -14,7 +14,7 @@ abstract class Interp
 {
     public var name:String;
 
-    public var imports:Map<String, Class<Dynamic>>;
+    public var imports:Map<String, Dynamic>;
 
     public var variables:Scope;
 
@@ -72,7 +72,7 @@ abstract class Interp
     abstract public function execute(exprs:Array<Expr>):Dynamic;
 
 
-    function resolveType(mod:String, ?allowPackage:Bool = true):Class<Dynamic>
+    function resolveType(mod:String, ?allowPackage:Bool = true):Dynamic
     {
         for (module in [mod, softPackage == null || !allowPackage ? null : softPackage + '.' + mod, mod + EnumsMacro.SUFFIX, mod + AbstractsMacro.SUFFIX])
             if (module != null)

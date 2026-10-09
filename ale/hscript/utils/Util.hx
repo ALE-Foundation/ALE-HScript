@@ -72,6 +72,7 @@ class Util
         'public' => TPublic,
         'return' => TReturn,
         'static' => TStatic,
+        'super' => TSuper,
         'switch' => TSwitch,
         'this' => TThis,
         'throw' => TThrow,

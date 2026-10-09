@@ -364,6 +364,9 @@ class Error extends Exception
             case TStatic:
                 'static';
 
+            case TSuper:
+                'super';
+
             case TSwitch:
                 'switch';
 
