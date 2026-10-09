@@ -1,29 +1,13 @@
-class Oso
-{
-    var oso:String = 'MASHA';
+var oso:String = 'oso';
 
-    function new(?arg:String)
-        if (arg != null)
-            oso = arg;
-}
+public var oso:String = 'oso';
 
-final instance0 = new Oso('oso');
-final instance1 = new Oso('donde');
+private var oso:String = 'oso';
 
-trace(instance0.oso);
-trace(instance1.oso);
+function oso():String {}
 
-/*
-class Masha extends Oso
-{
-    function new()
-    {
-        super('masha');
-    }
-}
+public function oso():String {}
 
-final instance2 = new Masha('tu');
-final instance3 = new Masha();
-trace(instance2.oso);
-trace(instance3.oso);
-*/
+private function oso():String {}
+
+override function oso():String {}

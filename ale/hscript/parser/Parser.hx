@@ -61,7 +61,8 @@ class Parser
     {
         final res:Expr = parseStatement();
 
-        semicolon(res.type);
+        if (res != null)
+            semicolon(res.type);
 
         return res;
     }
@@ -516,6 +517,47 @@ class Parser
                 advance();
 
                 fastExpr(ESuper, cur);
+
+            case TPublic, TPrivate, TOverride:
+                final access:Array<TokenType> = [];
+
+                while (true)
+                {
+                    switch (peek().type)
+                    {
+                        case TPublic if (!access.contains(TPublic)):
+                            advance();
+
+                            access.push(TPublic);
+
+                        case TPrivate if (!access.contains(TPrivate)):
+                            advance();
+
+                            access.push(TPrivate);
+
+                        case TOverride if (!access.contains(TOverride)):
+                            advance();
+
+                            access.push(TOverride);
+
+                        default:
+                            break;
+                    }
+                }
+
+                final token = peek();
+
+                switch (token.type)
+                {
+                    case TVar | TFinal if (!access.contains(TOverride)):
+
+                    case TFunction:
+
+                    default:
+                        error(EUnexpected(token.type), token);
+                }
+
+                null;
 
             case TTry:
                 advance();

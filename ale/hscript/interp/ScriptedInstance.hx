@@ -1,6 +1,6 @@
 package ale.hscript.interp;
 
-abstract class ScriptedInstance<T>
+class ScriptedInstance<T>
 {
     public final scripted:ScriptedClass<T>;
     public final scope:Scope<T>;

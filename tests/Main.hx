@@ -31,7 +31,7 @@ class Main
 
 					executed.push(name);
 
-					new Script(name).execute();
+					new Script(name).safeExecute();
 				}
 		#end
 	}

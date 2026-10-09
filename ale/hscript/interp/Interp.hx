@@ -142,6 +142,6 @@ abstract class Interp<T>
     }
 
 
-    function createScope(parent:Scope<T>):Scope<T>
+    public function createScope(parent:Scope<T>):Scope<T>
         return new Scope<T>(parent);
 }
