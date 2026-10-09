@@ -6,6 +6,8 @@ import ale.hscript.lexer.Token;
 import ale.hscript.parser.ExprType;
 import ale.hscript.parser.Expr;
 
+import ale.hscript.interp.ControlSignal;
+
 enum ErrorType
 {
     EInvalidCharacter(char:Int);
@@ -28,6 +30,8 @@ enum ErrorType
     ENeverRead(id:String);
     EUnknownVariable(id:String);
 
-    EInvalidOp(op:TokenType);
     EInvalidExpression(expr:ExprType);
+    EInvalidOp(op:TokenType);
+
+    EInvalidControl(signal:ControlSignal);
 }

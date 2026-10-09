@@ -1,18 +1,13 @@
-package ale.hscript.interp;
-
-import ale.hscript.interp.*;
-
-import ale.hscript.parser.Expr;
-
-import ale.hscript.errors.ErrorType;
+package ale.hscript.astwalker;
 
 import ale.hscript.macros.TypeListMacro;
-
+import ale.hscript.errors.ErrorType;
 import ale.hscript.errors.Error;
+import ale.hscript.parser.Expr;
+import ale.hscript.interp.*;
 
 import haxe.Constraints.IMap;
 import haxe.ds.ObjectMap;
-
 import haxe.Log;
 
 class ASTWalker extends Interp
@@ -32,8 +27,15 @@ class ASTWalker extends Interp
             }
 
             return result;
-        } catch(signal:ReturnSignal) {
-            return signal.value;
+        } catch(signal:ControlSignal) {
+            return switch (signal)
+            {
+                case CReturn(value):
+                    value;
+
+                default:
+                    null;
+            }
         }
     }
 
@@ -170,12 +172,8 @@ class ASTWalker extends Interp
                     try
                     {
                         eval(body);
-                    } catch (c:ContinueSignal) {
+                    } catch (c:ControlSignal) {
                         throw c;
-                    } catch (b:BreakSignal) {
-                        throw b;
-                    } catch (r:ReturnSignal) {
-                        throw r;
                     } catch(e:Dynamic) {
                         final oldScope:Scope = scope;
 
@@ -300,8 +298,15 @@ class ASTWalker extends Interp
                     {
                         for (expr in exprs)
                             res = eval(expr);
-                    } catch(e:ReturnSignal) {
-                        res = e.value;
+                    } catch(e:ControlSignal) {
+                        switch (e)
+                        {
+                            case CReturn(value):
+                                res = value;
+
+                            default:
+                                error(EInvalidControl(e), expr);
+                        }
                     }
 
                     scope = oldScope;
@@ -309,10 +314,10 @@ class ASTWalker extends Interp
                     res;
 
                 case EContinue:
-                    throw new ContinueSignal();
+                    throw ControlSignal.CContinue;
 
                 case EBreak:
-                    throw new BreakSignal();
+                    throw ControlSignal.CBreak;
 
                 case EThrow(val):
                     throw eval(val);
@@ -438,7 +443,7 @@ class ASTWalker extends Interp
                         Reflect.getProperty(obj, id);
 
                 case EReturn(value):
-                    throw new ReturnSignal(eval(value));
+                    throw ControlSignal.CReturn(eval(value));
 
                 case EFalse:
                     false;
@@ -615,12 +620,19 @@ class ASTWalker extends Interp
 
                     null;
             }
-        } catch (signal:ReturnSignal) {
-            throw signal;
+        } catch (signal:ControlSignal) {
+            switch (signal)
+            {
+                case CReturn(_):
+                    throw signal;
+
+                default:
+                    error(EInvalidControl(signal), expr);
+
+                    return null;
+            }
         } catch(externalError:ErrorType) {
             error(externalError, expr);
-
-            null;
         }
     }
 
@@ -634,10 +646,18 @@ class ASTWalker extends Interp
             try
             {
                 res.push(eval(body));
-            } catch (c:ContinueSignal) {
-                continue;
-            } catch (b:BreakSignal) {
-                break;
+            } catch (c:ControlSignal) {
+                switch (c)
+                {
+                    case CBreak:
+                        break;
+
+                    case CContinue:
+                        continue;
+
+                    default:
+                        throw c;
+                }
             }
         }
 
@@ -652,10 +672,18 @@ class ASTWalker extends Interp
             try
             {
                 res.push(eval(body));
-            } catch (c:ContinueSignal) {
-                continue;
-            } catch (b:BreakSignal) {
-                break;
+            } catch (c:ControlSignal) {
+                switch (c)
+                {
+                    case CBreak:
+                        break;
+
+                    case CContinue:
+                        continue;
+
+                    default:
+                        throw c;
+                }
             }
         } while(eval(condition));
 
@@ -681,10 +709,18 @@ class ASTWalker extends Interp
                 try
                 {
                     res.push(eval(body, newScope));
-                } catch (c:ContinueSignal) {
-                    continue;
-                } catch (b:BreakSignal) {
-                    break;
+                } catch (c:ControlSignal) {
+                    switch (c)
+                    {
+                        case CBreak:
+                            break;
+
+                        case CContinue:
+                            continue;
+
+                        default:
+                            throw c;
+                    }
                 }
             }
 
@@ -704,10 +740,18 @@ class ASTWalker extends Interp
                 try
                 {
                     res.push(eval(body, newScope));
-                } catch (c:ContinueSignal) {
-                    continue;
-                } catch (b:BreakSignal) {
-                    break;
+                } catch (c:ControlSignal) {
+                    switch (c)
+                    {
+                        case CBreak:
+                            break;
+
+                        case CContinue:
+                            continue;
+
+                        default:
+                            throw c;
+                    }
                 }
             }
 

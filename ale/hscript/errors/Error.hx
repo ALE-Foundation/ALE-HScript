@@ -81,6 +81,19 @@ class Error extends Exception
             case EInvalidExpression(expr):
                 'Invalid expression $expr';
 
+            case EInvalidControl(signal):
+                'Invalid control flow: ' + switch (signal)
+                {
+                    case CReturn(value):
+                        'return (' + value + ')';
+
+                    case CBreak:
+                        'break';
+
+                    case CContinue:
+                        'continue';
+                };
+
             default:
                 Std.string(type);
         }

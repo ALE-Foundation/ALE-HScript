@@ -1,7 +1,5 @@
 package;
 
-import ale.hscript.interp.BytecodeInterp;
-
 import ale.hscript.serialization.Serializer;
 
 import ale.hscript.Script;

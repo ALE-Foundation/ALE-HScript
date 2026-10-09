@@ -1,12 +1,10 @@
-package ale.hscript.interp;
+package ale.hscript.bytecode;
 
 import ale.hscript.macros.TypeListMacro;
-
 import ale.hscript.errors.ErrorType;
-
 import ale.hscript.parser.Expr;
-
 import ale.hscript.bytecode.*;
+import ale.hscript.interp.*;
 
 import haxe.Constraints.IMap;
 import haxe.ds.GenericStack;

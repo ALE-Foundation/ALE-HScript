@@ -7,7 +7,9 @@ import ale.hscript.lexer.Lexer;
 import ale.hscript.parser.Parser;
 
 import ale.hscript.interp.Interp;
-import ale.hscript.interp.*;
+
+import ale.hscript.bytecode.BytecodeInterp;
+import ale.hscript.astwalker.ASTWalker;
 
 import ale.hscript.bytecode.Code;
 
