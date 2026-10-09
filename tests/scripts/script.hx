@@ -119,6 +119,8 @@ trace([10, 20, 30, 40, 'ola']);
 
 // EArrayComprehension
 
+trace([for (i in 0...20) i]);
+
 // EMap
 
 trace([
@@ -193,12 +195,6 @@ leche.oh.masha.leche = 'tengo mucha leche para tí';
 
 trace(leche);
 
-// ECast
-
-final oso:String = cast 67;
-
-trace(cast(67, Int));
-
 // EBinOp
 
 final oso:Int = 10;
@@ -239,3 +235,226 @@ function tung():Bool
 
 trace(true || tung());
 trace(false || tung());
+
+var osoVal:Float = 7;
+
+trace(osoVal %= 5);
+trace(osoVal *= 10);
+trace(osoVal /= 5);
+trace(osoVal += 6);
+trace(osoVal -= 5);
+
+var osoVal:Int = 10;
+
+trace(osoVal <<= 2);
+trace(osoVal >>= 2);
+trace(osoVal >>>= 2);
+trace(osoVal &= 2);
+trace(osoVal |= 2);
+trace(osoVal ^= 2);
+
+trace(10 == 10);
+trace(20 != 20);
+trace(5 < 10);
+trace(10 <= 10);
+trace(5 > 10);
+trace(5 >= 5);
+
+trace(10...20);
+
+trace((10 + 10) * 10);
+
+// EPrefix
+
+trace(~10);
+trace(!false);
+trace(-20);
+
+var oso:Int = 3;
+
+trace(++oso);
+trace(--oso);
+
+// EPostfix
+
+trace(oso++);
+trace(oso);
+
+trace(oso--);
+trace(oso);
+
+// ETernOp
+
+trace(20 >= 10 ? 10 : 20);
+trace(if (false) 10 else 20);
+
+// EIf
+
+if ('oso' == 'oso')
+    trace('oso');
+
+if (10 + 10 >= 20)
+    trace('donde');
+else
+    trace('tu ta');
+
+// EWhile
+
+var i:Int = 0;
+
+while (i++ < 10)
+    trace(i);
+
+while (false)
+    trace('oso');
+
+// EDoWhile
+
+do {
+    trace(i);
+} while (--i > 0);
+
+do {
+    trace('oso');
+} while (false);
+
+// EFor
+
+for (i in 0...10)
+    trace(i);
+
+final arr = ['oso', 10, 20, 50];
+
+for (i => val in arr)
+    trace(i, val);
+
+final map = [
+    'en' => 10,
+    'la' => 67,
+    'radio' => [
+        'hay un pollito' => 'pio pio'
+    ]
+];
+
+for (key => val in map)
+    trace(key, val);
+
+// ESwitch
+
+var oso:String = 'oso';
+
+while (true)
+{
+    trace(oso);
+
+    switch (oso)
+    {
+        case 'oso':
+            oso = 'donde';
+
+        case 'donde':
+            oso = 'tu';
+
+        case 'tu':
+            oso = 'ta';
+
+        case 'ta':
+            break;
+    }
+}
+
+// ETry
+
+try
+{
+    final oso = 'oso';
+
+    oso = 'donde';
+} catch(e) {
+    trace(e);
+}
+
+// EReturn
+
+function oso(?arg:String):Void -> Void
+{
+    if (arg != null)
+        throw 'MercadoLibre';
+
+    return () -> trace('kumalala kumalala kumala sabesta');
+
+    return () -> trace('oso');
+}
+
+oso()();
+
+// EThrow
+
+try
+{
+    oso('AY SI');
+} catch(e) {
+    trace(e);
+}
+
+// EContinue
+
+var i:Int = 10;
+
+while (i-- > 0)
+{
+    if (i == 6)
+        continue;
+
+    trace(i);
+}
+
+for (i in 0...10)
+{
+    if (i == 7)
+        continue;
+
+    trace(i);
+}
+
+do {
+    if (i == 6)
+        continue;
+
+    trace(i);
+} while(i++ < 10);
+
+// EBreak
+
+while (i-- > 10)
+{
+    trace(i);
+
+    if (i == 6)
+        break;
+}
+
+for (i in 0...67)
+{
+    trace(i);
+
+    if (i == 6)
+        break;
+}
+
+do {
+    if (i == 6)
+        break;
+
+    trace(i);
+} while(i++ < 10);
+
+// ECast
+
+final oso:String = cast 67;
+
+trace(cast(67, Int));
+
+// EMetadata
+
+@:privateAccess trace('oso');

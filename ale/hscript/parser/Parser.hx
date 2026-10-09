@@ -343,35 +343,40 @@ class Parser
 
         while (!end())
         {
-            var op:Token = advance();
+            final start:Int = index;
 
-            if (op.type == TGreater)
+            final op:Token = advance();
+            var opType:TokenType = op.type;
+
+            if (opType == TGreater)
                 if (match(TGreater))
                 {
-                    op.type = TDoubleGreater;
+                    opType = TDoubleGreater;
 
                     if (match(TGreater))
                     {
-                        op.type = TTripleGreater;
+                        opType = TTripleGreater;
 
                         if (match(TEqual))
-                            op.type = TTripleGreaterEqual;
+                            opType = TTripleGreaterEqual;
                     } else if (match(TEqual)) {
-                        op.type = TDoubleGreaterEqual;
+                        opType = TDoubleGreaterEqual;
                     }
                 } else if (match(TEqual))
-                    op.type = TGreaterEqual;
+                {
+                    opType = TGreaterEqual;
+                }
 
-            final info:Null<Precedence> = _precedenceMap[op.type];
+            final info:Null<Precedence> = _precedenceMap[opType];
 
             if (info == null || info.value < minPrec)
             {
-                index--;
+                index = start;
 
                 break;
             }
 
-            if (op.type == TQuestion)
+            if (opType == TQuestion)
             {
                 final ifTrue:Expr = parseBinary();
 
@@ -382,9 +387,9 @@ class Parser
                 continue;
             }
 
-            left = fastExprFromExpr(EBinOp(op.type, left, parseBinary(info.right ? info.value : info.value + 1)), left);
+            left = fastExprFromExpr(EBinOp(opType, left, parseBinary(info.right ? info.value : info.value + 1)), left);
         }
-
+        
         return left;
     }
 

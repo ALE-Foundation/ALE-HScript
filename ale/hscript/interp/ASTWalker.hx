@@ -15,7 +15,6 @@ import haxe.ds.ObjectMap;
 
 import haxe.Log;
 
-@:deprecated
 class ASTWalker extends Interp
 {
     public function execute(exprs:Array<Expr>):Dynamic
@@ -50,12 +49,18 @@ class ASTWalker extends Interp
                 case ETypedef(_, _):
                     null;
 
+                case EAlias(id, type):
+                    imports[id] = eval(type);
+
                 case EEof:
                     null;
 
                 case EPackage(module):
                     softPackage = module;
 
+                    null;
+
+                case EMetadata(_, _):
                     null;
 
                 case EImport(module, alias):

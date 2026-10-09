@@ -6,8 +6,8 @@ import ale.hscript.lexer.Lexer;
 
 import ale.hscript.parser.Parser;
 
-import ale.hscript.interp.BytecodeInterp;
 import ale.hscript.interp.Interp;
+import ale.hscript.interp.*;
 
 import ale.hscript.bytecode.Code;
 
@@ -26,7 +26,7 @@ class Script
         source = data.source;
         code = data.code;
 
-        interp ??= new BytecodeInterp();
+        interp ??= new ASTWalker();
         interp.name ??= data.name;
         interp.superInstance ??= superInstance;
 
