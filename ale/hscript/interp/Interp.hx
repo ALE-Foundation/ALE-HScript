@@ -72,7 +72,9 @@ abstract class Interp<T>
     abstract public function executeString(source:String):Dynamic;
 
 
-    abstract public function execute(?exprs:T):Dynamic;
+    abstract public function execute(?exprs:Array<T>):Dynamic;
+
+    abstract public function eval(expr:T, ?newScope:Scope<T>):Dynamic;
 
 
     function resolveType(mod:String, ?allowPackage:Bool = true):Dynamic

@@ -11,7 +11,7 @@ import ale.hscript.interp.Interp;
 
 import ale.hscript.astwalker.ASTWalker;
 
-class Script<T = Array<Expr>>
+class Script<T = Expr>
 {
     public final source:String;
 

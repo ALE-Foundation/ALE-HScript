@@ -16,7 +16,7 @@ import haxe.Constraints.IMap;
 import haxe.ds.ObjectMap;
 import haxe.Log;
 
-class ASTWalker extends Interp<Array<Expr>>
+class ASTWalker extends Interp<Expr>
 {
     public function executeString(source:String):Dynamic
         return execute(new Parser(new Lexer(source).tokenize()).parse());
@@ -48,7 +48,7 @@ class ASTWalker extends Interp<Array<Expr>>
         }
     }
 
-    function eval(expr:Expr, ?newScope:Scope<Array<Expr>>):Dynamic
+    public function eval(expr:Expr, ?newScope:Scope<Expr>):Dynamic
     {
         if (expr == null)
             return null;
@@ -64,7 +64,7 @@ class ASTWalker extends Interp<Array<Expr>>
                     scope.scriptedSuper;
 
                 case EClassDecl(id, body, parent):
-                    imports[id] = new ScriptedClass<Array<Expr>>(id, body, scope, eval(parent));
+                    imports[id] = new ScriptedClass<Expr>(id, body, scope, eval(parent));
 
                 case ETypedef(_, _):
                     null;
