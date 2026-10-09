@@ -9,16 +9,6 @@ import sys.FileSystem;
 
 using StringTools;
 
-class Oso
-{
-	public function new() {}
-}
-
-class OsoExtend extends Oso
-{
-	function new() {}
-}
-
 class Main
 {
 	static function main()
