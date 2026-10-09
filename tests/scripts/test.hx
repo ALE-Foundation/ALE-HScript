@@ -11,3 +11,5 @@ public function oso():String {}
 private function oso():String {}
 
 override function oso():String {}
+
+@:oso @:donde @:tu @:ta @:oso var oso:String;

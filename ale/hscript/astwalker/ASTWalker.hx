@@ -113,12 +113,12 @@ class ASTWalker extends Interp<Expr>
                         res;
                     }
 
-                case EVarDecl(id, value, getter, setter, isFinal):
+                case EVarDecl(id, value, access, getter, setter, isFinal):
                     scope.define(id, eval(value), getter, setter, isFinal);
 
                     null;
                 
-                case EFunctionDecl(id, func):
+                case EFunctionDecl(id, func, overr, access):
                     scope.define(id, eval(func));
 
                     null;

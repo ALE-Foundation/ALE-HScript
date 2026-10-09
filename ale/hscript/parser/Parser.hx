@@ -75,6 +75,9 @@ class Parser
 
     var allowThis:Bool = false;
     var allowSuper:Bool = false;
+
+    var nextAccess:Array<TokenType> = [];
+    var nextOverride:Bool = false;
     
     function parseStatement():Expr
     {
@@ -282,7 +285,11 @@ class Parser
 
                 parseOptionalType();
 
-                fastExpr(EVarDecl(id, parseOptionalValue(), getter, setter, cur.type == TFinal), cur);
+                final expr = fastExpr(EVarDecl(id, parseOptionalValue(), nextAccess, getter, setter, cur.type == TFinal), cur);
+
+                nextAccess = [];
+
+                expr;
 
             case TFunction:
                 advance();
@@ -305,7 +312,12 @@ class Parser
 
                 parseOptionalType();
 
-                fastExpr(EFunctionDecl(id, fastExpr(EFunction(args, parseBody()), cur)), cur);
+                final expr = fastExpr(EFunctionDecl(id, fastExpr(EFunction(args, parseBody()), cur), nextOverride, nextAccess), cur);
+
+                nextOverride = false;
+                nextAccess = [];
+
+                expr;
 
             case TIf:
                 parseIf(true);
@@ -353,30 +365,6 @@ class Parser
                 advance();
 
                 fastExpr(EThrow(parseExpr()), cur);
-
-            case TAt:
-                advance();
-
-                final id:StringBuf = new StringBuf();
-
-                if (match(TColon))
-                    id.addChar(':'.code);
-
-                id.add(parseIdent());
-
-                final pos:Int = index;
-
-                var args:Array<Expr> = null;
-
-                try
-                {
-                    if (check(TLParen))
-                        args = parseCallArguments();
-                } catch(_:Dynamic) {
-                    index = pos;
-                }
-
-                fastExpr(EMetadata(id.toString(), args), cur);
 
             case TEof:
                 fastAdvanceExpr(EEof, cur);
@@ -508,6 +496,40 @@ class Parser
 
         return switch (cur.type)
         {
+            case TAt:
+                advance();
+                
+                final id:StringBuf = new StringBuf();
+
+                if (match(TColon))
+                    id.addChar(':'.code);
+
+                id.add(parseIdent());
+
+                final pos:Int = index;
+
+                var args:Array<Expr> = null;
+
+                try
+                {
+                    if (check(TLParen))
+                        args = parseCallArguments();
+                } catch(_:Dynamic) {
+                    index = pos;
+                }
+
+                final token = peek();
+
+                switch (token.type)
+                {
+                    case TEof:
+                        error(EUnexpected(TEof), token);
+
+                    default:
+                }
+
+                fastExpr(EMetadata(id.toString(), args), cur);
+
             case TThis if (allowThis):
                 advance();
 
@@ -520,6 +542,8 @@ class Parser
 
             case TPublic, TPrivate, TOverride:
                 final access:Array<TokenType> = [];
+
+                var over:Bool = false;
 
                 while (true)
                 {
@@ -535,10 +559,10 @@ class Parser
 
                             access.push(TPrivate);
 
-                        case TOverride if (!access.contains(TOverride)):
+                        case TOverride if (!over):
                             advance();
 
-                            access.push(TOverride);
+                            over = true;
 
                         default:
                             break;
@@ -546,10 +570,13 @@ class Parser
                 }
 
                 final token = peek();
+                
+                nextOverride = over;
+                nextAccess = access;
 
                 switch (token.type)
                 {
-                    case TVar | TFinal if (!access.contains(TOverride)):
+                    case TVar | TFinal if (!over):
 
                     case TFunction:
 
@@ -1370,8 +1397,6 @@ class Parser
         ], true);
 
         addPrecedence([TQuestion], true);
-
-        addPrecedence([TAt], true);
 
         addPrecedence([TDoubleQuestion]);
 
