@@ -689,8 +689,10 @@ class Parser
 
                 parseOptionalType();
 
-                fastExpr(EFunction(args, parseBody(false)), cur);
+                nextAccess = [];
 
+                fastExpr(EFunction(args, parseBody(false)), cur);
+                
             case TNew:
                 advance();
 
