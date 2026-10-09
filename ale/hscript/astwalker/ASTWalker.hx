@@ -308,15 +308,7 @@ class ASTWalker extends Interp<Expr>
                             null;
 
                         case ESuper:
-                            final parent = scope.scriptedSuper;
-
-                            if (parent == null)
-                                error(EInvalidExpression(expr.type), expr);
-
-                            final constructor = parent.scope.variables.get('new');
-
-                            if (constructor != null)
-                                Reflect.callMethod(parent, constructor.value, solvedArgs);
+                            Reflect.callMethod(scope.scriptedSuper, scope.scriptedSuper.scope.get('new'), solvedArgs);
 
                             null;
                         

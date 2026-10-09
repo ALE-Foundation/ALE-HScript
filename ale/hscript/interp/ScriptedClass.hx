@@ -40,7 +40,7 @@ class ScriptedClass<T>
                 interp.eval(expr);
 
             if (args != null)
-                Reflect.callMethod(inst, newScope.variables.get('new').value, args);
+                Reflect.callMethod(inst, newScope.get('new'), args);
         } catch(e) {
             interp.scope = oldScope;
 

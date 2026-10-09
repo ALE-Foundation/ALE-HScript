@@ -1,15 +1,19 @@
-var oso:String = 'oso';
+class Oso
+{
+    var tung:String = 'donde';
 
-public var oso:String = 'oso';
+    public function new()
+        trace('oso');
+}
 
-private var oso:String = 'oso';
+class Donde extends Oso {}
 
-function oso():String {}
+class Ta extends Donde
+{
+    public function new()
+        super();
+}
 
-public function oso():String {}
+final oso = new Ta();
 
-private function oso():String {}
-
-override function oso():String {}
-
-@:oso @:donde @:tu @:ta @:oso var oso:String;
+trace(oso.tung);

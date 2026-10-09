@@ -236,7 +236,7 @@ class Parser
 
                 switch (cur.type)
                 {
-                    case TVar, TFinal, TFunction:
+                    case TVar, TFinal, TFunction, TPrivate, TPublic, TOverride:
                         body.push(parseSemicolonStatement());
 
                     default:
