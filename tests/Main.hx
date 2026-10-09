@@ -1,7 +1,5 @@
 package;
 
-import ale.hscript.serialization.Serializer;
-
 import ale.hscript.Script;
 import ale.hscript.Config;
 
@@ -33,18 +31,7 @@ class Main
 
 					executed.push(name);
 
-					// new Serializer(name).save();
-
-					new Script(name).safeExecute();
-				} else if (scr.endsWith(Config.COMPILED_EXTENSION)) {
-					final name:String = scr.replace(Config.COMPILED_EXTENSION, '');
-
-					if (executed.contains(name))
-						continue;
-					
-					executed.push(name);
-
-					new Script(name).safeExecute();
+					new Script(name).execute();
 				}
 		#end
 	}

@@ -4,16 +4,16 @@ import ale.hscript.errors.ErrorType;
 
 import ale.hscript.parser.Property;
 
-class Scope
+class Scope<T>
 {
-    public var parent:Scope;
+    public var parent:Scope<T>;
 
     public var variables:Map<String, Variable>;
 
-    public var scriptedThis:ScriptedInstance;
-    public var scriptedSuper:ScriptedInstance;
+    public var scriptedThis:ScriptedInstance<T>;
+    public var scriptedSuper:ScriptedInstance<T>;
 
-    public function new(?parent:Scope)
+    public function new(?parent:Scope<T>)
     {
         this.parent = parent;
 
@@ -120,9 +120,9 @@ class Scope
                 false;
             }
 
-    function resolve(id:String):Scope
+    function resolve(id:String):Scope<T>
     {
-        final res:Scope = variables.exists(id) ? this : parent?.resolve(id);
+        final res = variables.exists(id) ? this : parent?.resolve(id);
 
         if (res == null)
             throw ErrorType.EUnknownVariable(id);
@@ -130,7 +130,7 @@ class Scope
         return res;
     }
 
-    public function reset(?parent:Scope)
+    public function reset(?parent:Scope<T>)
     {
         this.parent = parent;
 

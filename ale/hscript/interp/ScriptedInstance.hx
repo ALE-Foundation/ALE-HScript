@@ -1,13 +1,13 @@
 package ale.hscript.interp;
 
-class ScriptedInstance
+abstract class ScriptedInstance<T>
 {
-    public final scripted:ScriptedClass;
-    public final scope:Scope;
+    public final scripted:ScriptedClass<T>;
+    public final scope:Scope<T>;
 
-    public var scriptedSuper:ScriptedInstance;
+    public var scriptedSuper:ScriptedInstance<T>;
 
-    public function new(scripted:ScriptedClass, scope:Scope)
+    public function new(scripted:ScriptedClass<T>, scope:Scope<T>)
     {
         this.scripted = scripted;
         this.scope = scope;

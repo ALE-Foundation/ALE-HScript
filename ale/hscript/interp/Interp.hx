@@ -10,15 +10,15 @@ import ale.hscript.macros.EnumsMacro;
 
 import ale.hscript.errors.ErrorType;
 
-abstract class Interp
+abstract class Interp<T>
 {
     public var name:String;
 
     public var imports:Map<String, Dynamic>;
 
-    public var variables:Scope;
+    public var variables:Scope<T>;
 
-    public var scope:Scope;
+    public var scope:Scope<T>;
 
     public var superInstance(default, set):Dynamic;
     function set_superInstance(value:Dynamic)
@@ -69,7 +69,10 @@ abstract class Interp
     }
 
 
-    abstract public function execute(exprs:Array<Expr>):Dynamic;
+    abstract public function executeString(source:String):Dynamic;
+
+
+    abstract public function execute(?exprs:T):Dynamic;
 
 
     function resolveType(mod:String, ?allowPackage:Bool = true):Dynamic
@@ -137,6 +140,6 @@ abstract class Interp
     }
 
 
-    function createScope(parent:Scope):Scope
-        return new Scope(parent);
+    function createScope(parent:Scope<T>):Scope<T>
+        return new Scope<T>(parent);
 }

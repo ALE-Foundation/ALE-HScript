@@ -1,18 +1,27 @@
 package ale.hscript.astwalker;
 
 import ale.hscript.macros.TypeListMacro;
+
+import ale.hscript.lexer.Lexer;
+
 import ale.hscript.errors.ErrorType;
 import ale.hscript.errors.Error;
+
+import ale.hscript.parser.Parser;
 import ale.hscript.parser.Expr;
+
 import ale.hscript.interp.*;
 
 import haxe.Constraints.IMap;
 import haxe.ds.ObjectMap;
 import haxe.Log;
 
-class ASTWalker extends Interp
+class ASTWalker extends Interp<Array<Expr>>
 {
-    public function execute(exprs:Array<Expr>):Dynamic
+    public function executeString(source:String):Dynamic
+        return execute(new Parser(new Lexer(source).tokenize()).parse());
+
+    public function execute(?exprs:Array<Expr>):Dynamic
     {
         try
         {
@@ -39,61 +48,7 @@ class ASTWalker extends Interp
         }
     }
 
-    function createScriptedInstance(cls:ScriptedClass, args:Array<Dynamic>):ScriptedInstance
-    {
-        final instance = createScriptedSuper(cls, null);
-
-        final oldScope = scope;
-
-        scope = instance.scope;
-
-        try
-        {
-            if (instance.scope.variables.exists('new'))
-                Reflect.callMethod(instance, instance.scope.get('new'), args);
-        } catch (e:Dynamic) {
-            scope = oldScope;
-
-            throw e;
-        }
-
-        scope = oldScope;
-
-        return instance;
-    }
-
-    function createScriptedSuper(cls:ScriptedClass, instance:ScriptedInstance):ScriptedInstance
-    {
-        if (cls == null)
-            return null;
-
-        final parent = createScriptedSuper(cast cls.parent, instance);
-        final parentScope = createScope(parent != null ? parent.scope : cls.scope);
-        final parentInstance = new ScriptedInstance(cls, parentScope);
-
-        parentInstance.scriptedSuper = parent;
-        parentScope.scriptedThis = instance ?? parentInstance;
-        parentScope.scriptedSuper = parent;
-
-        final oldScope = scope;
-
-        scope = parentScope;
-
-        try
-        {
-            for (field in cls.body)
-                eval(field);
-        } catch (e:Dynamic) {
-            scope = oldScope;
-            throw e;
-        }
-
-        scope = oldScope;
-        
-        return parentInstance;
-    }
-
-    function eval(expr:Expr, ?newScope:Scope):Dynamic
+    function eval(expr:Expr, ?newScope:Scope<Array<Expr>>):Dynamic
     {
         if (expr == null)
             return null;
@@ -109,7 +64,7 @@ class ASTWalker extends Interp
                     scope.scriptedSuper;
 
                 case EClassDecl(id, body, parent):
-                    imports[id] = new ScriptedClass(id, body, scope, eval(parent));
+                    imports[id] = new ScriptedClass<Array<Expr>>(id, body, scope, eval(parent));
 
                 case ETypedef(_, _):
                     null;
@@ -175,9 +130,9 @@ class ASTWalker extends Interp
                     } catch (c:ControlSignal) {
                         throw c;
                     } catch(e:Dynamic) {
-                        final oldScope:Scope = scope;
+                        final oldScope = scope;
 
-                        final tryScope:Scope = createScope(scope);
+                        final tryScope = createScope(scope);
 
                         tryScope.define(arg.id, e);
 
@@ -251,15 +206,15 @@ class ASTWalker extends Interp
                     final solvedArgs = args.map(arg -> eval(arg));
 
                     if (resolvedClass is ScriptedClass)
-                        return createScriptedInstance(resolvedClass, solvedArgs);
+                        return resolvedClass.instance(solvedArgs, this);
 
                     return Type.createInstance(resolvedClass, solvedArgs);
                 
                 case EFunction(arguments, block):
-                    final capturedScope:Scope = scope;
+                    final capturedScope = scope;
 
                     Reflect.makeVarArgs((args:Array<Dynamic>) -> {
-                        final funcScope:Scope = createScope(capturedScope);
+                        final funcScope = createScope(capturedScope);
 
                         for (index => arg in arguments)
                             funcScope.define(arguments[index].id, args[index] ?? eval(arguments[index].value));
@@ -288,7 +243,7 @@ class ASTWalker extends Interp
                     null;
 
                 case EBlock(exprs):
-                    final oldScope:Scope = scope;
+                    final oldScope = scope;
                     
                     scope = newScope ?? createScope(scope);
 
@@ -305,7 +260,7 @@ class ASTWalker extends Interp
                                 res = value;
 
                             default:
-                                error(EInvalidControl(e), expr);
+                                throw e;
                         }
                     }
 
@@ -621,16 +576,7 @@ class ASTWalker extends Interp
                     null;
             }
         } catch (signal:ControlSignal) {
-            switch (signal)
-            {
-                case CReturn(_):
-                    throw signal;
-
-                default:
-                    error(EInvalidControl(signal), expr);
-
-                    return null;
-            }
+            throw signal;
         } catch(externalError:ErrorType) {
             error(externalError, expr);
         }
@@ -640,7 +586,7 @@ class ASTWalker extends Interp
     function evalWhile(condition:Expr, body:Expr):Array<Dynamic>
     {
         final res:Array<Dynamic> = [];
-                    
+
         while (eval(condition))
         {
             try
@@ -694,7 +640,7 @@ class ASTWalker extends Interp
     {
         final res:Array<Dynamic> = [];
 
-        final oldScope:Scope = scope;
+        final oldScope = scope;
             
         if (indexId == null)
         {
@@ -702,7 +648,7 @@ class ASTWalker extends Interp
 
             while (it.hasNext())
             {
-                final newScope:Scope = createScope(scope);
+                final newScope = createScope(scope);
 
                 newScope.define(iterId, it.next());
 
@@ -730,7 +676,7 @@ class ASTWalker extends Interp
 
             while (it.hasNext())
             {
-                final newScope:Scope = createScope(scope);
+                final newScope = createScope(scope);
 
                 final pair = it.next();
 

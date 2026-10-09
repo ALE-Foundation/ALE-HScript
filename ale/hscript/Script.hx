@@ -5,30 +5,25 @@ import ale.hscript.utils.Util;
 import ale.hscript.lexer.Lexer;
 
 import ale.hscript.parser.Parser;
+import ale.hscript.parser.Expr;
 
 import ale.hscript.interp.Interp;
 
-import ale.hscript.bytecode.BytecodeInterp;
 import ale.hscript.astwalker.ASTWalker;
 
-import ale.hscript.bytecode.Code;
-
-class Script
+class Script<T = Array<Expr>>
 {
     public final source:String;
 
-    public final code:Code;
+    public final interp:Interp<T>;
 
-    public final interp:Interp;
-
-    public function new(script:String, ?name:String, ?interp:Interp, ?superInstance:Dynamic, ?context:Dynamic)
+    public function new(script:String, ?name:String, ?interp:Interp<T>, ?superInstance:Dynamic, ?context:Dynamic)
     {
         final data = Util.resolveSourceData(script, name);
 
         source = data.source;
-        code = data.code;
 
-        interp ??= new ASTWalker();
+        interp ??= cast new ASTWalker();
         interp.name ??= data.name;
         interp.superInstance ??= superInstance;
 
@@ -50,7 +45,7 @@ class Script
     }
 
     public function execute():Dynamic
-        return code != null && interp is BytecodeInterp ? cast(interp, BytecodeInterp).interpret(code) : interp.execute(new Parser(new Lexer(source).tokenize()).parse());
+        return interp.executeString(source);
 
     public var failedExecution(default, null):Bool = false;
 
