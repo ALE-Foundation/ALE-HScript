@@ -9,9 +9,6 @@ enum ExprType
 
     ETypedef(id:String, fields:Array<String>);
     EAlias(id:String, type:Expr);
-
-    EInterface(id:String, fields:Array<Expr>);
-
     
     EVar(id:String);
     EField(object:Expr, property:String);
@@ -88,7 +85,9 @@ enum ExprType
     EEof;
 
 
-    EClassDecl(id:String, body:Array<Expr>, ?parent:Expr);
+    EClassDecl(id:String, body:Array<Expr>, ?parent:Expr, implem:Array<Expr>);
+
+    EInterfaceDecl(id:String, fields:Array<String>, ?parents:Array<Expr>);
 
     ESuper;
     EThis;

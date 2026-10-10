@@ -57,14 +57,17 @@ class ASTWalker extends Interp<Expr>
         {
             return switch (expr.type)
             {
+                case EInterfaceDecl(id, fields, parents):
+                    imports[id] = new ScriptedInterface(id, fields, [for (par in parents) eval(par)]);
+
                 case EThis:
                     scope.scriptedThis;
 
                 case ESuper:
                     scope.scriptedSuper;
 
-                case EClassDecl(id, body, parent):
-                    imports[id] = new ScriptedClass<Expr>(id, body, scope, eval(parent));
+                case EClassDecl(id, body, parent, implem):
+                    imports[id] = new ScriptedClass<Expr>(id, body, scope, eval(parent), [for (imp in implem) eval(imp)]);
 
                 case ETypedef(_, _):
                     null;

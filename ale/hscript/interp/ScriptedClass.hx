@@ -1,20 +1,24 @@
 package ale.hscript.interp;
 
+import ale.hscript.errors.ErrorType;
+
 import ale.hscript.parser.Expr;
 
 class ScriptedClass<T>
 {
-    public final name:String;
+    public final id:String;
     public final body:Array<T>;
     public final scope:Scope<T>;
     public final parent:Dynamic;
+    public final implem:Array<ScriptedInterface>;
 
-    public function new(name:String, body:Array<T>, scope:Scope<T>, ?parent:Dynamic)
+    public function new(id:String, body:Array<T>, scope:Scope<T>, ?parent:Dynamic, ?implem:Array<ScriptedInterface>)
     {
-        this.name = name;
+        this.id = id;
         this.body = body;
         this.scope = scope;
         this.parent = parent;
+        this.implem = implem;
     }
 
     public function instance(args:Array<Dynamic>, interp:Interp<T>):ScriptedInstance<T>
@@ -38,6 +42,11 @@ class ScriptedClass<T>
         {
             for (expr in body)
                 interp.eval(expr);
+
+            for (imp in implem)
+                for (field in imp.instance())
+                    if (!newScope.exists(field))
+                        throw ENeededField(field, imp.id);
 
             if (args != null)
                 Reflect.callMethod(inst, newScope.get('new'), args);

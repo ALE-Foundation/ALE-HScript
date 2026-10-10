@@ -1,17 +1,15 @@
-
-/*
-interface IOso
+interface IBaseOso
 {
     var tung:String;
+}
 
+interface IOso extends IBaseOso
+{
     public function oso():Void;
 }
-*/
 
-class Oso
+class Oso implements IOso
 {
-    var tung:String = 'donde';
-
     public function new()
         trace('oso');
 

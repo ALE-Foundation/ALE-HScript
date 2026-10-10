@@ -34,4 +34,6 @@ enum ErrorType
     EInvalidOp(op:TokenType);
 
     EInvalidControl(signal:ControlSignal);
+
+    ENeededField(field:String, inter:String);
 }

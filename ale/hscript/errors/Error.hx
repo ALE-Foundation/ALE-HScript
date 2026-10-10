@@ -94,6 +94,9 @@ class Error extends Exception
                         'continue';
                 };
 
+            case ENeededField(id, imp):
+                'Field "$id" needed by "$imp is missing';
+
             default:
                 Std.string(type);
         }
