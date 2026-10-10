@@ -68,10 +68,8 @@ class Parser
     }
 
     var allowPackage:Bool = true;
-    var allowImports:Bool = true;
-    var allowUsings:Bool = true;
-    var allowTypedefs:Bool = true;
-    var allowClasses:Bool = true;
+    var allowUsingsImports:Bool = true;
+    var allowTypes:Bool = true;
 
     var allowThis:Bool = false;
     var allowSuper:Bool = false;
@@ -104,158 +102,164 @@ class Parser
 
         allowPackage = false;
 
-        if (allowImports && match(TImport))
-        {
-            final str:StringBuf = new StringBuf();
-
-            while (!end() && !check(TStar))
+        if (allowUsingsImports)
+            switch (cur.type)
             {
-                str.add(parseIdent());
+                case TImport:
+                    advance();
 
-                if (match(TDot))
-                {
-                    if (match(TStar))
-                        return fastExpr(EPackageImport(str.toString()), cur);
+                    final str:StringBuf = new StringBuf();
 
-                    str.add('.');
-                } else
-                    break;
-            }
-
-            var alias:Null<String> = null;
-
-            if (match(TAs))
-                alias = parseIdent();
-
-            return fastExpr(EImport(str.toString(), alias), cur);
-        }
-
-        allowImports = false;
-
-        if (allowUsings && match(TUsing))
-            return fastExpr(EUsing(parseType()), cur);
-
-        allowUsings = false;
-
-        if (allowTypedefs && match(TTypedef))
-        {
-            final id:String = parseIdent();
-
-            expect(TEqual);
-
-            final pos:Int = index;
-                
-            try
-            {
-                return fastExpr(EAlias(id, parseType()), cur);
-            } catch(_:Dynamic) {
-                try
-                {
-                    index = pos;
-
-                    final fields:Array<String> = [];
-
-                    expect(TLBrace);
-
-                    while (!end() && !check(TRBrace))
+                    while (!end() && !check(TStar))
                     {
-                        match(TQuestion);
+                        str.add(parseIdent());
 
-                        fields.push(parseIdent());
+                        if (match(TDot))
+                        {
+                            if (match(TStar))
+                                return fastExpr(EPackageImport(str.toString()), cur);
 
-                        parseOptionalType();
-
-                        if (!match(TComma))
+                            str.add('.');
+                        } else
                             break;
                     }
 
-                    expect(TRBrace);
+                    var alias:Null<String> = null;
 
-                    return fastExpr(ETypedef(id, fields), cur);
-                } catch(_:Dynamic) {
-                    index = pos;
+                    if (match(TAs))
+                        alias = parseIdent();
+
+                    return fastExpr(EImport(str.toString(), alias), cur);
+
+                case TUsing:
+                    return fastExpr(EUsing(parseType()), cur);
+
+                default:
+                    allowUsingsImports = false;
+            }
+
+        if (allowTypes)
+            switch (cur.type)
+            {
+                case TTypedef:
+                    advance();
                     
-                    final fields:Array<String> = [];
+                    final id:String = parseIdent();
 
-                    expect(TLBrace);
+                    expect(TEqual);
 
-                    while (!end() && !check(TRBrace))
+                    final pos:Int = index;
+                        
+                    try
                     {
-                        switch (peek().type)
+                        return fastExpr(EAlias(id, parseType()), cur);
+                    } catch(_:Dynamic) {
+                        try
                         {
-                            case TAt:
-                                parseSemicolonStatement();
+                            index = pos;
 
-                            case TVar:
-                                advance();
+                            final fields:Array<String> = [];
+
+                            expect(TLBrace);
+
+                            while (!end() && !check(TRBrace))
+                            {
+                                match(TQuestion);
 
                                 fields.push(parseIdent());
 
                                 parseOptionalType();
 
-                                expect(TSemicolon);
+                                if (!match(TComma))
+                                    break;
+                            }
+
+                            expect(TRBrace);
+
+                            return fastExpr(ETypedef(id, fields), cur);
+                        } catch(_:Dynamic) {
+                            index = pos;
+                            
+                            final fields:Array<String> = [];
+
+                            expect(TLBrace);
+
+                            while (!end() && !check(TRBrace))
+                            {
+                                switch (peek().type)
+                                {
+                                    case TAt:
+                                        parseSemicolonStatement();
+
+                                    case TVar:
+                                        advance();
+
+                                        fields.push(parseIdent());
+
+                                        parseOptionalType();
+
+                                        expect(TSemicolon);
+
+                                    default:
+                                        expected(TVar, peek());
+                                }
+                            }
+
+                            expect(TRBrace);
+
+                            return fastExpr(ETypedef(id, fields), cur);
+                        }
+                    }
+
+                case TClass:
+                    advance();
+
+                    allowTypes = false;
+
+                    allowThis = true;
+
+                    final id:String = parseIdent();
+
+                    var parent:Expr = null;
+
+                    if (match(TExtends))
+                    {
+                        parent = parseType();
+
+                        allowSuper = true;
+                    }
+
+                    expect(TLBrace);
+
+                    var body:Array<Expr> = [];
+
+                    while (!end() && !check(TRBrace))
+                    {
+                        final cur:Token = peek();
+
+                        switch (cur.type)
+                        {
+                            case TVar, TFinal, TFunction, TPrivate, TPublic, TOverride:
+                                body.push(parseSemicolonStatement());
 
                             default:
-                                expected(TVar, peek());
+                                error(EUnexpected(cur.type), cur);
                         }
                     }
 
                     expect(TRBrace);
 
-                    return fastExpr(ETypedef(id, fields), cur);
-                }
+                    allowSuper = false;
+
+                    allowThis = false;
+
+                    allowTypes = true;
+
+                    return fastExpr(EClassDecl(id, body, parent), cur);
+
+                default:
+                    allowTypes = false;
             }
-        }
-
-        allowTypedefs = false;
-
-        if (allowClasses && match(TClass))
-        {
-            allowClasses = false;
-
-            allowThis = true;
-
-            final id:String = parseIdent();
-
-            var parent:Expr = null;
-
-            if (match(TExtends))
-            {
-                parent = parseType();
-
-                allowSuper = true;
-            }
-
-            expect(TLBrace);
-
-            var body:Array<Expr> = [];
-
-            while (!end() && !check(TRBrace))
-            {
-                final cur:Token = peek();
-
-                switch (cur.type)
-                {
-                    case TVar, TFinal, TFunction, TPrivate, TPublic, TOverride:
-                        body.push(parseSemicolonStatement());
-
-                    default:
-                        error(EUnexpected(cur.type), cur);
-                }
-            }
-
-            expect(TRBrace);
-
-            allowSuper = false;
-
-            allowThis = false;
-
-            allowClasses = true;
-
-            return fastExpr(EClassDecl(id, body, parent), cur);
-        }
-
-        allowClasses = false;
 
         return switch (cur.type)
         {

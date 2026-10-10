@@ -1,3 +1,13 @@
+
+/*
+interface IOso
+{
+    var tung:String;
+
+    public function oso():Void;
+}
+*/
+
 class Oso
 {
     var tung:String = 'donde';
@@ -20,8 +30,6 @@ class Ta extends Donde
     public function new()
     {
         super();
-
-        masha = 67;
     }
 }
 

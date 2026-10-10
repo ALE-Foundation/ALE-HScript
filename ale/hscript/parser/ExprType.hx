@@ -10,6 +10,8 @@ enum ExprType
     ETypedef(id:String, fields:Array<String>);
     EAlias(id:String, type:Expr);
 
+    EInterface(id:String, fields:Array<Expr>);
+
     
     EVar(id:String);
     EField(object:Expr, property:String);
