@@ -95,7 +95,7 @@ class Error extends Exception
                 };
 
             case ENeededField(id, imp):
-                'Field "$id" needed by "$imp is missing';
+                'Field "$id" needed by "$imp" is missing';
 
             default:
                 Std.string(type);

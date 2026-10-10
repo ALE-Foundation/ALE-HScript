@@ -8,8 +8,10 @@ interface IOso extends IBaseOso
     public function oso():Void;
 }
 
-class Oso implements IOso
+class Oso
 {
+    var tung:String = '67';
+
     public function new()
         trace('oso');
 
@@ -23,7 +25,7 @@ class Donde extends Oso
         trace('tu');
 }
 
-class Ta extends Donde
+class Ta extends Donde implements IOso
 {
     public function new()
     {
