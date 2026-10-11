@@ -166,6 +166,21 @@ class Scope<T>
         return res;
     }
 
+    public function resolveSuper():OneOfTwo<ScriptedInstance<T>, NativeExtensible>
+    {
+        var res = this;
+
+        while (res != null)
+        {
+            if (res.scriptedSuper != null)
+                return res.scriptedSuper;
+
+            res = res.parent;
+        }
+
+        return null;
+    }
+
     public function reset(?parent:Scope<T>)
     {
         this.parent = parent;

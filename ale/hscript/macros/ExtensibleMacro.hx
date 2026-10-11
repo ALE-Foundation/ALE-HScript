@@ -8,7 +8,7 @@ import haxe.macro.Type;
 class ExtensibleMacro
 {
     public static final SUFFIX:String = '_ALE_HScript_Extensible';
-    public static final FIELD_SUFFIX:String = '_ALE_HScript_super';
+    public static final SUPER_SUFFIX:String = '_ALE_HScript_super';
 
     macro public static function build():Array<Field>
     {
@@ -61,7 +61,7 @@ class ExtensibleMacro
 
                     extensibleFields.push({
                         pos: Context.currentPos(),
-                        name: field.name + FIELD_SUFFIX,
+                        name: field.name + SUPER_SUFFIX,
                         kind: FFun({
                             args: func.args?.copy(),
                             params: func.params?.copy(),

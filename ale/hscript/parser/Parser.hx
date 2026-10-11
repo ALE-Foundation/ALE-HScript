@@ -586,6 +586,15 @@ class Parser
 
         return switch (cur.type)
         {
+            case TSuper if (allowSuper):
+                advance();
+                
+                expect(TDot);
+
+                final id = parseIdent();
+
+                fastExpr(ESuperFieldCall(id, parseCallArguments()), cur);
+            
             case TAt:
                 advance();
                 
@@ -624,11 +633,6 @@ class Parser
                 advance();
 
                 fastExpr(EThis, cur);
-
-            case TSuper if (allowSuper):
-                advance();
-
-                fastExpr(ESuper, cur);
 
             case TPublic, TPrivate, TOverride:
                 final access:Array<TokenType> = [];

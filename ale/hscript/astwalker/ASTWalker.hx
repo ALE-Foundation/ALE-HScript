@@ -10,6 +10,8 @@ import ale.hscript.errors.Error;
 import ale.hscript.parser.Parser;
 import ale.hscript.parser.Expr;
 
+import ale.hscript.macros.ExtensibleMacro;
+
 import ale.hscript.interp.*;
 
 import haxe.Constraints.IMap;
@@ -63,8 +65,10 @@ class ASTWalker extends Interp<Expr>
                 case EThis:
                     scope.scriptedThis;
 
-                case ESuper:
-                    scope.scriptedSuper;
+                case ESuperFieldCall(id, args):
+                    final sup = scope.resolveSuper();
+
+                    Reflect.callMethod(sup, sup is ScriptedInstance ? (sup : ScriptedInstance<Dynamic>).get(id) : Reflect.getProperty(sup, id + ExtensibleMacro.SUPER_SUFFIX), args);
 
                 case EClassDecl(id, body, parent, implem):
                     imports[id] = new ScriptedClass<Expr>(id, body, eval(parent), [for (imp in implem) eval(imp)]);

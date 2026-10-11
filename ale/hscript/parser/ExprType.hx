@@ -89,6 +89,8 @@ enum ExprType
 
     EInterfaceDecl(id:String, fields:Array<String>, ?parents:Array<Expr>);
 
-    ESuper;
     EThis;
+
+    ESuperFieldCall(id:String, args:Array<Expr>);
+    ESuperCall(args:Array<Expr>);
 }
