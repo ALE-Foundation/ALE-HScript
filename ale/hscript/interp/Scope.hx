@@ -4,6 +4,10 @@ import ale.hscript.errors.ErrorType;
 
 import ale.hscript.parser.Property;
 
+import ale.hscript.macros.NativeExtensible;
+
+import ale.hscript.utils.OneOfTwo;
+
 class Scope<T>
 {
     public var parent:Scope<T>;
@@ -11,7 +15,7 @@ class Scope<T>
     public var variables:Map<String, Variable>;
 
     public var scriptedThis:ScriptedInstance<T>;
-    public var scriptedSuper:ScriptedInstance<T>;
+    public var scriptedSuper:OneOfTwo<ScriptedInstance<T>, NativeExtensible>;
 
     public function new(?parent:Scope<T>)
     {

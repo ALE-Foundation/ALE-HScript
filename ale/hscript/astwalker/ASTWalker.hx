@@ -310,11 +310,6 @@ class ASTWalker extends Interp<Expr>
 
                             null;
 
-                        case ESuper:
-                            Reflect.callMethod(scope.scriptedSuper, scope.scriptedSuper.scope.get('new'), solvedArgs);
-
-                            null;
-                        
                         case EField(target, id):
                             final obj:Dynamic = eval(target);
 

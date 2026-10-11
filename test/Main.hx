@@ -7,6 +7,8 @@ import ale.hscript.Config;
 import sys.FileSystem;
 #end
 
+import ExtensibleTest;
+
 using StringTools;
 
 class Main
