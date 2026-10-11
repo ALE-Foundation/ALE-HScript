@@ -1,13 +1,6 @@
-class ExtensibleTest
-{
-    public function new() {}
-
-    var oso:String = 'oso';
-}
-
 class Oso extends ExtensibleTest
 {
-    function osoFunc():String
+    override function osoFunc():String
     {
         trace('donde');
     }

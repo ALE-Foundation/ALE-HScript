@@ -67,7 +67,7 @@ class ASTWalker extends Interp<Expr>
                     scope.scriptedSuper;
 
                 case EClassDecl(id, body, parent, implem):
-                    imports[id] = new ScriptedClass<Expr>(id, body, scope, eval(parent), [for (imp in implem) eval(imp)]);
+                    imports[id] = new ScriptedClass<Expr>(id, body, eval(parent), [for (imp in implem) eval(imp)]);
 
                 case ETypedef(_, _):
                     null;

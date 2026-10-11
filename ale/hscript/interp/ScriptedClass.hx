@@ -11,12 +11,11 @@ class ScriptedClass<T>
 {
     public final id:String;
     public final body:Array<T>;
-    public final scope:Scope<T>;
     public final parent:ScriptedClass<T>;
     public final nativeParent:Class<NativeExtensible>;
     public final implem:Array<ScriptedInterface>;
 
-    public function new(id:String, body:Array<T>, scope:Scope<T>, ?parent:Dynamic, ?implem:Array<ScriptedInterface>)
+    public function new(id:String, body:Array<T>, ?parent:Dynamic, ?implem:Array<ScriptedInterface>)
     {
         function resolveNative():Class<NativeExtensible>
         {
@@ -42,7 +41,6 @@ class ScriptedClass<T>
 
         this.id = id;
         this.body = body;
-        this.scope = scope;
         this.parent = parent is ScriptedClass ? parent : null;
         this.nativeParent = resolveNative();
         this.implem = implem;
@@ -54,7 +52,7 @@ class ScriptedClass<T>
 
         final superInst = parent?.instance(null, interp);
 
-        final newScope = interp.createScope(superInst?.scope ?? scope);
+        final newScope = interp.createScope(superInst?.scope);
 
         final inst = new ScriptedInstance<T>(this, newScope);
 

@@ -15,14 +15,28 @@ class Scope<T>
     public var variables:Map<String, Variable>;
 
     public var scriptedThis:ScriptedInstance<T>;
-    public var scriptedSuper:OneOfTwo<ScriptedInstance<T>, NativeExtensible>;
+
+    public var scriptedSuper(default, set):OneOfTwo<ScriptedInstance<T>, NativeExtensible>;
+    function set_scriptedSuper(val:OneOfTwo<ScriptedInstance<T>, NativeExtensible>):OneOfTwo<ScriptedInstance<T>, NativeExtensible>
+    {
+        if (scriptedSuper == val)
+            return scriptedSuper;
+
+        if (val == null || val is ScriptedInstance)
+            nativeFields = null;
+        else
+            nativeFields = Type.getInstanceFields(Type.getClass(val));
+
+        return scriptedSuper = val;
+    }
+
+    public var nativeFields:Array<String> = null;
 
     public function new(?parent:Scope<T>)
     {
         this.parent = parent;
 
         scriptedThis = parent?.scriptedThis;
-        scriptedSuper = parent?.scriptedSuper;
 
         variables = new Map<String, Variable>();
     }
@@ -44,6 +58,13 @@ class Scope<T>
         final scope = resolve(id);
 
         final theVar = scope.variables[id];
+
+        if (theVar == null)
+        {
+            Reflect.setProperty(scriptedSuper, id, value);
+
+            return Reflect.getProperty(scriptedSuper, id);
+        }
 
         if (theVar.isFinal)
         {
@@ -86,6 +107,9 @@ class Scope<T>
 
         final theVar = scope.variables[id];
 
+        if (theVar == null)
+            return Reflect.getProperty(scriptedSuper, id);
+
         return switch (theVar.getter)
         {
             case PDefault, PNull:
@@ -126,7 +150,15 @@ class Scope<T>
 
     function resolve(id:String):Scope<T>
     {
-        final res = variables.exists(id) ? this : parent?.resolve(id);
+        var res = this;
+
+        while (res != null)
+        {
+            if (res.variables.exists(id) || res.nativeFields?.contains(id))
+                return res;
+
+            res = res.parent;
+        }
 
         if (res == null)
             throw ErrorType.EUnknownVariable(id);
