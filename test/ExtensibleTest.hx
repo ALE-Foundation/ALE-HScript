@@ -14,7 +14,7 @@ class BaseBase
 class Base extends BaseBase
 {
     public function new(arg:String = 'donde', ?tengo:Dynamic, ?hambre:Dynamic)
-        trace(arg);
+        trace(arg, tengo, hambre);
 }
 
 @:build(ale.hscript.macros.ExtensibleMacro.build())

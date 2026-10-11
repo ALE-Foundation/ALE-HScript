@@ -77,7 +77,7 @@ class ExtensibleMacro
 
         if (totalArgs != null)
         {
-            var superArgs:Array<Expr> = [for (i in 0...totalArgs) macro cast args[$v{i}]];
+            var superArgs:Array<Expr> = [for (i in 0...totalArgs) macro cast localArgs[$v{i}]];
 
             extensibleFields.push({
                 pos: Context.currentPos(),
@@ -85,8 +85,8 @@ class ExtensibleMacro
                 kind: FFun({
                     args: [
                         {
-                            name: 'cls',
-                            type: macro:ale.hscript.interp.ScriptedInstance<Dynamic>
+                            name: 'consData',
+                            type: macro:ale.hscript.interp.ConstructorData<Dynamic>
                         },
                         {
                             name: 'args',
@@ -94,7 +94,23 @@ class ExtensibleMacro
                         }
                     ],
                     expr: macro {
+                        var localArgs = args;
+
+                        if (consData != null)
+                        {
+                            consData.initScope(args);
+                            consData.initPre();
+                            
+                            localArgs = consData.getSuperArgs();
+                        }
+                        
                         super($a{superArgs});
+
+                        if (consData != null)
+                        {
+                            consData.initPost();
+                            consData.destroyScope();
+                        }
                     }
                 })
             });

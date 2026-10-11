@@ -91,6 +91,8 @@ enum ExprType
 
     EThis;
 
+    EExtendedConstructor(pre:Expr, superArgs:Array<Expr>, post:Expr, funcArgs:Array<FunctionArgument>);
+
     ESuperFieldCall(id:String, args:Array<Expr>);
     ESuperCall(args:Array<Expr>);
 }

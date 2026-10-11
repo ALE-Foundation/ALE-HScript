@@ -100,6 +100,9 @@ class Error extends Exception
             case ECannotExtend(id):
                 'Type "$id" cannot be extended';
 
+            case EMissingSuper:
+                'Missing super constructor call';
+
             default:
                 Std.string(type);
         }

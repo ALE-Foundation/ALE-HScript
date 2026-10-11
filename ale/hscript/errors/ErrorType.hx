@@ -38,4 +38,6 @@ enum ErrorType
     ENeededField(field:String, inter:String);
 
     ECannotExtend(id:String);
+
+    EMissingSuper;
 }

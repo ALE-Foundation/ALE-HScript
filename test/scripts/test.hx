@@ -1,11 +1,13 @@
 class Oso extends ExtensibleTest
 {
-    override function osoFunc():String
+    override function new(arg:String)
     {
-        super.osoFunc();
+        trace('en');
+
+        super(arg, 'radio', 'hay');
+
+        trace('un pollito');
     }
 }
 
-final oso = new Oso('tengo hambre');
-
-oso.osoFunc();
+final oso = new Oso('la');

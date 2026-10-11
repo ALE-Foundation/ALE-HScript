@@ -32,6 +32,8 @@ class Scope<T>
 
     public var nativeFields:Array<String> = null;
 
+    public var constructorData:ConstructorData<T>;
+
     public function new(?parent:Scope<T>)
     {
         this.parent = parent;

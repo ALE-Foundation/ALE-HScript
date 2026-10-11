@@ -66,7 +66,7 @@ class ScriptedClass<T>
         try
         {
             if (nativeParent != null)
-                newScope.define('new', Reflect.makeVarArgs(args -> newScope.scriptedSuper = Type.createInstance(nativeParent, [inst, args])));
+                newScope.define('new', Reflect.makeVarArgs(args -> newScope.scriptedSuper = Type.createInstance(nativeParent, [newScope.constructorData, args])));
 
             for (expr in body)
                 interp.eval(expr);
@@ -80,8 +80,6 @@ class ScriptedClass<T>
                 Reflect.callMethod(inst, newScope.get('new'), args);
         } catch(e) {
             interp.scope = oldScope;
-
-            trace(e.details());
 
             throw e;
         }

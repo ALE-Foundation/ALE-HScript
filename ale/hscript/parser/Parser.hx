@@ -46,7 +46,7 @@ class Parser
     function requiresSemicolon(expr:ExprType):Null<Bool>
         return switch (expr)
         {
-            case EClassDecl(_, _, _), EInterfaceDecl(_, _), EEof, ETypedef(_, _), EMetadata(_, _), ESwitch(_, _, _), EIf(_, _, _), EWhile(_, _), EFor(_), EStructure(_), ETry(_, _), EBlock(_), EFunctionDecl(_, _), EFunction(_, _):
+            case EExtendedConstructor(_, _, _), EClassDecl(_, _, _), EInterfaceDecl(_, _), EEof, ETypedef(_, _), EMetadata(_, _), ESwitch(_, _, _), EIf(_, _, _), EWhile(_, _), EFor(_), EStructure(_), ETry(_, _), EBlock(_), EFunctionDecl(_, _), EFunction(_, _):
                 false;
 
             case EReturn(val), EVarDecl(_, val, _, _, _), EAssign(_, val):
@@ -383,6 +383,59 @@ class Parser
 
             case TFunction:
                 advance();
+
+                switch (peek().type)
+                {
+                    case TNew if (allowSuper):
+                        advance();
+
+                        final args = parseFunctionArguments();
+
+                        final pre:Array<Expr> = [];
+                        final post:Array<Expr> = [];
+
+                        var superCall:Array<Expr> = null;
+
+                        final expectTR = match(TLBrace);
+
+                        if (expectTR)
+                        {
+                            while (!end() && !check(TRBrace))
+                            {
+                                switch (peek().type)
+                                {
+                                    case TSuper:
+                                        advance();
+
+                                        superCall = parseCallArguments();
+
+                                        expect(TSemicolon);
+
+                                    default:
+                                        if (superCall == null)
+                                            pre.push(parseSemicolonStatement());
+                                        else
+                                            post.push(parseSemicolonStatement());
+                                }
+                            }
+                        } else {
+                            expect(TSuper);
+
+                            superCall = parseCallArguments();
+
+                            expect(TSemicolon);
+                        }
+
+                        if (expectTR)
+                            expect(TRBrace);
+
+                        if (superCall == null)
+                            error(EMissingSuper, cur);
+
+                        return fastExpr(EExtendedConstructor(fastExpr(EBlock(pre), cur), superCall, fastExpr(EBlock(post), cur), args), cur);
+
+                    default:
+                }
 
                 final id:String = switch (advance().type)
                 {

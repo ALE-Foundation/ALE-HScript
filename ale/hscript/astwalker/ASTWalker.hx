@@ -59,6 +59,11 @@ class ASTWalker extends Interp<Expr>
         {
             return switch (expr.type)
             {
+                case EExtendedConstructor(pre, superArgs, post, funcArgs):
+                    scope.constructorData = new ConstructorData<Expr>(this, pre, superArgs, post, funcArgs);
+
+                    null;
+
                 case EInterfaceDecl(id, fields, parents):
                     imports[id] = new ScriptedInterface(id, fields, [for (par in parents) eval(par)]);
 
