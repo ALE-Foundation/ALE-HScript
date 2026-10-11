@@ -13,82 +13,146 @@ class ExtensibleMacro
     macro public static function build():Array<Field>
     {
         final baseClass = Context.getLocalClass().get();
-        final baseFields = Context.getBuildFields();
 
-        final extensibleFields:Array<Field> = [];
+        final ogFields = Context.getBuildFields();
 
-        for (field in baseFields)
+        var totalArgs:Null<Int> = null;
+
+        for (field in ogFields)
             switch (field.kind)
             {
                 case FFun(func):
-                    if (field.access.contains(AStatic))
+                    if (field.name != 'new')
                         continue;
 
-                    if (field.name == 'new')
-                    {
-                        var superArgs:Array<Expr> = [for (i in 0...func.args.length) macro cast args[$v{i}]];
+                    totalArgs = func.args.length;
 
-                        extensibleFields.push({
-                            pos: Context.currentPos(),
-                            name: 'new',
-                            kind: FFun({
-                                args: [
-                                    {
-                                        name: 'cls',
-                                        type: macro:ale.hscript.interp.ScriptedInstance<Dynamic>
-                                    },
-                                    {
-                                        name: 'args',
-                                        type: macro:Array<Dynamic>
-                                    }
-                                ],
-                                expr: macro {
-                                    super($a{superArgs});
-                                }
-                            })
-                        });
+                    break;
 
-                        continue;
+                default:
+            }
+
+        final baseFields = [];
+
+        final names = new Map<String, Bool>();
+
+        final classes:Array<ClassType> = [baseClass];
+
+        var sup = baseClass.superClass.t.get();
+
+        while (sup != null)
+        {
+            classes.push(sup);
+
+            sup = sup.superClass?.t.get();
+        }
+
+        for (cls in classes)
+        {
+            for (field in cls.fields.get())
+                if (!names.exists(field.name))
+                {
+                    baseFields.push(field);
+
+                    names[field.name] = true;
+                }
+
+            if (totalArgs == null || cls.constructor != null)
+                switch (cls.constructor?.get().type)
+                {
+                    case TLazy(func):
+                        switch (func())
+                        {
+                            case TFun(args, _):
+                                totalArgs = args.length;
+
+                            default:
+                        }
+
+                    default:
+                }
+        }
+
+        final extensibleFields:Array<Field> = [];
+
+        if (totalArgs != null)
+        {
+            var superArgs:Array<Expr> = [for (i in 0...totalArgs) macro cast args[$v{i}]];
+
+            extensibleFields.push({
+                pos: Context.currentPos(),
+                name: 'new',
+                kind: FFun({
+                    args: [
+                        {
+                            name: 'cls',
+                            type: macro:ale.hscript.interp.ScriptedInstance<Dynamic>
+                        },
+                        {
+                            name: 'args',
+                            type: macro:Array<Dynamic>
+                        }
+                    ],
+                    expr: macro {
+                        super($a{superArgs});
                     }
+                })
+            });
+        }
 
-                    final call:Expr = {
-                        expr: ECall({
-                            expr: EField(macro super, field.name),
-                            pos: Context.currentPos()
-                        }, [for (a in func.args) macro $i{a.name}]),
-                        pos: Context.currentPos()
-                    };
+        for (field in baseFields)
+            switch (field.type)
+            {
+                case TLazy(lazy):
+                    switch (lazy())
+                    {
+                        case TFun(funcArgs, ret):
+                            final call:Expr = {
+                                expr: ECall({
+                                    expr: EField(macro super, field.name),
+                                    pos: Context.currentPos()
+                                }, [for (a in funcArgs) macro $i{a.name}]),
+                                pos: Context.currentPos()
+                            };
 
-                    extensibleFields.push({
-                        pos: Context.currentPos(),
-                        name: field.name + SUPER_SUFFIX,
-                        kind: FFun({
-                            args: func.args?.copy(),
-                            params: func.params?.copy(),
-                            ret: func.ret,
-                            expr: switch (func.ret)
-                            {
-                                case TPath({name: 'Void', pack: []}):
-                                    call;
+                            final fixedArgs = [
+                                for (arg in funcArgs)
+                                    {
+                                        name: arg.name,
+                                        type: Context.toComplexType(arg.t)
+                                    }
+                            ];
 
-                                default:
-                                    macro return $call;
-                            }
-                        })
-                    });
+                            extensibleFields.push({
+                                pos: Context.currentPos(),
+                                name: field.name + SUPER_SUFFIX,
+                                kind: FFun({
+                                    args: fixedArgs.copy(),
+                                    ret: Context.toComplexType(ret),
+                                    expr: switch (Context.toComplexType(ret))
+                                    {
+                                        case TPath({name: 'Void', pack: []}):
+                                            call;
 
-                    extensibleFields.push({
-                        pos: Context.currentPos(),
-                        name: field.name,
-                        access: [AOverride],
-                        kind: FFun({
-                            args: func.args?.copy(),
-                            ret: func.ret,
-                            params: func.params?.copy(),
-                            expr: macro return null
-                        })
-                    });
+                                        default:
+                                            macro return $call;
+                                    }
+                                })
+                            });
 
+                            extensibleFields.push({
+                                pos: Context.currentPos(),
+                                name: field.name,
+                                access: [AOverride],
+                                kind: FFun({
+                                    args: fixedArgs.copy(),
+                                    ret: Context.toComplexType(ret),
+                                    expr: macro return null
+                                })
+                            });
+
+                        default:
+                    }
                 default:
             }
 
@@ -106,6 +170,6 @@ class ExtensibleMacro
             fields: extensibleFields
         });
 
-        return baseFields;
+        return Context.getBuildFields();
     }
 }
