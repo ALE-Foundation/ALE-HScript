@@ -13,8 +13,6 @@ using StringTools;
 
 class Main
 {
-	static var toTest:ExtensibleTest = null;
-
 	static function main()
 	{
 		#if cpp
@@ -40,10 +38,6 @@ class Main
 		#end
 	}
 
-	static function callTest()
-	{
-		trace(toTest);
-
-		trace(toTest?.osoFunc());
-	}
+	public function typed<T>(type:T):T
+		return type;
 }

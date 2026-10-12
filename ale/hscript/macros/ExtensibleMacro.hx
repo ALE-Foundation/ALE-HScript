@@ -5,15 +5,33 @@ import haxe.macro.Context;
 import haxe.macro.Expr;
 import haxe.macro.Type;
 
+using StringTools;
+
 class ExtensibleMacro
 {
+    #if macro
+    public static function init()
+        Compiler.addGlobalMetadata('', '@:build(ale.hscript.macros.ExtensibleMacro.build())', true, true, false);
+    #end
+
     public static final SUFFIX:String = '_ALE_HScript_Extensible';
     public static final SUPER_SUFFIX:String = '_ALE_HScript_super';
-    public static final INSTANCE:String = '_ALE_HScript_Sripted';
+    public static final INSTANCE:String = '_ALE_HScript_Scripted';
+
+    #if macro
+    static function ok(t:Type):Bool
+        return try {
+            Context.resolveType(Context.toComplexType(t), Context.currentPos()); true;
+        } catch (_) {
+            false;
+        }
 
     macro public static function build():Array<Field>
     {
-        final baseClass = Context.getLocalClass().get();
+        final baseClass = Context.getLocalClass()?.get();
+
+        if (baseClass == null || baseClass.name.endsWith(SUFFIX) || ['Array', 'String', 'Date', 'Xml'].contains(baseClass.module) || baseClass.isInterface || baseClass.isExtern || baseClass.isFinal || baseClass.isAbstract || [for (pack in ['cpp', 'cs', 'eval', 'flash', 'haxe', 'hl', 'java', 'js', 'lua', 'mbedtls', 'neko', 'php', 'python', 'sys']) baseClass.module.startsWith(pack + '.')].contains(true))
+            return Context.getBuildFields();
 
         final ogFields = Context.getBuildFields();
 
@@ -39,7 +57,7 @@ class ExtensibleMacro
 
         final classes:Array<ClassType> = [baseClass];
 
-        var sup = baseClass.superClass.t.get();
+        var sup = baseClass.superClass?.t.get();
 
         while (sup != null)
         {
@@ -53,9 +71,10 @@ class ExtensibleMacro
             for (field in cls.fields.get())
                 if (!names.exists(field.name))
                 {
-                    baseFields.push(field);
-
                     names[field.name] = true;
+
+                    if (ok(field.type) && !field.isFinal && !field.kind.match(FMethod(MethInline)))
+                        baseFields.push(field);
                 }
 
             if (totalArgs == null || cls.constructor != null)
@@ -126,99 +145,96 @@ class ExtensibleMacro
                     }
                 })
             });
+        } else {
+            return Context.getBuildFields();
         }
 
         for (field in baseFields)
         {
             final fieldName = field.name;
 
-            switch (field.type)
+            switch (Context.follow(field.type))
             {
-                case TLazy(lazy):
-                    switch (lazy())
-                    {
-                        case TFun(funcArgs, ret):
-                            final call:Expr = {
-                                expr: ECall({
-                                    expr: EField(macro super, fieldName),
-                                    pos: Context.currentPos()
-                                }, [for (a in funcArgs) macro $i{a.name}]),
-                                pos: Context.currentPos()
-                            };
+                case TFun(funcArgs, ret):
+                    final call:Expr = {
+                        expr: ECall({
+                            expr: EField(macro super, fieldName),
+                            pos: Context.currentPos()
+                        }, [for (a in funcArgs) macro $i{a.name}]),
+                        pos: Context.currentPos()
+                    };
 
-                            final fixedArgs = [
-                                for (arg in funcArgs)
-                                    {
-                                        name: arg.name,
-                                        type: Context.toComplexType(arg.t)
-                                    }
-                            ];
-
-                            final isVoid:Bool = switch (Context.toComplexType(ret))
+                    final fixedArgs = [
+                        for (arg in funcArgs)
                             {
-                                case TPath({name: 'Void', pack: []}):
-                                    true;
-
-                                default:
-                                    false;
+                                name: arg.name,
+                                opt: arg.opt,
+                                type: Context.toComplexType(arg.t)
                             }
+                    ];
 
-                            extensibleFields.push({
-                                pos: Context.currentPos(),
-                                name: fieldName + SUPER_SUFFIX,
-                                kind: FFun({
-                                    args: fixedArgs.copy(),
-                                    ret: Context.toComplexType(ret),
-                                    expr: isVoid ? call : macro return $call
-                                })
-                            });
+                    final isVoid = Context.follow(ret).match(TAbstract(_.get() => {name: 'Void'}, _));
 
-                            var argExprs:Array<Expr> = [for (i in 0...fixedArgs.length) macro $i{'arg' + i}];
+                    extensibleFields.push({
+                        pos: Context.currentPos(),
+                        name: fieldName + SUPER_SUFFIX,
+                        kind: FFun({
+                            args: fixedArgs.copy(),
+                            ret: Context.toComplexType(ret),
+                            expr: isVoid ? call : macro return $call
+                        })
+                    });
 
-                            extensibleFields.push({
-                                pos: Context.currentPos(),
-                                name: fieldName,
-                                access: [AOverride],
-                                kind: FFun({
-                                    args: [for (i => arg in fixedArgs) {
-                                        name: 'arg' + i,
-                                        type: arg.type
-                                    }],
-                                    ret: Context.toComplexType(ret),
-                                    expr: isVoid ? macro {
-                                        if ($i{INSTANCE}.scope.exists($v{fieldName}, false))
-                                            Reflect.callMethod(this, $i{INSTANCE}.get($v{fieldName}), [$a{argExprs}]);
-                                        else
-                                            super.$fieldName($a{argExprs});
-                                    } : macro {
-                                        if ($i{INSTANCE}.scope.exists($v{fieldName}, false))
-                                            return Reflect.callMethod(this, $i{INSTANCE}.get($v{fieldName}), [$a{argExprs}]);
+                    var argExprs:Array<Expr> = [for (i in 0...fixedArgs.length) macro $i{'arg' + i}];
 
-                                        return super.$fieldName($a{argExprs});
-                                    }
-                                })
-                            });
+                    extensibleFields.push({
+                        pos: Context.currentPos(),
+                        name: fieldName,
+                        access: [AOverride],
+                        kind: FFun({
+                            args: [for (i => arg in fixedArgs) {
+                                name: 'arg' + i,
+                                opt: arg.opt,
+                                type: arg.type
+                            }],
+                            ret: Context.toComplexType(ret),
+                            expr: isVoid ? macro {
+                                if ($i{INSTANCE}.scope.exists($v{fieldName}, false))
+                                    Reflect.callMethod(this, $i{INSTANCE}.get($v{fieldName}), [$a{argExprs}]);
+                                else
+                                    super.$fieldName($a{argExprs});
+                            } : macro {
+                                if ($i{INSTANCE}.scope.exists($v{fieldName}, false))
+                                    return Reflect.callMethod(this, $i{INSTANCE}.get($v{fieldName}), [$a{argExprs}]);
 
-                        default:
-                    }
+                                return super.$fieldName($a{argExprs});
+                            }
+                        })
+                    });
+
                 default:
             }
         }
 
-        Context.defineType({
+        final modName = baseClass.name + SUFFIX;
+
+        Context.defineModule(baseClass.pack.concat([modName]).join('.'), [{
             pack: baseClass.pack,
-            name: baseClass.name + SUFFIX,
+            name: modName,
             pos: Context.currentPos(),
             kind: TDClass({
                 pack: baseClass.pack,
-                name: baseClass.name
+                name: baseClass.module.split('.').pop(),
+                sub: baseClass.name,
+                params: [for (_ in baseClass.params) TPType(macro:Dynamic)]
             }, [{
                 pack: ['ale', 'hscript', 'macros'],
                 name: 'NativeExtensible'
-            }], false, false, false),
+            }]),
             fields: extensibleFields
-        });
+        }], Context.getLocalImports());
 
         return Context.getBuildFields();
     }
+    #end
 }
