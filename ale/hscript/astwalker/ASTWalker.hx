@@ -218,7 +218,14 @@ class ASTWalker extends Interp<Expr>
                     final solvedArgs = args.map(arg -> eval(arg));
 
                     if (resolvedClass is ScriptedClass)
-                        return resolvedClass.instance(solvedArgs, this);
+                    {
+                        final inst:ScriptedInstance<Expr> = resolvedClass.instance(solvedArgs, this);
+
+                        if (inst.nativeExtension == null)
+                            return inst;
+                        else
+                            return inst.nativeExtension;
+                    }
 
                     return Type.createInstance(resolvedClass, solvedArgs);
                 

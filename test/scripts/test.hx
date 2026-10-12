@@ -1,3 +1,5 @@
+import Main;
+
 class Oso extends ExtensibleTest
 {
     override function new(arg:String)
@@ -8,6 +10,13 @@ class Oso extends ExtensibleTest
 
         trace('un pollito');
     }
+
+    override function osoFunc(arg:String):String
+    {
+        return 'ayayayay me pica el pene me pica el pene';
+    }
 }
 
-final oso = new Oso('la');
+final oso = new Oso();
+
+trace(oso);

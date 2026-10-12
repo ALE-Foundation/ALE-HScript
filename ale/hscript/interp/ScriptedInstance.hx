@@ -1,7 +1,11 @@
 package ale.hscript.interp;
 
+import ale.hscript.macros.NativeExtensible;
+
 class ScriptedInstance<T>
 {
+    public var nativeExtension:NativeExtensible;
+
     public final scripted:ScriptedClass<T>;
     public final scope:Scope<T>;
 

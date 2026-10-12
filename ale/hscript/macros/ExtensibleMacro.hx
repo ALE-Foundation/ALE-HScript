@@ -9,6 +9,7 @@ class ExtensibleMacro
 {
     public static final SUFFIX:String = '_ALE_HScript_Extensible';
     public static final SUPER_SUFFIX:String = '_ALE_HScript_super';
+    public static final INSTANCE:String = '_ALE_HScript_Sripted';
 
     macro public static function build():Array<Field>
     {
@@ -73,7 +74,12 @@ class ExtensibleMacro
                 }
         }
 
-        final extensibleFields:Array<Field> = [];
+        final extensibleFields:Array<Field> = [{
+            pos: Context.currentPos(),
+            name: INSTANCE,
+            kind: FVar(macro:ale.hscript.interp.ScriptedInstance<Dynamic>),
+            access: [AFinal]
+        }];
 
         if (totalArgs != null)
         {
@@ -85,8 +91,8 @@ class ExtensibleMacro
                 kind: FFun({
                     args: [
                         {
-                            name: 'consData',
-                            type: macro:ale.hscript.interp.ConstructorData<Dynamic>
+                            name: 'instance',
+                            type: macro:ale.hscript.interp.ScriptedInstance<Dynamic>
                         },
                         {
                             name: 'args',
@@ -95,6 +101,8 @@ class ExtensibleMacro
                     ],
                     expr: macro {
                         var localArgs = args;
+
+                        final consData = instance.scope.constructorData;
 
                         if (consData != null)
                         {
@@ -111,12 +119,19 @@ class ExtensibleMacro
                             consData.initPost();
                             consData.destroyScope();
                         }
+
+                        $i{INSTANCE} = instance;
+
+                        $i{INSTANCE}.nativeExtension = this;
                     }
                 })
             });
         }
 
         for (field in baseFields)
+        {
+            final fieldName = field.name;
+
             switch (field.type)
             {
                 case TLazy(lazy):
@@ -125,7 +140,7 @@ class ExtensibleMacro
                         case TFun(funcArgs, ret):
                             final call:Expr = {
                                 expr: ECall({
-                                    expr: EField(macro super, field.name),
+                                    expr: EField(macro super, fieldName),
                                     pos: Context.currentPos()
                                 }, [for (a in funcArgs) macro $i{a.name}]),
                                 pos: Context.currentPos()
@@ -139,31 +154,48 @@ class ExtensibleMacro
                                     }
                             ];
 
+                            final isVoid:Bool = switch (Context.toComplexType(ret))
+                            {
+                                case TPath({name: 'Void', pack: []}):
+                                    true;
+
+                                default:
+                                    false;
+                            }
+
                             extensibleFields.push({
                                 pos: Context.currentPos(),
-                                name: field.name + SUPER_SUFFIX,
+                                name: fieldName + SUPER_SUFFIX,
                                 kind: FFun({
                                     args: fixedArgs.copy(),
                                     ret: Context.toComplexType(ret),
-                                    expr: switch (Context.toComplexType(ret))
-                                    {
-                                        case TPath({name: 'Void', pack: []}):
-                                            call;
-
-                                        default:
-                                            macro return $call;
-                                    }
+                                    expr: isVoid ? call : macro return $call
                                 })
                             });
 
+                            var argExprs:Array<Expr> = [for (i in 0...fixedArgs.length) macro $i{'arg' + i}];
+
                             extensibleFields.push({
                                 pos: Context.currentPos(),
-                                name: field.name,
+                                name: fieldName,
                                 access: [AOverride],
                                 kind: FFun({
-                                    args: fixedArgs.copy(),
+                                    args: [for (i => arg in fixedArgs) {
+                                        name: 'arg' + i,
+                                        type: arg.type
+                                    }],
                                     ret: Context.toComplexType(ret),
-                                    expr: macro return null
+                                    expr: isVoid ? macro {
+                                        if ($i{INSTANCE}.scope.exists($v{fieldName}, false))
+                                            Reflect.callMethod(this, $i{INSTANCE}.get($v{fieldName}), [$a{argExprs}]);
+                                        else
+                                            super.$fieldName($a{argExprs});
+                                    } : macro {
+                                        if ($i{INSTANCE}.scope.exists($v{fieldName}, false))
+                                            return Reflect.callMethod(this, $i{INSTANCE}.get($v{fieldName}), [$a{argExprs}]);
+
+                                        return super.$fieldName($a{argExprs});
+                                    }
                                 })
                             });
 
@@ -171,6 +203,7 @@ class ExtensibleMacro
                     }
                 default:
             }
+        }
 
         Context.defineType({
             pack: baseClass.pack,

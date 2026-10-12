@@ -13,6 +13,8 @@ using StringTools;
 
 class Main
 {
+	static var toTest:ExtensibleTest = null;
+
 	static function main()
 	{
 		#if cpp
@@ -36,5 +38,12 @@ class Main
 					new Script(name).safeExecute();
 				}
 		#end
+	}
+
+	static function callTest()
+	{
+		trace(toTest);
+
+		trace(toTest?.osoFunc());
 	}
 }

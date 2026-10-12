@@ -66,7 +66,7 @@ class ScriptedClass<T>
         try
         {
             if (nativeParent != null)
-                newScope.define('new', Reflect.makeVarArgs(args -> newScope.scriptedSuper = Type.createInstance(nativeParent, [newScope.constructorData, args])));
+                newScope.define('new', Reflect.makeVarArgs(args -> newScope.scriptedSuper = Type.createInstance(nativeParent, [inst, args])));
 
             for (expr in body)
                 interp.eval(expr);

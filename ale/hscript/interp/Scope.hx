@@ -140,23 +140,23 @@ class Scope<T>
         }
     }
 
-    public function exists(id:String):Bool
+    public function exists(id:String, ?allowNative:Bool):Bool
         return try
             {
-                resolve(id);
+                resolve(id, allowNative);
 
                 true;
             } catch(_:ErrorType) {
                 false;
             }
 
-    function resolve(id:String):Scope<T>
+    function resolve(id:String, ?allowNative:Bool = true):Scope<T>
     {
         var res = this;
 
         while (res != null)
         {
-            if (res.variables.exists(id) || res.nativeFields?.contains(id))
+            if (res.variables.exists(id) || (allowNative && res.nativeFields?.contains(id)))
                 return res;
 
             res = res.parent;
