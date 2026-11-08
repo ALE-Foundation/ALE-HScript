@@ -7,8 +7,6 @@ class Macros
 {
     public static function init()
     {
-        ExtensibleMacro.init();
-
         Context.onAfterTyping(moduleTypes -> {
             AbstractsMacro.onAfterTyping(moduleTypes);
             EnumsMacro.onAfterTyping(moduleTypes);

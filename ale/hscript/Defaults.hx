@@ -18,11 +18,7 @@ import haxe.Log;
 class Defaults
 {
     static final FILE_CHECKER:String -> Bool = #if sys FileSystem.exists #else null #end ;
-
     static final CONTENT_READER:String -> String = #if sys File.getContent #else null #end ;
-    static final BYTES_READER:String -> Bytes = #if sys File.getBytes #else null #end ;
-
-    static final BYTES_WRITER:String -> Bytes -> Void = #if sys File.saveBytes #else null #end ;
 
     static final IMPORTS:Array<Class<Dynamic>> = [
         Array,
@@ -45,8 +41,8 @@ class Defaults
     static final TYPEDEFS:Map<String, Class<Dynamic>> = [];
     static final VARIABLES:Map<String, Dynamic> = [];
 
-    static final EXTENSION:String = '.hx';
-    static final COMPILED_EXTENSION:String = '.hxc';
+    static final SCRIPT_EXTENSION:String = '.hx';
+    static final MODULE_EXTENSION:String = '.hxc';
 
     static final SCRIPT_PATH:String = 'scripts/';
     static final MODULE_PATH:String = 'classes/';

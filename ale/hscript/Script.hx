@@ -1,5 +1,6 @@
 package ale.hscript;
 
+import ale.hscript.utils.SourceData;
 import ale.hscript.utils.Util;
 
 import ale.hscript.lexer.Lexer;
@@ -7,50 +8,33 @@ import ale.hscript.lexer.Lexer;
 import ale.hscript.parser.Parser;
 import ale.hscript.parser.Expr;
 
-import ale.hscript.interp.Interp;
+import ale.hscript.interp.IInterp;
 
 import ale.hscript.astwalker.ASTWalker;
 
-class Script<T = Expr>
+class Script
 {
-    public final source:String;
+    public final data:SourceData;
 
-    public final interp:Interp<T>;
+    public final interp:IInterp;
 
-    public function new(script:String, ?name:String, ?interp:Interp<T>, ?superInstance:Dynamic, ?context:Dynamic)
+    public function new(script:String, ?name:String, ?interp:IInterp, ?superInstance:Dynamic, ?context:Dynamic)
     {
-        final data = Util.resolveSourceData(script, name);
-
-        source = data.source;
+        data = Util.resolveSourceData(script, name);
 
         interp ??= cast new ASTWalker();
-        interp.name ??= data.name;
         interp.superInstance ??= superInstance;
 
         this.interp = interp;
     }
 
-    public function set(id:String, value:Dynamic):Void
-        errorHandled(() -> interp.variables.define(id, value));
-
-    public function get(id:String):Dynamic
-        return errorHandled(() -> interp.variables.get(id));
-
-    public function call(id:String, ?args:Array<Dynamic>):Dynamic
-    {
-        if (!interp.variables.exists(id))
-            return null;
-
-        return errorHandled(() -> Reflect.callMethod(null, get(id), args ?? []));
-    }
-
     public function execute():Dynamic
-        return interp.executeString(source);
+        return interp.execute(new Parser(new Lexer(data.source).tokenize()).parse());
 
     public var failedExecution(default, null):Bool = false;
 
     public function safeExecute():Dynamic
-        return errorHandled(() -> execute());
+        return errorHandled(execute);
 
     function errorHandled<T>(call:Void -> T):T
         try
@@ -59,7 +43,7 @@ class Script<T = Expr>
         } catch(error:Dynamic) {
             failedExecution = true;
 
-            Config.ERROR_HANDLER(error, interp.name);
+            Config.ERROR_HANDLER(error, data.name);
 
             return null;
         }

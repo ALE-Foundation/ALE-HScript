@@ -7,8 +7,6 @@ import ale.hscript.Config;
 import sys.FileSystem;
 #end
 
-import ExtensibleTest;
-
 using StringTools;
 
 class Main
@@ -20,24 +18,10 @@ class Main
 		#end
 
 		#if sys
-		var executed:Array<String> = [];
-
 		for (scr in FileSystem.readDirectory(Config.SCRIPT_PATH))
 			if (!scr.startsWith('.'))
-				if (scr.endsWith(Config.EXTENSION))
-				{
-					final name:String = scr.replace(Config.EXTENSION, '');
-
-					if (executed.contains(name))
-						continue;
-
-					executed.push(name);
-
-					new Script(name).safeExecute();
-				}
+				if (scr.endsWith(Config.SCRIPT_EXTENSION))
+					new Script(scr.replace(Config.SCRIPT_EXTENSION, '')).safeExecute();
 		#end
 	}
-
-	public function typed<T>(type:T):T
-		return type;
 }

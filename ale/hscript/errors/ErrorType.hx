@@ -4,9 +4,6 @@ import ale.hscript.lexer.TokenType;
 import ale.hscript.lexer.Token;
 
 import ale.hscript.parser.ExprType;
-import ale.hscript.parser.Expr;
-
-import ale.hscript.interp.ControlSignal;
 
 enum ErrorType
 {
@@ -20,24 +17,7 @@ enum ErrorType
     EExpected(want:TokenType, got:TokenType);
     EUnexpected(got:TokenType);
 
-    ETypeNotFound(module:String);
-    EInvalidArrayAccess(type:String);
-    EInvalidAssignment;
-    EInvalidCast;
-
-    EFinalAssign(id:String);
-    ENeverWrite(id:String);
-    ENeverRead(id:String);
-    EUnknownVariable(id:String);
-
-    EInvalidExpression(expr:ExprType);
-    EInvalidOp(op:TokenType);
-
-    EInvalidControl(signal:ControlSignal);
-
-    ENeededField(field:String, inter:String);
-
-    ECannotExtend(id:String);
-
     EMissingSuper;
+
+    EUnsupportedExpression(expr:ExprType);
 }

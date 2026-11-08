@@ -15,8 +15,7 @@ class Util
     {
         final basePath:String = Config.SCRIPT_PATH + script;
 
-        final path:String = basePath + Config.EXTENSION;
-        final compiledPath:String = basePath + Config.COMPILED_EXTENSION;
+        final path:String = basePath + Config.SCRIPT_EXTENSION;
 
         final isFile:Bool = Config.FILE_CHECKER != null && Config.FILE_CHECKER(path);
 
@@ -24,8 +23,7 @@ class Util
 
         return {
             source: isFile ? Config.CONTENT_READER(path) : script,
-            name: baseName + Config.EXTENSION,
-            compiledPath: Config.SCRIPT_PATH + (isFile ? script : name ?? Config.SCRIPT_NAME) + Config.COMPILED_EXTENSION
+            name: baseName + Config.SCRIPT_EXTENSION,
         };
     }
 

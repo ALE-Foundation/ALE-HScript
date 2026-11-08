@@ -10,8 +10,9 @@ using StringTools;
 class ExtensibleMacro
 {
     #if macro
-    public static function init()
-        Compiler.addGlobalMetadata('', '@:build(ale.hscript.macros.ExtensibleMacro.build())', true, true, false);
+    public static function init(?whiteList:Array<String>)
+        for (pack in whiteList)
+            Compiler.addGlobalMetadata(pack, '@:build(ale.hscript.macros.ExtensibleMacro.build())', true, true, false);
     #end
 
     public static final SUFFIX:String = '_ALE_HScript_Extensible';
@@ -19,18 +20,11 @@ class ExtensibleMacro
     public static final INSTANCE:String = '_ALE_HScript_Scripted';
 
     #if macro
-    static function ok(t:Type):Bool
-        return try {
-            Context.resolveType(Context.toComplexType(t), Context.currentPos()); true;
-        } catch (_) {
-            false;
-        }
-
     macro public static function build():Array<Field>
     {
         final baseClass = Context.getLocalClass()?.get();
 
-        if (baseClass == null || baseClass.name.endsWith(SUFFIX) || ['Array', 'String', 'Date', 'Xml'].contains(baseClass.module) || baseClass.isInterface || baseClass.isExtern || baseClass.isFinal || baseClass.isAbstract || [for (pack in ['cpp', 'cs', 'eval', 'flash', 'haxe', 'hl', 'java', 'js', 'lua', 'mbedtls', 'neko', 'php', 'python', 'sys']) baseClass.module.startsWith(pack + '.')].contains(true))
+        if (baseClass == null || baseClass.name.endsWith(SUFFIX) || baseClass.isInterface || baseClass.isExtern || baseClass.isFinal || baseClass.isAbstract)
             return Context.getBuildFields();
 
         final ogFields = Context.getBuildFields();
@@ -69,25 +63,29 @@ class ExtensibleMacro
         for (cls in classes)
         {
             for (field in cls.fields.get())
-                if (!names.exists(field.name))
-                {
-                    names[field.name] = true;
+            {
+                if (names.exists(field.name))
+                    continue;
 
-                    if (ok(field.type) && !field.isFinal && !field.kind.match(FMethod(MethInline)))
+                names[field.name] = true;
+
+                if (field.isFinal)
+                    continue;
+
+                switch (field.kind)
+                {
+                    case FMethod(MethNormal):
                         baseFields.push(field);
+
+                    default:
                 }
+            }
 
-            if (totalArgs == null || cls.constructor != null)
-                switch (cls.constructor?.get().type)
+            if (totalArgs == null && cls.constructor != null)
+                switch (Context.follow(cls.constructor?.get().type))
                 {
-                    case TLazy(func):
-                        switch (func())
-                        {
-                            case TFun(args, _):
-                                totalArgs = args.length;
-
-                            default:
-                        }
+                    case TFun(args, _):
+                        totalArgs = args.length;
 
                     default:
                 }

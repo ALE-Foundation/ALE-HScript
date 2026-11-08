@@ -28,22 +28,22 @@ class Error extends Exception
         return switch (type)
         {
             case EInvalidCharacter(char):
-                'Invalid character "${String.fromCharCode(char)}"';
+                'Invalid character: "${String.fromCharCode(char)}"';
 
             case EInvalidEscape(char):
                 'Invalid escape: "\\${String.fromCharCode(char)}"';
 
             case EUnterminatedString:
-                'Unterminated string';
+                'Unterminated String';
 
             case EUnterminatedComment:
-                'Unterminated comment';
+                'Unterminated Comment';
 
             case EUnterminatedRegex:
-                'Unterminated regular expression';
+                'Unterminated Regular Expression';
 
             case EInvalidNumber:
-                'Invalid number';
+                'Invalid Number';
 
             case EExpected(want, got):
                 'Expected ${formatToken(want)}, got ${formatToken(got)}';
@@ -51,57 +51,11 @@ class Error extends Exception
             case EUnexpected(got):
                 'Unexpected ${formatToken(got)}';
 
-            case ETypeNotFound(module):
-                'Type "$module" not found';
-
-            case EInvalidArrayAccess(type):
-                'Array access is not allowed on $type';
-
-            case EInvalidAssignment:
-                'Invalid assignment';
-
-            case EInvalidCast:
-                'Invalid cast';
-
-            case EFinalAssign(id):
-                'Cannot assign final variable "$id"';
-
-            case ENeverWrite(id):
-                'Variable "$id" cannot be accessed for writing';
-
-            case ENeverRead(id):
-                'Variable "$id" cannot be accessed for reading';
-
-            case EUnknownVariable(id):
-                'Unknown variable "$id"';
-
-            case EInvalidOp(op):
-                'Invalid operation "$op"';
-
-            case EInvalidExpression(expr):
-                'Invalid expression $expr';
-
-            case EInvalidControl(signal):
-                'Invalid control flow: ' + switch (signal)
-                {
-                    case CReturn(value):
-                        'return (' + value + ')';
-
-                    case CBreak:
-                        'break';
-
-                    case CContinue:
-                        'continue';
-                };
-
-            case ENeededField(id, imp):
-                'Field "$id" needed by "$imp" is missing';
-
-            case ECannotExtend(id):
-                'Type "$id" cannot be extended';
-
             case EMissingSuper:
-                'Missing super constructor call';
+                'Missing super Constructor Call';
+
+            case EUnsupportedExpression(expr):
+                'Unsupported Expression: ${expr}';
 
             default:
                 Std.string(type);
