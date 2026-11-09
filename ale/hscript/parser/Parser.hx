@@ -481,16 +481,6 @@ class Parser
 
             case TTry:
                 parseTry(true);
-
-            case TReturn:
-                advance();
-
-                var res:Expr = null;
-
-                if (!check(TSemicolon))
-                    res = parseExpr();
-
-                fastExpr(EReturn(res), cur);
                 
             case TThrow:
                 advance();
@@ -627,6 +617,16 @@ class Parser
 
         return switch (cur.type)
         {
+            case TReturn:
+                advance();
+
+                var res:Expr = null;
+
+                if (!check(TSemicolon))
+                    res = parseExpr();
+
+                fastExpr(EReturn(res), cur);
+
             case TSuper if (allowSuper):
                 advance();
                 

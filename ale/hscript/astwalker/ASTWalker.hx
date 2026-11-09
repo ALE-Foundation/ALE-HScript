@@ -77,45 +77,39 @@ class ASTWalker implements IInterp
             case EFunction(args, block):
                 final curScope:Scope = scope;
 
-                Reflect.makeVarArgs(function (uArgs:Array<Dynamic>)
+                Reflect.makeVarArgs(function(uArgs:Array<Dynamic>)
                 {
-                    enterScope(curScope);
+                    return scoped(() -> {
+                        for (i => arg in args)
+                            scope.define(arg.id, uArgs[i] ?? eval(arg.value));
 
-                    for (i => arg in args)
-                        scope.define(arg.id, uArgs[i] ?? eval(arg.value));
-
-                    var res:Dynamic = null;
-
-                    try
-                    {
-                        eval(block);
-                    } catch(ret:ControlSignal) {
-                        switch (ret)
+                        try
                         {
-                            case CReturn(val):
-                                res = val;
+                            eval(block);
+                        } catch(ret:ControlSignal) {
+                            switch (ret)
+                            {
+                                case CReturn(val):
+                                    return val;
 
-                            default:
-                                throw ret;
+                                default:
+                                    throw ret;
+                            }
                         }
-                    }
 
-                    exitScope();
-
-                    return res;
+                        return null;
+                    }, curScope);
                 });
 
             case EBlock(exprs):
-                enterScope();
+                scoped(() -> {
+                    var res:Dynamic = null;
 
-                var res:Dynamic = null;
+                    for (expr in exprs)
+                        res = eval(expr);
 
-                for (expr in exprs)
-                    res = eval(expr);
-
-                exitScope();
-
-                res;
+                    return res;
+                });
 
             case ENull:
                 null;
@@ -173,29 +167,30 @@ class ASTWalker implements IInterp
 
                     var error:Dynamic = e;
 
+                    var handled:Bool = false;
+
                     for (catchy in catches)
                     {
-                        enterScope();
-
                         try
                         {
-                            scope.define(catchy.argument, error);
+                            res = scoped(() -> {
+                                scope.define(catchy.argument, error);
 
-                            res = eval(catchy.body);
+                                return eval(catchy.body);
+                            });
 
-                            exitScope();
+                            handled = true;
 
                             break;
                         } catch(s:ControlSignal) {
-                            exitScope();
-
                             throw s;
                         } catch(e:Dynamic) {
-                            exitScope();
-
                             error = e;
                         }
                     }
+
+                    if (!handled)
+                        throw error;
 
                     res;
                 }
@@ -417,17 +412,29 @@ class ASTWalker implements IInterp
     function evalArray(exprs:Array<Expr>):Array<Dynamic>
         return [for (expr in exprs) eval(expr)];
 
+
     var scopeStack:GenericStack<Scope>;
 
-    function enterScope(?parent:Scope)
+    function scoped<T>(call:Void -> T, ?parent:Scope):T
     {
         scopeStack.add(scope);
 
         scope = new Scope(parent ?? scope);
+
+        try
+        {
+            final res:T = call();
+
+            scope = scopeStack.pop();
+
+            return res;
+        } catch (e:Dynamic) {
+            scope = scopeStack.pop();
+
+            throw e;
+        }
     }
 
-    function exitScope()
-        scope = scopeStack.pop();
 
     inline function error(type:ErrorType, expr:Expr)
     {
@@ -435,6 +442,7 @@ class ASTWalker implements IInterp
 
         return null;
     }
+
     
     function evalWhile(condition:Expr, body:Expr):Array<Dynamic>
     {
@@ -442,17 +450,13 @@ class ASTWalker implements IInterp
 
         while (eval(condition))
         {
-            enterScope();
-
             try
             {
                 final toPush:Dynamic = eval(body);
 
                 if (toPush != null)
                     res.push(toPush);
-            } catch (c:ControlSignal) {
-                exitScope();
-
+            } catch(c:ControlSignal) {
                 switch (c)
                 {
                     case CBreak:
@@ -465,8 +469,6 @@ class ASTWalker implements IInterp
                         throw c;
                 }
             }
-
-            exitScope();
         }
 
         return res;
@@ -478,17 +480,13 @@ class ASTWalker implements IInterp
 
         do
         {
-            enterScope();
-
             try
             {
                 final toPush:Dynamic = eval(body);
 
                 if (toPush != null)
                     res.push(toPush);
-            } catch (c:ControlSignal) {
-                exitScope();
-
+            } catch(c:ControlSignal) {
                 switch (c)
                 {
                     case CBreak:
@@ -501,8 +499,6 @@ class ASTWalker implements IInterp
                         throw c;
                 }
             }
-
-            exitScope();
         } while (eval(condition));
 
         return res;
@@ -511,50 +507,42 @@ class ASTWalker implements IInterp
     function evalFor(indexId:String, iterId:String, iter:Expr, body:Expr):Array<Dynamic>
     {
         final res:Array<Dynamic> = [];
-        
+
         final iterator = indexId == null ? makeIterator(eval(iter)) : makeKeyValueIterator(eval(iter));
 
         while (iterator.hasNext())
         {
-            enterScope();
-
-            if (indexId == null)
-            {
-                scope.define(iterId, iterator.next());
-            } else {
-                final pair = iterator.next();
-
-                scope.define(indexId, pair.key);
-                scope.define(iterId, pair.value);
-            }
-
             try
             {
-                final toPush:Dynamic = eval(body);
+                final toPush:Dynamic = scoped(() -> {
+                    if (indexId == null)
+                    {
+                        scope.define(iterId, iterator.next());
+                    } else {
+                        final pair = iterator.next();
+
+                        scope.define(indexId, pair.key);
+                        scope.define(iterId, pair.value);
+                    }
+
+                    return eval(body);
+                });
 
                 if (toPush != null)
                     res.push(toPush);
-            } catch (c:ControlSignal) {
+            } catch(c:ControlSignal) {
                 switch (c)
                 {
                     case CBreak:
-                        exitScope();
-
                         break;
 
                     case CContinue:
-                        exitScope();
-                        
                         continue;
 
                     default:
-                        exitScope();
-
                         throw c;
                 }
             }
-
-            exitScope();
         }
 
         return res;
