@@ -49,5 +49,7 @@ class Defaults
 
     static final SCRIPT_NAME:String = 'ale_hscript';
 
+    static final TRACE:String -> Int -> Array<Dynamic> -> Void = (name, line, args) -> Log.trace(name + ':' + line + ': ' + args.join(', '), null);
+
     static final ERROR_HANDLER:Dynamic -> String -> Void = (error, name) -> Log.trace('[ ERROR ] ' + name + ': ' + error?.toString() ?? error, null);
 }

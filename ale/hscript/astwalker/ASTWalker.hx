@@ -8,6 +8,8 @@ import ale.hscript.parser.Expr;
 import ale.hscript.errors.ErrorType;
 import ale.hscript.errors.Error;
 
+import ale.hscript.Config;
+
 import haxe.ds.GenericStack;
 
 import haxe.Log;
@@ -20,7 +22,7 @@ class ASTWalker implements IInterp
 
     public var superInstance:Dynamic;
 
-    public var name:String;
+    public var name:String = 'ale-hscript';
 
     public function new()
     {
@@ -115,12 +117,12 @@ class ASTWalker implements IInterp
                 null;
 
             case ECall(obj, args):
-                final resArgs = evalArray(args);
+                final resArgs:Array<Dynamic> = evalArray(args);
 
                 switch (obj.type)
                 {
                     case EVar(id) if (id == 'trace'):
-                        Log.trace(name + ':' + expr.line + ': ' + resArgs.join(','), null);
+                        Config.TRACE(name, expr.line, resArgs);
 
                         null;
                     

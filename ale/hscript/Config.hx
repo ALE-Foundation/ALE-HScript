@@ -20,6 +20,8 @@ class Config
 
     public static var SCRIPT_NAME:String = Defaults.SCRIPT_NAME;
 
+    public static var TRACE:String -> Int -> Array<Dynamic> -> Void = Defaults.TRACE;
+
     public static var ERROR_HANDLER:Dynamic -> String -> Void = Defaults.ERROR_HANDLER;
     
     public static function reset()
@@ -39,6 +41,8 @@ class Config
         MODULE_PATH = Defaults.MODULE_PATH;
 
         SCRIPT_NAME = Defaults.SCRIPT_NAME;
+
+        TRACE = Defaults.TRACE;
 
         ERROR_HANDLER = Defaults.ERROR_HANDLER;
     }
