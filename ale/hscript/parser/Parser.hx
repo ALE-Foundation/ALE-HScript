@@ -1149,7 +1149,7 @@ class Parser
 
         while (!end() && !check(TRBrace))
         {
-            var condition:Expr = null;
+            var conditions:Array<Expr> = [];
 
             var isDefault:Bool = false;
 
@@ -1158,7 +1158,13 @@ class Parser
                 case TCase:
                     advance();
 
-                    condition = parseExpr();
+                    while (!end())
+                    {
+                        conditions.push(parseExpr());
+
+                        if (!match(TComma))
+                            break;
+                    }
 
                 case TIdent(val) if (val == 'default'):
                     advance();
@@ -1182,14 +1188,14 @@ class Parser
                 defaultExpr = res;
             else
                 cases.push({
-                    condition: condition,
+                    conditions: conditions,
                     body: res
                 });
         }
 
         expect(TRBrace);
 
-        return fastExpr(ESwitch(obj, cases), cur);
+        return fastExpr(ESwitch(obj, cases, defaultExpr), cur);
     }
 
 

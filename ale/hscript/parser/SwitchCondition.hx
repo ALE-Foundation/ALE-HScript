@@ -1,6 +1,6 @@
 package ale.hscript.parser;
 
 typedef SwitchCondition = {
-    condition:Expr,
+    conditions:Array<Expr>,
     body:Expr
 }

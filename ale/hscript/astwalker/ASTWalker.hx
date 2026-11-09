@@ -11,6 +11,7 @@ import ale.hscript.errors.Error;
 import ale.hscript.Config;
 
 import haxe.ds.GenericStack;
+import haxe.ds.ObjectMap;
 
 import haxe.Exception;
 import haxe.Log;
@@ -141,6 +142,28 @@ class ASTWalker implements IInterp
 
             case EFor(indexId, iterId, iter, body):
                 evalFor(indexId, iterId, iter, body);
+
+                null;
+
+            case EWhile(condition, expr):
+                evalWhile(condition, expr);
+
+                null;
+
+            case EDoWhile(condition, expr):
+                evalDoWhile(condition, expr);
+
+                null;
+
+            case ESwitch(val, cases, defaultExpr):
+                final key:Dynamic = eval(val);
+
+                for (cas in cases)
+                    for (condition in cas.conditions)
+                        if (eval(condition) == key)
+                            return eval(cas.body);
+
+                eval(defaultExpr);
 
             case EBinOp(token, a, b):
                 switch (token)
@@ -313,6 +336,17 @@ class ASTWalker implements IInterp
             case ETrue:
                 true;
 
+            case EArray(exprs):
+                evalArray(exprs);
+
+            case EMap(members):
+                final res = new ObjectMap();
+
+                for (key => val in members)
+                    res.set(eval(key), eval(val));
+
+                res;
+
             case EReturn(val):
                 throw CReturn(eval(val));
 
@@ -364,6 +398,77 @@ class ASTWalker implements IInterp
         return null;
     }
     
+    function evalWhile(condition:Expr, body:Expr):Array<Dynamic>
+    {
+        final res:Array<Dynamic> = [];
+
+        while (eval(condition))
+        {
+            enterScope();
+
+            try
+            {
+                final toPush:Dynamic = eval(body);
+
+                if (toPush != null)
+                    res.push(toPush);
+            } catch (c:ControlSignal) {
+                exitScope();
+
+                switch (c)
+                {
+                    case CBreak:
+                        break;
+
+                    case CContinue:
+                        continue;
+
+                    default:
+                        throw c;
+                }
+            }
+
+            exitScope();
+        }
+
+        return res;
+    }
+
+    function evalDoWhile(condition:Expr, body:Expr):Array<Dynamic>
+    {
+        final res:Array<Dynamic> = [];
+
+        do
+        {
+            enterScope();
+
+            try
+            {
+                final toPush:Dynamic = eval(body);
+
+                if (toPush != null)
+                    res.push(toPush);
+            } catch (c:ControlSignal) {
+                exitScope();
+
+                switch (c)
+                {
+                    case CBreak:
+                        break;
+
+                    case CContinue:
+                        continue;
+
+                    default:
+                        throw c;
+                }
+            }
+
+            exitScope();
+        } while (eval(condition));
+
+        return res;
+    }
 
     function evalFor(indexId:String, iterId:String, iter:Expr, body:Expr):Array<Dynamic>
     {

@@ -373,7 +373,7 @@ while (true)
         case 'tu':
             oso = 'ta';
 
-        case 'ta':
+        default:
             break;
     }
 }
