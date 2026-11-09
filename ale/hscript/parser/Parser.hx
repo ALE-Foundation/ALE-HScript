@@ -565,7 +565,7 @@ class Parser
 
                 expect(TColon);
 
-                left = fastExprFromExpr(ETernOp(left, ifTrue, parseBinary(info.value)), left);
+                left = fastExprFromExpr(EIf(left, ifTrue, parseBinary(info.value)), left);
 
                 continue;
             }
@@ -1232,20 +1232,11 @@ class Parser
         var res:Expr = stmt ? parseSemicolonStatement() : parseExpr();
 
         if (!res.type.match(EBlock(_)))
-        {
-            if (!stmt && !res.type.match(EReturn(_)))
-                res = {
-                    type: EReturn(res),
-                    line: res.line,
-                    column: res.column
-                }
-
             res = {
                 type: EBlock([res]),
                 line: res.line,
                 column: res.column
             };
-        }
 
         return res;
     }

@@ -87,7 +87,7 @@ class ASTWalker implements IInterp
 
                     try
                     {
-                        res = eval(block);
+                        eval(block);
                     } catch(ret:ControlSignal) {
                         switch (ret)
                         {
@@ -298,11 +298,8 @@ class ASTWalker implements IInterp
                         error(EInvalidOp(token), expr);
                 }
 
-            case EIf(condition, expr, elseExpr):
-                if (eval(condition))
-                    eval(expr);
-                else
-                    eval(elseExpr);
+            case EIf(condition, a, b):
+                eval(condition) ? eval(a) : eval(b);
 
             case EString(str):
                 str;
@@ -371,6 +368,7 @@ class ASTWalker implements IInterp
     function evalFor(indexId:String, iterId:String, iter:Expr, body:Expr):Array<Dynamic>
     {
         final res:Array<Dynamic> = [];
+        
         final iterator = indexId == null ? makeIterator(eval(iter)) : makeKeyValueIterator(eval(iter));
 
         while (iterator.hasNext())
@@ -389,7 +387,10 @@ class ASTWalker implements IInterp
 
             try
             {
-                res.push(eval(body));
+                final toPush:Dynamic = eval(body);
+
+                if (toPush != null)
+                    res.push(toPush);
             } catch (c:ControlSignal) {
                 switch (c)
                 {
