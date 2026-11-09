@@ -54,7 +54,7 @@ class ASTWalker implements IInterp
         } catch(e:ErrorType) {
             error(e, _lastExpr);
         } catch (e:Exception) {
-            throw new Exception(_lastExpr.line + ': ' + e.message);
+            throw new Exception(_lastExpr.line + ':' + _lastExpr.column + ': ' + e.message);
         }
 
         return null;
@@ -253,6 +253,49 @@ class ASTWalker implements IInterp
                             default:
                                 error(EInvalidOp(token), expr);
                         }
+                }
+
+            case EPrefix(token, a):
+                final l:Dynamic = eval(a);
+
+                switch (token)
+                {
+                    case TTilde:
+                        ~l;
+
+                    case TExclamation:
+                        !l;
+
+                    case TMinus:
+                        -l;
+
+                    case TDoublePlus:
+                        assign(a, l + 1);
+
+                    case TDoubleMinus:
+                        assign(a, l - 1);
+
+                    default:
+                        error(EInvalidOp(token), expr);
+                }
+
+            case EPostfix(token, a):
+                final l:Dynamic = eval(a);
+
+                switch (token)
+                {
+                    case TDoublePlus:
+                        assign(a, l + 1);
+
+                        l;
+
+                    case TDoubleMinus:
+                        assign(a, l - 1);
+
+                        l;
+
+                    default:
+                        error(EInvalidOp(token), expr);
                 }
 
             case EIf(condition, expr, elseExpr):

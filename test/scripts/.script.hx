@@ -262,19 +262,20 @@ trace(10...20);
 
 trace((10 + 10) * 10);
 
+var tungResult = 67;
+
 function tung()
 {
     trace('sahur');
 
-    return 67;
+    return tungResult;
 }
 
 var osoVal:Null<Int> = null;
 
 trace(osoVal ??= tung());
 
-function tung()
-    return 10;
+tungResult = 10;
 
 trace(osoVal ??= tung());
 
