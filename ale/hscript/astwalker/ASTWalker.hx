@@ -162,6 +162,47 @@ class ASTWalker implements IInterp
             case EArrayComprehension(expr):
                 eval(expr);
 
+            case ETry(body, catches):
+                try
+                {
+                    eval(body);
+                } catch(s:ControlSignal) {
+                    throw s;
+                } catch(e:Dynamic) {
+                    var res:Dynamic = null;
+
+                    var error:Dynamic = e;
+
+                    for (catchy in catches)
+                    {
+                        enterScope();
+
+                        try
+                        {
+                            scope.define(catchy.argument, error);
+
+                            res = eval(catchy.body);
+
+                            exitScope();
+
+                            break;
+                        } catch(s:ControlSignal) {
+                            exitScope();
+
+                            throw s;
+                        } catch(e:Dynamic) {
+                            exitScope();
+
+                            error = e;
+                        }
+                    }
+
+                    res;
+                }
+
+            case EThrow(val):
+                throw eval(val);
+
             case EBinOp(token, a, b):
                 switch (token)
                 {

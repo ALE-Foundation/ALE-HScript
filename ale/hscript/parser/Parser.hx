@@ -480,19 +480,7 @@ class Parser
                 parseStatement();
 
             case TTry:
-                advance();
-
-                final body:Expr = parseBody();
-
-                expect(TCatch);
-
-                expect(TLParen);
-
-                final arg:FunctionArgument = parseFunctionArgument();
-
-                expect(TRParen);
-
-                fastExpr(ETry(body, arg, parseBody()), cur);
+                parseTry(true);
 
             case TReturn:
                 advance();
@@ -734,19 +722,7 @@ class Parser
                 null;
 
             case TTry:
-                advance();
-
-                final body:Expr = parseBody(false);
-
-                expect(TCatch);
-
-                expect(TLParen);
-
-                final arg:FunctionArgument = parseFunctionArgument();
-
-                expect(TRParen);
-
-                fastExpr(ETry(body, arg, parseBody(false)), cur);
+                parseTry(false);
 
             case TBreak:
                 fastAdvanceExpr(EBreak, cur);
@@ -1051,6 +1027,38 @@ class Parser
 
                 null;
         }
+    }
+
+    function parseTry(stmt:Bool):Expr
+    {
+        final cur:Token = advance();
+
+        final body:Expr = parseBody(stmt);
+
+        final catches:Array<Catch> = [];
+
+        while (!end())
+        {
+            expect(TCatch);
+
+            expect(TLParen);
+
+            final arg:String = parseIdent();
+
+            parseOptionalType();
+
+            expect(TRParen);
+
+            catches.push({
+                argument: arg,
+                body: parseBody(stmt)
+            });
+
+            if (!check(TCatch))
+                break;
+        }
+
+        return fastExpr(ETry(body, catches), cur);
     }
 
 

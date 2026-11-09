@@ -58,7 +58,7 @@ enum ExprType
 
     ESwitch(obj:Expr, cases:Array<SwitchCondition>, ?defaultExpr:Expr);
 
-    ETry(body:Expr, arg:FunctionArgument, failed:Expr);
+    ETry(body:Expr, catches:Array<Catch>);
 
 
     EReturn(value:Expr);
