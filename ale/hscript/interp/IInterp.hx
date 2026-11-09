@@ -8,4 +8,6 @@ interface IInterp
 
     public var superInstance:Dynamic;
     public var variables:Scope;
+
+    public var name:String;
 }

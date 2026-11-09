@@ -14,18 +14,25 @@ import ale.hscript.astwalker.ASTWalker;
 
 class Script
 {
-    public final data:SourceData;
+    public var data(default, set):SourceData;
+    function set_data(val:SourceData)
+    {
+        if (interp != null)
+            interp.name = val.name;
+
+        return data = val;
+    }
 
     public final interp:IInterp;
 
     public function new(script:String, ?name:String, ?interp:IInterp, ?superInstance:Dynamic, ?context:Dynamic)
     {
-        data = Util.resolveSourceData(script, name);
-
         interp ??= cast new ASTWalker();
         interp.superInstance ??= superInstance;
 
         this.interp = interp;
+
+        data = Util.resolveSourceData(script, name);
     }
 
     public function execute():Dynamic

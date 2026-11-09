@@ -1,1 +1,3 @@
-var oso = 'piolin te va a culiar';
+final oso = 10;
+
+trace(oso);
