@@ -262,6 +262,22 @@ trace(10...20);
 
 trace((10 + 10) * 10);
 
+function tung()
+{
+    trace('sahur');
+
+    return 67;
+}
+
+var osoVal:Null<Int> = null;
+
+trace(osoVal ??= tung());
+
+function tung()
+    return 10;
+
+trace(osoVal ??= tung());
+
 // EPrefix
 
 trace(~10);

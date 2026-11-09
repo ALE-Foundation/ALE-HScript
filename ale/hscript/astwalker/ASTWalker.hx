@@ -12,6 +12,7 @@ import ale.hscript.Config;
 
 import haxe.ds.GenericStack;
 
+import haxe.Exception;
 import haxe.Log;
 
 class ASTWalker implements IInterp
@@ -52,6 +53,8 @@ class ASTWalker implements IInterp
             }
         } catch(e:ErrorType) {
             error(e, _lastExpr);
+        } catch (e:Exception) {
+            throw new Exception(_lastExpr.line + ': ' + e.message);
         }
 
         return null;
@@ -136,11 +139,139 @@ class ASTWalker implements IInterp
             case EAssign(obj, value):
                 assign(obj, eval(value));
 
+            case EFor(indexId, iterId, iter, body):
+                evalFor(indexId, iterId, iter, body);
+
+            case EBinOp(token, a, b):
+                switch (token)
+                {
+                    case TDoubleAmpersand:
+                        eval(a) && eval(b);
+
+                    case TDoublePipe:
+                        eval(a) || eval(b);
+
+                    case TDoubleQuestion:
+                        eval(a) ?? eval(b);
+                    
+                    case TDoubleQuestionEqual:
+                        eval(a) ?? assign(a, eval(b));
+
+                    default:
+                        final l:Dynamic = eval(a);
+                        final r:Dynamic = eval(b);
+
+                        switch (token)
+                        {
+                            case TTripleDot:
+                                new IntIterator(l, r);
+
+                            case TDoubleEqual:
+                                l == r;
+
+                            case TExclamationEqual:
+                                l != r;
+
+                            case TLess:
+                                l < r;
+
+                            case TGreater:
+                                l > r;
+
+                            case TLessEqual:
+                                l <= r;
+
+                            case TGreaterEqual:
+                                l >= r;
+
+                            case TPercent:
+                                l % r;
+
+                            case TStar:
+                                l * r;
+
+                            case TSlash:
+                                l / r;
+
+                            case TPlus:
+                                l + r;
+
+                            case TMinus:
+                                l - r;
+
+                            case TDoubleLess:
+                                Std.int(l) << Std.int(r);
+
+                            case TDoubleGreater:
+                                Std.int(l) >> Std.int(r);
+
+                            case TTripleGreater:
+                                Std.int(l) >>> Std.int(r);
+
+                            case TAmpersand:
+                                Std.int(l) & Std.int(r);
+
+                            case TPipe:
+                                Std.int(l) | Std.int(r);
+
+                            case TCaret:
+                                Std.int(l) ^ Std.int(r);
+
+                            case TPercentEqual:
+                                assign(a, l % r);
+
+                            case TStarEqual:
+                                assign(a, l * r);
+
+                            case TSlashEqual:
+                                assign(a, l / r);
+
+                            case TPlusEqual:
+                                assign(a, l + r);
+
+                            case TMinusEqual:
+                                assign(a, l - r);
+
+                            case TDoubleLessEqual:
+                                assign(a, Std.int(l) << Std.int(r));
+
+                            case TDoubleGreaterEqual:
+                                assign(a, Std.int(l) >> Std.int(r));
+
+                            case TTripleGreaterEqual:
+                                assign(a, Std.int(l) >>> Std.int(r));
+
+                            case TAmpersandEqual:
+                                assign(a, Std.int(l) & Std.int(r));
+
+                            case TPipeEqual:
+                                assign(a, Std.int(l) | Std.int(r));
+
+                            case TCaretEqual:
+                                assign(a, Std.int(l) ^ Std.int(r));
+
+                            default:
+                                error(EInvalidOp(token), expr);
+                        }
+                }
+
+            case EIf(condition, expr, elseExpr):
+                if (eval(condition))
+                    eval(expr);
+                else
+                    eval(elseExpr);
+
             case EString(str):
                 str;
 
             case ENumber(val):
                 val;
+
+            case EFalse:
+                false;
+
+            case ETrue:
+                true;
 
             case EReturn(val):
                 throw CReturn(eval(val));
@@ -162,7 +293,7 @@ class ASTWalker implements IInterp
         return switch (obj.type)
         {
             case EVar(id):
-                return scope.set(id, value);
+                scope.set(id, value);
 
             default:
                 null;
@@ -191,5 +322,98 @@ class ASTWalker implements IInterp
         throw new Error(type, expr.line, expr.column);
 
         return null;
+    }
+    
+
+    function evalFor(indexId:String, iterId:String, iter:Expr, body:Expr):Array<Dynamic>
+    {
+        final res:Array<Dynamic> = [];
+        final iterator = indexId == null ? makeIterator(eval(iter)) : makeKeyValueIterator(eval(iter));
+
+        while (iterator.hasNext())
+        {
+            enterScope();
+
+            if (indexId == null)
+            {
+                scope.define(iterId, iterator.next());
+            } else {
+                final pair = iterator.next();
+
+                scope.define(indexId, pair.key);
+                scope.define(iterId, pair.value);
+            }
+
+            try
+            {
+                res.push(eval(body));
+            } catch (c:ControlSignal) {
+                switch (c)
+                {
+                    case CBreak:
+                        exitScope();
+
+                        break;
+
+                    case CContinue:
+                        exitScope();
+                        
+                        continue;
+
+                    default:
+                        exitScope();
+
+                        throw c;
+                }
+            }
+
+            exitScope();
+        }
+
+        return res;
+    }
+
+
+    function makeIterator(obj:Dynamic):Iterator<Dynamic>
+    {
+        #if js
+        if (obj is Array)
+            return (obj : Array<Dynamic>).iterator();
+
+        if (obj.iterator != null)
+            obj = obj.iterator();
+        #else
+        #if cpp if (obj.iterator != null) #end
+            try
+            {
+                obj = obj.iterator();
+            } catch(e:Dynamic) {}
+        #end
+            
+        if (obj.hasNext == null || obj.next == null)
+            obj = null;
+
+        return obj;
+    }
+
+    function makeKeyValueIterator(obj:Dynamic):KeyValueIterator<Dynamic, Dynamic>
+    {
+        #if js
+        if (obj is Array)
+            return (obj : Array<Dynamic>).keyValueIterator();
+
+        if (obj.keyValueIterator != null)
+            obj = obj.keyValueIterator();
+        #else
+        try
+        {
+            obj = obj.keyValueIterator();
+        } catch(e:Dynamic) {}
+        #end
+
+        if (obj.hasNext == null || obj.next == null)
+            obj = null;
+
+        return obj;
     }
 }

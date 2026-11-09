@@ -51,5 +51,5 @@ class Defaults
 
     static final SCRIPT_TRACE:Dynamic = (name, line, args) -> Log.trace(name + ':' + line + ': ' + args.join(', '), null);
 
-    static final ERROR_HANDLER:(Dynamic, String) -> Void = (error, name) -> Log.trace('[ ERROR ] ' + name + ': ' + error?.toString() ?? error, null);
+    static final ERROR_HANDLER:(Dynamic, String) -> Void = (name, error) -> Log.trace('[ ERROR ] ' + name + ': ' + error?.toString() ?? error, null);
 }
