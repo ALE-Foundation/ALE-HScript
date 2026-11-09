@@ -122,7 +122,7 @@ class ASTWalker implements IInterp
                 switch (obj.type)
                 {
                     case EVar(id) if (id == 'trace'):
-                        Config.TRACE(name, expr.line, resArgs);
+                        Config.SCRIPT_TRACE(name, expr.line, resArgs);
 
                         null;
                     

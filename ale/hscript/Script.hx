@@ -50,7 +50,7 @@ class Script
         } catch(error:Dynamic) {
             failedExecution = true;
 
-            Config.ERROR_HANDLER(error, data.name);
+            Config.ERROR_HANDLER(data.name, error);
 
             return null;
         }
