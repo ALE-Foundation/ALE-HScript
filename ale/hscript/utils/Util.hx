@@ -8,9 +8,20 @@ import ale.hscript.parser.Expr;
 
 import ale.hscript.Config;
 
+import haxe.PosInfos;
+import haxe.Log;
+
 @:publicFields
 class Util
 {
+    // I need a quick print with a return to speed up debugging
+    static function print<T>(val:T, ?pos:PosInfos):T
+    {
+        Log.trace(val, pos);
+
+        return val;
+    }
+
     static function resolveSourceData(script:String, ?name:String):SourceData
     {
         final basePath:String = Config.SCRIPT_PATH + script;
