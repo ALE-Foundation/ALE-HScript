@@ -143,17 +143,11 @@ class ASTWalker implements IInterp
             case EFor(indexId, iterId, iter, body):
                 evalFor(indexId, iterId, iter, body);
 
-                null;
-
             case EWhile(condition, expr):
                 evalWhile(condition, expr);
 
-                null;
-
             case EDoWhile(condition, expr):
                 evalDoWhile(condition, expr);
-
-                null;
 
             case ESwitch(val, cases, defaultExpr):
                 final key:Dynamic = eval(val);
@@ -164,6 +158,9 @@ class ASTWalker implements IInterp
                             return eval(cas.body);
 
                 eval(defaultExpr);
+
+            case EArrayComprehension(expr):
+                eval(expr);
 
             case EBinOp(token, a, b):
                 switch (token)
