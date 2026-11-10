@@ -1,5 +1,6 @@
 package;
 
+import ale.hscript.interp.Context;
 import ale.hscript.Script;
 import ale.hscript.Config;
 
@@ -21,11 +22,14 @@ class Main
 		cpp.CPPCrashHandler.runCPPCrashHandler();
 		#end
 
-		#if sys
-		for (scr in FileSystem.readDirectory(Config.SCRIPT_PATH))
-			if (!scr.startsWith('.'))
-				if (scr.endsWith(Config.SCRIPT_EXTENSION))
-					new Script(scr.replace(Config.SCRIPT_EXTENSION, '')).execute();
-		#end
+		final context = new Context();
+
+		final a = new Script('a', context);
+		a.execute();
+
+		final b = new Script('b', context);
+		b.execute();
+		
+		a.call('new');
 	}
 }

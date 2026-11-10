@@ -9,6 +9,7 @@ import ale.hscript.parser.Parser;
 import ale.hscript.parser.Expr;
 
 import ale.hscript.interp.IInterp;
+import ale.hscript.interp.Context;
 
 import ale.hscript.astwalker.ASTWalker;
 
@@ -25,10 +26,9 @@ class Script
 
     public final interp:IInterp;
 
-    public function new(script:String, ?name:String, ?interp:IInterp, ?superInstance:Dynamic, ?context:Dynamic)
+    public function new(script:String, ?name:String, ?interp:IInterp, ?context:Context, ?superInstance:Dynamic)
     {
-        interp ??= cast new ASTWalker();
-        interp.superInstance ??= superInstance;
+        interp ??= cast new ASTWalker(superInstance, context);
 
         this.interp = interp;
 

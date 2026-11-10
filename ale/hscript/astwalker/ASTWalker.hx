@@ -31,11 +31,14 @@ class ASTWalker implements IInterp
 
     public var name:String = 'ale-hscript';
 
+    public var context:Context;
+
     var imports:Map<String, Dynamic>;
 
-    public function new(?superInstance:Dynamic)
+    public function new(?superInstance:Dynamic, ?context:Context)
     {
         this.superInstance = superInstance;
+        this.context = context;
 
         scope = variables = new Scope(null);
 
@@ -155,7 +158,19 @@ class ASTWalker implements IInterp
                 buf.toString();
 
             case EVarDecl(id, value, access, getter, setter, isFinal):
-                scope.define(id, eval(value), getter, setter, isFinal);
+                final val:Dynamic = eval(value);
+
+                if (context != null && access != null)
+                {
+                    if (access.contains(TStatic))
+                        context.staticVariables.define(id, val, getter, setter, isFinal);
+                    else if (access.contains(TPublic))
+                        context.publicVariables.define(id, val, getter, setter, isFinal);
+                    else
+                        scope.define(id, val, getter, setter, isFinal);
+                } else {
+                    scope.define(id, val, getter, setter, isFinal);
+                }
 
                 null;
 
@@ -571,13 +586,35 @@ class ASTWalker implements IInterp
                 {
                     scope.set(id, value);
                 } catch(e:ErrorType) {
-                    if (superInstance == null)
-                        throw e;
-                    else {
-                        Reflect.setProperty(superInstance, id, value);
+                    var done:Bool = false;
 
-                        value;
-                    }
+                    var res = null;
+                    
+                    if (context != null)
+                        try
+                        {
+                            res = context.publicVariables.set(id, value);
+
+                            done = true;
+                        } catch(_) {
+                            try
+                            {
+                                res = context.staticVariables.set(id, value);
+
+                                done = true;
+                            } catch(_) {}
+                        }
+
+                    if (!done)
+                        if (superInstance == null)
+                            throw e;
+                        else {
+                            Reflect.setProperty(superInstance, id, value);
+
+                            res = value;
+                        }
+
+                    res;
                 }
 
             case EArrayAccess(arr, key):
@@ -608,7 +645,29 @@ class ASTWalker implements IInterp
             switch (e)
             {
                 case EUnknownVariable(_):
-                    var res = imports[id];
+                    var done:Bool = false;
+
+                    var res = null;
+
+                    if (context != null)
+                        try
+                        {
+                            res = context.publicVariables.get(id);
+
+                            done = true;
+                        } catch(_) {
+                            try
+                            {
+                                res = context.staticVariables.get(id);
+
+                                done = true;
+                            } catch(_) {}
+                        }
+
+                    if (done)
+                        return res;
+                    
+                    res ??= imports[id];
 
                     if (res == null && superInstance != null)
                         res = Reflect.getProperty(superInstance, id);
