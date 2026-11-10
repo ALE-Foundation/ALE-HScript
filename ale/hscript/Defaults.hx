@@ -38,6 +38,7 @@ class Defaults
         Xml
     ];
     static final ABSTRACTS:Array<String> = [];
+    static final ENUMS:Array<String> = [];
     static final TYPEDEFS:Map<String, Class<Dynamic>> = [];
     static final VARIABLES:Map<String, Dynamic> = [];
 
@@ -51,5 +52,5 @@ class Defaults
 
     static final SCRIPT_TRACE:Dynamic = (name, line, args) -> Log.trace(name + ':' + line + ': ' + args.join(', '), null);
 
-    static final ERROR_HANDLER:(Dynamic, String) -> Void = (name, error) -> Log.trace('[ ERROR ] ' + name + ': ' + error?.toString() ?? error, null);
+    static final ERROR_HANDLER:(String, Dynamic) -> Void = (name, error) -> Log.trace('[ ERROR ] ' + name + ': ' + error?.toString() ?? error, null);
 }

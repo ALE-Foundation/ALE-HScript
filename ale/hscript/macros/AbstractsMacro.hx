@@ -18,135 +18,68 @@ class AbstractsMacro
             switch (type)
             {
                 case TAbstract(ref):
-                    final abs = ref.get();
+                    final abs:AbstractType = ref.get();
 
-                    if (abs.params.length > 0 || abs.impl == null || abs.isPrivate || abs.name == 'XmlType' || abs.module.startsWith('cpp.') || abs.module.startsWith('hxvlc.externs.'))
+                    if (abs.params.length > 0 || abs.impl == null || abs.isPrivate || abs.name == 'XmlType' || abs.meta.has(':native') || abs.meta.has(':extern') || abs.impl.get().meta.has(':native'))
                         continue;
 
-                    final wrapped:String = '__ale_hscript_abstract_wrapped';
-                    
+                    final pos:Position = Context.currentPos();
+
                     final absPath:TypePath = Macros.getPath(abs.name, abs.module);
 
-                    final fields:Array<Field> = [
-                        {
-                            pos: Context.currentPos(),
-                            access: [APublic],
-                            name: 'new',
-                            kind: FFun({
-                                args: [
-                                    {
-                                        name: 'value',
-                                        type: TPath(absPath)
-                                    }
-                                ],
-                                expr: macro {
-                                    this.__ale_hscript_abstract_wrapped = value;
-                                }
-                            })
-                        },
-                        {
-                            pos: Context.currentPos(),
-                            access: [APublic, AFinal],
-                            name: wrapped,
-                            meta: [
-                                {
-                                    pos: Context.currentPos(),
-                                    name: ':unreflective'
-                                }
-                            ],
-                            kind: FVar(TPath(absPath))
-                        }
-                    ];
-
-                    final name:String = abs.name + SUFFIX;
-                    
                     final pack:Array<String> = abs.module.split('.');
                     pack.pop();
 
+                    final fullPath:Array<String> = abs.module.split('.').concat([abs.name]);
+
+                    final fields:Array<Field> = [];
+
                     for (field in abs.impl.get().statics.get())
                     {
-                        switch (field.type)
-                        {
-                            case TAbstract(a, params) if (a.toString() == abs.name):
-                                if (params.length > 0)
-                                    continue;
+                        if (!field.isPublic || field.meta.has(':impl'))
+                            continue;
 
+                        switch (field.kind)
+                        {
+                            case FVar(AccNormal | AccInline, _):
+
+                            default:
+                                continue;
+                        }
+
+                        switch (Context.follow(field.type))
+                        {
+                            case TAbstract(a, params) if (params.length == 0 && a.get().name == abs.name && a.get().module == abs.module):
                                 fields.push({
+                                    pos: pos,
                                     name: field.name,
                                     access: [APublic, AStatic],
-                                    kind: FProp(
-                                        'get',
-                                        'never',
-                                        TPath(absPath)
-                                    ),
-                                    pos: Context.currentPos()
+                                    kind: FProp('get', 'never', TPath(absPath))
                                 });
 
                                 fields.push({
+                                    pos: pos,
                                     name: 'get_' + field.name,
                                     access: [AStatic],
+                                    meta: [{name: ':keep', pos: pos}],
                                     kind: FFun({
                                         args: [],
                                         ret: TPath(absPath),
-                                        expr: {
-                                            pos: Context.currentPos(),
-                                            expr: EReturn(
-                                                /*
-                                                {
-                                                    pos: Context.currentPos(),
-                                                    expr: ENew(
-                                                        {
-                                                            pack: pack,
-                                                            name: name
-                                                        },
-                                                        [
-                                                        */
-                                                            {
-                                                                pos: Context.currentPos(),
-                                                                expr: EField(
-                                                                    {
-                                                                        pos: Context.currentPos(),
-                                                                        expr: EConst(CIdent(abs.name))
-                                                                    },
-                                                                    field.name,
-                                                                    Normal
-                                                                )
-                                                            }
-                                                        /*
-                                                        ]
-                                                    )
-                                                }
-                                                */
-                                            )
-                                        }
-                                    }),
-                                    pos: Context.currentPos()
+                                        expr: macro return $p{fullPath.concat([field.name])}
+                                    })
                                 });
 
                             default:
                         }
                     }
-
+                    
                     Context.defineType({
                         pack: pack,
-                        name: name,
-                        kind: TDClass(
-                            null,
-                            [
-                                {
-                                    pack: ['ale', 'hscript', 'macros'],
-                                    name: 'AbstractWrapper',
-                                    params: [
-                                        TPType(TPath(absPath))
-                                    ]
-                                }
-                            ],
-                            false,
-                            false,
-                            false
-                        ),
+                        name: abs.name + SUFFIX,
+                        meta: [{name: ':keep', pos: pos}],
+                        kind: TDClass(null, [], false, false, false),
                         fields: fields,
-                        pos: Context.currentPos()
+                        pos: pos
                     });
 
                 default:

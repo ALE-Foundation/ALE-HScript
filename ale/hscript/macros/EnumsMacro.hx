@@ -18,17 +18,25 @@ class EnumsMacro
             switch (type)
             {
                 case TEnumDecl(ref):
-                    final enumDecl = ref.get();
+                    final enumDecl:EnumType = ref.get();
 
-                    if (enumDecl.params.length > 0 || enumDecl.module.split('.').pop() != enumDecl.name)
+                    if (enumDecl.params.length > 0 || enumDecl.isPrivate || enumDecl.isExtern)
                         continue;
+
+                    final pos:Position = Context.currentPos();
+
+                    final path:Array<String> = enumDecl.module.split('.').concat([enumDecl.name]);
+
+                    final enumType:ComplexType = Context.toComplexType(TEnum(ref, []));
 
                     final fields:Array<Field> = [];
 
-                    for (key => val in enumDecl.constructs)
+                    for (val in enumDecl.constructs)
                     {
                         if (val.params.length > 0)
                             continue;
+
+                        final ctorPath:Array<String> = path.concat([val.name]);
 
                         switch (val.type)
                         {
@@ -46,7 +54,7 @@ class EnumsMacro
 
                                     callArgs.push({
                                         expr: EConst(CIdent(arg.name)),
-                                        pos: Context.currentPos()
+                                        pos: pos
                                     });
                                 }
 
@@ -55,8 +63,8 @@ class EnumsMacro
                                     access: [APublic, AStatic],
                                     kind: FFun({
                                         args: fnArgs,
-                                        ret: Context.toComplexType(TEnum(ref, [])),
-                                        expr: macro return $p{enumDecl.pack.concat([enumDecl.name, val.name])}($a{callArgs})
+                                        ret: enumType,
+                                        expr: macro return $p{ctorPath}($a{callArgs})
                                     }),
                                     pos: val.pos
                                 });
@@ -65,26 +73,20 @@ class EnumsMacro
                                 fields.push({
                                     name: val.name,
                                     access: [APublic, AStatic, AFinal],
-                                    kind: FVar(
-                                        Context.toComplexType(TEnum(ref, [])),
-                                        macro $p{enumDecl.pack.concat([enumDecl.name, val.name])}
-                                    ),
+                                    kind: FVar(enumType, macro $p{ctorPath}),
                                     pos: val.pos
                                 });
                         }
                     }
 
-                    final name:String = enumDecl.name + SUFFIX;
-
-                    Context.defineType(
-                        {
-                            pack: enumDecl.module.replace(enumDecl.name, name).split('.'),
-                            name: name,
-                            kind: TDClass(null, [], false, true, false),
-                            fields: fields,
-                            pos: Context.currentPos()
-                        }
-                    );
+                    Context.defineType({
+                        pack: enumDecl.pack,
+                        name: enumDecl.name + SUFFIX,
+                        meta: [{name: ':keep', pos: pos}],
+                        kind: TDClass(null, [], false, true, false),
+                        fields: fields,
+                        pos: pos
+                    });
 
                 default:
             }

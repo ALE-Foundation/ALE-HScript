@@ -37,7 +37,20 @@ class Scope
                 data.value;
 
             case PGet:
-                call(scope, 'get_' + id);
+                if (data.bypassGetter)
+                {
+                    data.value;
+                } else {
+                    final oldBypass:Bool = data.bypassGetter;
+
+                    data.bypassGetter = true;
+
+                    final res:Dynamic = call(scope, 'get_' + id);
+
+                    data.bypassGetter = oldBypass;
+
+                    res;
+                }
 
             case PNever, PSet:
                 throw ENeverRead(id);
@@ -65,7 +78,20 @@ class Scope
                 data.value = value;
 
             case PSet:
-                call(scope, 'set_' + id, [value]);
+                if (data.bypassSetter)
+                {
+                    data.value = value;
+                } else {
+                    final oldBypass:Bool = data.bypassSetter;
+
+                    data.bypassSetter = true;
+
+                    final res:Dynamic = call(scope, 'set_' + id, [value]);
+
+                    data.bypassSetter = oldBypass;
+
+                    res;
+                }
 
             case PNever, PGet:
                 throw ENeverWrite(id);

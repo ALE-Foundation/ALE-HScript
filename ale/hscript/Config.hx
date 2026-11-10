@@ -9,6 +9,7 @@ class Config
 
     public static var IMPORTS:Array<Class<Dynamic>> = Defaults.IMPORTS;
     public static var ABSTRACTS:Array<String> = Defaults.ABSTRACTS;
+    public static var ENUMS:Array<String> = Defaults.ENUMS;
     public static var TYPEDEFS:Map<String, Class<Dynamic>> = Defaults.TYPEDEFS;
     public static var VARIABLES:Map<String, Dynamic> = Defaults.VARIABLES;
     
@@ -22,7 +23,7 @@ class Config
 
     public static var SCRIPT_TRACE:(String, Int, Array<Dynamic>) -> Void = Defaults.SCRIPT_TRACE;
 
-    public static var ERROR_HANDLER:(Dynamic, String) -> Void = Defaults.ERROR_HANDLER;
+    public static var ERROR_HANDLER:(String, Dynamic) -> Void = Defaults.ERROR_HANDLER;
     
     public static function reset()
     {
@@ -31,6 +32,7 @@ class Config
 
         IMPORTS = Defaults.IMPORTS.copy();
         ABSTRACTS = Defaults.ABSTRACTS.copy();
+        ENUMS = Defaults.ENUMS.copy();
         TYPEDEFS = Defaults.TYPEDEFS.copy();
         VARIABLES = Defaults.VARIABLES.copy();
 

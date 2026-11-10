@@ -10,7 +10,9 @@ import ale.hscript.errors.Error;
 
 import ale.hscript.Config;
 
+import ale.hscript.macros.AbstractsMacro;
 import ale.hscript.macros.TypeListMacro;
+import ale.hscript.macros.EnumsMacro;
 
 import haxe.ds.GenericStack;
 import haxe.ds.ObjectMap;
@@ -31,8 +33,10 @@ class ASTWalker implements IInterp
 
     var imports:Map<String, Dynamic>;
 
-    public function new()
+    public function new(?superInstance:Dynamic)
     {
+        this.superInstance = superInstance;
+
         scope = variables = new Scope(null);
 
         imports = new Map();
@@ -41,6 +45,12 @@ class ASTWalker implements IInterp
 
         for (cls in Config.IMPORTS)
             imports[Type.getClassName(cls).split('.').pop()] = cls;
+
+        for (abs in Config.ABSTRACTS)
+            imports[abs.split('.').pop()] = Type.resolveClass(abs + AbstractsMacro.SUFFIX);
+
+        for (enu in Config.ENUMS)
+            imports[enu.split('.').pop()] = Type.resolveClass(enu + EnumsMacro.SUFFIX);
 
         for (key => cls in Config.TYPEDEFS)
             imports[key] = cls;
@@ -61,19 +71,19 @@ class ASTWalker implements IInterp
         {
             for (expr in exprs)
                 eval(expr);
+        } catch(e:ErrorType) {
+            error(e, _lastExpr);
+        } catch (e:Exception) {
+            throw new Exception(_lastExpr.line + ':' + _lastExpr.column + ': ' + e.message);
         } catch(ctrl:ControlSignal) {
             switch (ctrl)
             {
                 case CReturn(val):
                     return val;
-                    
+
                 default:
                     error(EInvalidControl(ctrl), _lastExpr);
             }
-        } catch(e:ErrorType) {
-            error(e, _lastExpr);
-        } catch (e:Exception) {
-            throw new Exception(_lastExpr.line + ':' + _lastExpr.column + ': ' + e.message);
         }
 
         return null;
@@ -562,12 +572,15 @@ class ASTWalker implements IInterp
             switch (e)
             {
                 case EUnknownVariable(_):
-                    final cls = imports[id];
+                    var res = imports[id];
 
-                    if (cls == null)
+                    if (res == null && superInstance != null)
+                        res = Reflect.getProperty(superInstance, id);
+
+                    if (res == null)
                         throw e;
 
-                    cls;
+                    res;
 
                 default:
                     throw e;
@@ -578,7 +591,11 @@ class ASTWalker implements IInterp
 
     function resolveClass(module:String):Dynamic
     {
-        var res:Dynamic = Type.resolveClass(module);
+        var res:Dynamic = null;
+        
+        for (mod in [module, module + EnumsMacro.SUFFIX, module + AbstractsMacro.SUFFIX])
+            if ((res = Type.resolveClass(mod)) != null)
+                break;
 
         if (res == null)
             throw ETypeNotFound(module);

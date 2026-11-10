@@ -21,7 +21,7 @@ class Main
 		for (scr in FileSystem.readDirectory(Config.SCRIPT_PATH))
 			if (!scr.startsWith('.'))
 				if (scr.endsWith(Config.SCRIPT_EXTENSION))
-					new Script(scr.replace(Config.SCRIPT_EXTENSION, '')).safeExecute();
+					new Script(scr.replace(Config.SCRIPT_EXTENSION, '')).execute();
 		#end
 	}
 }
