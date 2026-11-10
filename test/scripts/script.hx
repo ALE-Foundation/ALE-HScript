@@ -1,3 +1,3 @@
-import ale.hscript.lexer.TokenType;
+import FlxKey;
 
-trace(TokenType.TString('oso'));
+trace(FlxKey.fromString);

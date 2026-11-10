@@ -5,6 +5,8 @@ import haxe.macro.Context;
 import haxe.macro.Expr;
 import haxe.macro.Type;
 
+import ale.hscript.MacrosConfig;
+
 using StringTools;
 
 class AbstractsMacro
@@ -21,15 +23,31 @@ class AbstractsMacro
                 case TAbstract(ref):
                     final abs:AbstractType = ref.get();
 
-                    if (abs.params.length > 0 || abs.impl == null || abs.isPrivate || abs.name == 'XmlType' || abs.meta.has(':native') || abs.meta.has(':extern') || abs.impl.get().meta.has(':native'))
+                    if (abs.params.length > 0 || abs.impl == null || abs.isPrivate || abs.meta.has(':native') || abs.meta.has(':extern') || abs.impl.get().meta.has(':native') || abs.impl.get().meta.has(':extern'))
                         continue;
-
-                    final pos:Position = Context.currentPos();
 
                     final pack:Array<String> = abs.module.split('.');
                     pack.pop();
 
+                    final joinPack:String = pack.join('.');
+
+                    var shouldContinue:Bool = false;
+
+                    for (ignore in MacrosConfig.ABSTRACT_IGNORE_PACKAGES)
+                        if (joinPack.startsWith(ignore))
+                            shouldContinue = true;
+
+                    if (shouldContinue)
+                        continue;
+
                     final fullPath:Array<String> = abs.module.split('.').concat([abs.name]);
+
+                    final joinPath:String = fullPath.join('.');
+
+                    if (MacrosConfig.ABSTRACT_IGNORE.contains(joinPath))
+                        continue;
+
+                    final pos:Position = Context.currentPos();
 
                     final fields:Array<Field> = [];
 
@@ -67,22 +85,17 @@ class AbstractsMacro
 
                     for (field in abs.impl.get().statics.get())
                     {
-                        if (declared.contains(field.name) || field.meta.has(':deprecated'))
+                        if (declared.contains(field.name) || field.name.startsWith('get_') || field.name.startsWith('set_') || field.isExtern || field.meta.has(':deprecated'))
                             continue;
 
                         switch (field.kind)
                         {
                             case FVar(g, s):
-                                if (g == AccCall)
-                                    declared.push('get_' + field.name);
-
-                                if (s == AccCall)
-                                    declared.push('set_' + field.name);
-                                
                                 defineField(field.name);
 
-                            case FMethod(_):
-                                defineField(field.name);
+                            case FMethod(k):
+                                if (k != MethDynamic && k != MethMacro)
+                                    defineField(field.name);
                                 
                             default:
                         }
