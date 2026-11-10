@@ -69,7 +69,7 @@ class Scope
 
         final data:Variable = scope.variables[id];
 
-        if (data.isFinal)
+        if (data.isFinal && data.value != null)
             throw EFinalAssign(id);
 
         return switch (data.setter)
