@@ -21,7 +21,7 @@ enum ExprType
     ENew(cls:Expr, args:Array<Expr>);
 
     
-    EFunction(arguments:Array<FunctionArgument>, block:Expr);
+    EFunction(arguments:Array<FunctionArgument>, block:Expr, ?lambda:Bool);
     EBlock(exprs:Array<Expr>);
 
 

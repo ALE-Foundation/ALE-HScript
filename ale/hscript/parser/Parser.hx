@@ -132,6 +132,8 @@ class Parser
                     return fastExpr(EImport(str.toString(), alias), cur);
 
                 case TUsing:
+                    advance();
+                    
                     return fastExpr(EUsing(parseType()), cur);
 
                 default:
@@ -788,7 +790,7 @@ class Parser
 
                         expect(TArrow);
 
-                        fastExpr(EFunction(args, parseBody(false)), cur);
+                        fastExpr(EFunction(args, parseBody(false), true), cur);
                     } catch(_:Dynamic) {
                         index = pos;
 

@@ -10,9 +10,12 @@ import ale.hscript.errors.Error;
 
 import ale.hscript.Config;
 
+import ale.hscript.macros.TypeListMacro;
+
 import haxe.ds.GenericStack;
 import haxe.ds.ObjectMap;
 
+import haxe.Constraints.IMap;
 import haxe.Exception;
 import haxe.Log;
 
@@ -26,9 +29,24 @@ class ASTWalker implements IInterp
 
     public var name:String = 'ale-hscript';
 
+    var imports:Map<String, Dynamic>;
+
     public function new()
     {
         scope = variables = new Scope(null);
+
+        imports = new Map();
+
+        usings = [];
+
+        for (cls in Config.IMPORTS)
+            imports[Type.getClassName(cls).split('.').pop()] = cls;
+
+        for (key => cls in Config.TYPEDEFS)
+            imports[key] = cls;
+
+        for (key => val in Config.VARIABLES)
+            scope.define(key, val);
 
         scopeStack = new GenericStack();
     }
@@ -61,9 +79,66 @@ class ASTWalker implements IInterp
         return null;
     }
 
+    var _package:String;
+    var usings:Array<Dynamic>;
+
     public function eval(expr:Expr):Dynamic
         return switch ((_lastExpr = expr)?.type)
         {
+            case EPackage(module):
+                _package = module;
+
+                null;
+
+            case EImport(module, alias):
+                imports[alias ?? module.split('.').pop()] = resolveClass(module);
+
+                null;
+
+            case EPackageImport(module):
+                for (type in TypeListMacro.list[module])
+                    imports[type] = resolveClass(module + '.' + type);
+
+                null;
+
+            case EUsing(module):
+                usings.unshift(eval(module));
+
+                null;
+
+            case ETypedef(_, _):
+                null;
+
+            case EAlias(id, type):
+                imports[id] = eval(type);
+
+            case EField(obj, id):
+                resolveField(eval(obj), id);
+
+            case EArrayAccess(obj, key):
+                final res:Dynamic = eval(obj);
+
+                if (Std.isOfType(res, Array))
+                    res[eval(key)];
+                else if (Std.isOfType(res, IMap))
+                    cast(res, IMap<Dynamic, Dynamic>).get(eval(key));
+                else {
+                    error(EInvalidArrayAccess(Type.getClassName(Type.getClass(res))), expr);
+                    
+                    null;
+                }
+
+            case ENew(type, args):
+                createInstance(eval(type), evalArray(args));
+
+            case EInterpolatedString(parts):
+                final buf:StringBuf = new StringBuf();
+
+                for (part in parts)
+                    buf.add(eval(part));
+
+                buf.toString();
+
             case EVarDecl(id, value, access, getter, setter, isFinal):
                 scope.define(id, eval(value), getter, setter, isFinal);
 
@@ -74,7 +149,7 @@ class ASTWalker implements IInterp
 
                 null;
 
-            case EFunction(args, block):
+            case EFunction(args, block, lambda):
                 final curScope:Scope = scope;
 
                 Reflect.makeVarArgs(function(uArgs:Array<Dynamic>)
@@ -83,9 +158,11 @@ class ASTWalker implements IInterp
                         for (i => arg in args)
                             scope.define(arg.id, uArgs[i] ?? eval(arg.value));
 
+                        var res:Dynamic = null;
+
                         try
                         {
-                            eval(block);
+                            res = eval(block);
                         } catch(ret:ControlSignal) {
                             switch (ret)
                             {
@@ -97,7 +174,7 @@ class ASTWalker implements IInterp
                             }
                         }
 
-                        return null;
+                        return res;
                     }, curScope);
                 });
 
@@ -119,8 +196,32 @@ class ASTWalker implements IInterp
 
                 switch (obj.type)
                 {
+                    case EVar(id) if (id == 'cast'):
+                        resArgs[0];
+
                     case EVar(id) if (id == 'trace'):
                         Config.SCRIPT_TRACE(name, expr.line, resArgs);
+
+                        null;
+
+                    case EField(target, id):
+                        final obj:Dynamic = eval(target);
+
+                        try
+                        {
+                            final method:Dynamic = resolveField(obj, id);
+
+                            if (method != null)
+                                return Reflect.callMethod(obj, method, resArgs);
+                        } catch (_:Dynamic) {}
+
+                        for (usingClass in usings)
+                        {
+                            final method:Dynamic = Reflect.field(usingClass, id);
+
+                            if (method != null)
+                                return Reflect.callMethod(usingClass, method, [obj].concat(resArgs));
+                        }
 
                         null;
                     
@@ -363,6 +464,12 @@ class ASTWalker implements IInterp
             case ENumber(val):
                 val;
 
+            case EMetadata(_, _):
+                null;
+
+            case ERegex(reg):
+                reg;
+
             case EFalse:
                 false;
 
@@ -379,6 +486,31 @@ class ASTWalker implements IInterp
                     res.set(eval(key), eval(val));
 
                 res;
+
+            case EStructure(values):
+                final res:Dynamic = {};
+
+                for (key => val in values)
+                    Reflect.setProperty(res, key, eval(val));
+
+                res;
+
+            case ECast(obj, type):
+                final resObj:Dynamic = eval(obj);
+
+                if (type == null)
+                    resObj;
+                else {
+                    final res:Dynamic = Std.downcast(resObj, eval(type));
+
+                    if (res == null && resObj != null)
+                        error(EInvalidCast, expr);
+
+                    res;
+                }
+
+            case EType(id):
+                resolveType(id);
 
             case EReturn(val):
                 throw CReturn(eval(val));
@@ -402,12 +534,85 @@ class ASTWalker implements IInterp
             case EVar(id):
                 scope.set(id, value);
 
+            case EArrayAccess(arr, key):
+                final id:Dynamic = eval(key);
+                final res:Dynamic = eval(arr);
+
+                if (Std.isOfType(res, Array))
+                    res[id] = value;
+                else if (Std.isOfType(res, IMap))
+                    cast(res, IMap<Dynamic, Dynamic>).set(id, value);
+                else
+                    throw EInvalidArrayAccess(Type.getClassName(Type.getClass(res)));
+
+                value;
+
+            case EField(obj, id):
+                assignField(eval(obj), id, value);
+
             default:
-                null;
+                throw EInvalidAssignment;
         }
 
     function resolve(id:String)
-        return scope.get(id);
+        return try
+        {
+            scope.get(id);
+        } catch(e:ErrorType) {
+            switch (e)
+            {
+                case EUnknownVariable(_):
+                    final cls = imports[id];
+
+                    if (cls == null)
+                        throw e;
+
+                    cls;
+
+                default:
+                    throw e;
+
+                    null;
+            }
+        }
+
+    function resolveClass(module:String):Dynamic
+    {
+        var res:Dynamic = Type.resolveClass(module);
+
+        if (res == null)
+            throw ETypeNotFound(module);
+
+        return res;
+    }
+
+    function resolveType(module:String):Dynamic
+    {
+        var res:Dynamic = imports[module];
+
+        try
+        {
+            res ??= resolveClass(module);
+        } catch(e:ErrorType) {}
+
+        if (res == null)
+            throw ETypeNotFound(module);
+
+        return res;
+    }
+
+    function resolveField(obj:Dynamic, id:String):Dynamic
+        return Reflect.getProperty(obj, id);
+
+    function assignField(obj:Dynamic, id:String, value:Dynamic):Dynamic
+    {
+        Reflect.setProperty(obj, id, value);
+
+        return value;
+    }
+
+    function createInstance(obj:Dynamic, ?args:Array<Dynamic>):Dynamic
+        return Type.createInstance(obj, args ?? []);
 
     function evalArray(exprs:Array<Expr>):Array<Dynamic>
         return [for (expr in exprs) eval(expr)];

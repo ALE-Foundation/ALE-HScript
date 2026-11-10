@@ -27,7 +27,9 @@ class Scope
 
     public function get(id:String):Dynamic
     {
-        final data:Variable = resolve(id);
+        final scope:Scope = resolve(id);
+
+        final data:Variable = scope.variables[id];
 
         return switch (data.getter)
         {
@@ -35,7 +37,7 @@ class Scope
                 data.value;
 
             case PGet:
-                call('get_' + id);
+                call(scope, 'get_' + id);
 
             case PNever, PSet:
                 throw ENeverRead(id);
@@ -45,13 +47,14 @@ class Scope
         }
     }
 
-    public function call(id:String, ?args:Array<Dynamic>):Dynamic
-        return Reflect.callMethod(null, get(id), args ?? []);
+    public function call(scope:Scope, id:String, ?args:Array<Dynamic>):Dynamic
+        return Reflect.callMethod(null, scope.variables[id].value, args ?? []);
 
-    // TODO: Setters
     public function set(id:String, value:Dynamic):Dynamic
     {
-        final data:Variable = resolve(id);
+        final scope:Scope = resolve(id);
+
+        final data:Variable = scope.variables[id];
 
         if (data.isFinal)
             throw EFinalAssign(id);
@@ -62,7 +65,7 @@ class Scope
                 data.value = value;
 
             case PSet:
-                call('set_' + id, [value]);
+                call(scope, 'set_' + id, [value]);
 
             case PNever, PGet:
                 throw ENeverWrite(id);
@@ -72,27 +75,19 @@ class Scope
         }
     }
 
-    function resolve(id:String):Dynamic
+    function resolve(id:String):Scope
     {
-        var result:Dynamic = null;
-
         var scope:Scope = this;
 
         while (scope != null)
-        {
-            result = scope.variables[id];
-
-            if (result == null)
-                scope = scope.parent;
-            else
+            if (scope.variables.exists(id))
                 break;
-        }
+            else
+                scope = scope.parent;
 
         if (scope == null)
             throw EUnknownVariable(id);
 
-        return result;
+        return scope;
     }
-
-    
 }
