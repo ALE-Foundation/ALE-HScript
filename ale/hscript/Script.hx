@@ -38,6 +38,20 @@ class Script
     public function execute():Dynamic
         return interp.execute(new Parser(new Lexer(data.source).tokenize()).parse());
 
+    public function set(id:String, value:Dynamic):Void
+        errorHandled(() -> interp.variables.define(id, value));
+
+    public function get(id:String):Dynamic
+        return errorHandled(() -> interp.variables.get(id));
+    
+    public function call(id:String, ?args:Array<Dynamic>):Dynamic
+    {
+        if (!interp.variables.exists(id))
+            return null;
+
+        return errorHandled(() -> Reflect.callMethod(null, get(id), args ?? []));
+    }
+
     public var failedExecution(default, null):Bool = false;
 
     public function safeExecute():Dynamic

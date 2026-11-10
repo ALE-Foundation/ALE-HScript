@@ -18,7 +18,7 @@ import haxe.Log;
 class Defaults
 {
     static final FILE_CHECKER:String -> Bool = #if sys FileSystem.exists #else null #end ;
-    static final CONTENT_READER:String -> String = #if sys File.getContent #else null #end ;
+    static final FILE_READER:String -> String = #if sys File.getContent #else null #end ;
 
     static final IMPORTS:Array<Class<Dynamic>> = [
         Array,

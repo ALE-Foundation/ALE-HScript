@@ -5,7 +5,7 @@ import ale.hscript.Defaults;
 class Config
 {
     public static var FILE_CHECKER:String -> Bool = Defaults.FILE_CHECKER;
-    public static var CONTENT_READER:String -> String = Defaults.CONTENT_READER;
+    public static var FILE_READER:String -> String = Defaults.FILE_READER;
 
     public static var IMPORTS:Array<Class<Dynamic>> = Defaults.IMPORTS;
     public static var ABSTRACTS:Array<String> = Defaults.ABSTRACTS;
@@ -27,7 +27,7 @@ class Config
     public static function reset()
     {
         FILE_CHECKER = Defaults.FILE_CHECKER;
-        CONTENT_READER = Defaults.CONTENT_READER;
+        FILE_READER = Defaults.FILE_READER;
 
         IMPORTS = Defaults.IMPORTS.copy();
         ABSTRACTS = Defaults.ABSTRACTS.copy();

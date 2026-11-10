@@ -75,6 +75,16 @@ class Scope
         }
     }
 
+    public function exists(id:String):Bool
+        return try
+        {
+            resolve(id);
+
+            true;
+        } catch(_) {
+            false;
+        }
+
     function resolve(id:String):Scope
     {
         var scope:Scope = this;

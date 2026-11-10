@@ -33,7 +33,7 @@ class Util
         final baseName:String = name ?? (isFile ? script : Config.SCRIPT_NAME);
 
         return {
-            source: isFile ? Config.CONTENT_READER(path) : script,
+            source: isFile ? Config.FILE_READER(path) : script,
             name: baseName + Config.SCRIPT_EXTENSION,
         };
     }
