@@ -5,7 +5,7 @@ import ale.hscript.lexer.TokenType;
 enum ExprType
 {
     EVarDecl(id:String, value:Expr, access:Array<TokenType>, ?getter:Property, ?setter:Property, ?isFinal:Bool);
-    EFunctionDecl(id:String, value:Expr, overr:Bool, access:Array<TokenType>);
+    EFunctionDecl(id:String, access:Array<TokenType>, value:Expr, overr:Bool);
 
     ETypedef(id:String, fields:Array<String>);
     EAlias(id:String, type:Expr);

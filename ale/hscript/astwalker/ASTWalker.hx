@@ -3,6 +3,9 @@ package ale.hscript.astwalker;
 import ale.hscript.interp.ControlSignal;
 import ale.hscript.interp.*;
 
+import ale.hscript.lexer.TokenType;
+
+import ale.hscript.parser.Property;
 import ale.hscript.parser.Expr;
 
 import ale.hscript.errors.ErrorType;
@@ -158,24 +161,12 @@ class ASTWalker implements IInterp
                 buf.toString();
 
             case EVarDecl(id, value, access, getter, setter, isFinal):
-                final val:Dynamic = eval(value);
-
-                if (context != null && access != null)
-                {
-                    if (access.contains(TStatic))
-                        context.staticVariables.define(id, val, getter, setter, isFinal);
-                    else if (access.contains(TPublic))
-                        context.publicVariables.define(id, val, getter, setter, isFinal);
-                    else
-                        scope.define(id, val, getter, setter, isFinal);
-                } else {
-                    scope.define(id, val, getter, setter, isFinal);
-                }
+                define(id, eval(value), access, getter, setter, isFinal);
 
                 null;
 
-            case EFunctionDecl(id, value, overr, access):
-                scope.define(id, eval(value));
+            case EFunctionDecl(id, access, value, overr):
+                define(id, eval(value), access, PDefault, PNever);
 
                 null;
 
@@ -576,6 +567,19 @@ class ASTWalker implements IInterp
 
             default:
                 error(EInvalidExpression(expr.type), expr);
+        }
+
+    function define(id:String, val:Dynamic, access:Array<TokenType>, getter:Property, setter:Property, ?isFinal:Bool):Void
+        if (context != null && access != null)
+        {
+            if (access.contains(TStatic))
+                context.staticVariables.define(id, val, getter, setter, isFinal);
+            else if (access.contains(TPublic))
+                context.publicVariables.define(id, val, getter, setter, isFinal);
+            else
+                scope.define(id, val, getter, setter, isFinal);
+        } else {
+            scope.define(id, val, getter, setter, isFinal);
         }
 
     function assign(obj:Expr, value:Dynamic):Dynamic

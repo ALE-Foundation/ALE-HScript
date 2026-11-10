@@ -91,7 +91,6 @@ class EnumsMacro
                     Context.defineType({
                         pack: enumDecl.pack,
                         name: enumDecl.name + SUFFIX,
-                        meta: [{name: ':keep', pos: pos}],
                         kind: TDClass(null, [], false, true, false),
                         fields: fields,
                         pos: pos

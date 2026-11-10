@@ -21,14 +21,10 @@ class AbstractsMacro
                 case TAbstract(ref):
                     final abs:AbstractType = ref.get();
 
-                    final isEnum = abs.meta.has(":enum");
-
                     if (abs.params.length > 0 || abs.impl == null || abs.isPrivate || abs.name == 'XmlType' || abs.meta.has(':native') || abs.meta.has(':extern') || abs.impl.get().meta.has(':native'))
                         continue;
 
                     final pos:Position = Context.currentPos();
-
-                    final absPath:TypePath = Macros.getPath(abs.name, abs.module);
 
                     final pack:Array<String> = abs.module.split('.');
                     pack.pop();
@@ -37,10 +33,17 @@ class AbstractsMacro
 
                     final fields:Array<Field> = [];
 
-                    var declared = ['_new'];
+                    final declared = ['_new'];
 
                     function defineField(name:String)
                     {
+                        try
+                        {
+                            Context.typeof(macro @:privateAccess $p{fullPath.concat([name])});
+                        } catch (e:Dynamic) {
+                            return;
+                        }
+                        
                         declared.push(name);
 
                         fields.push({
@@ -64,14 +67,23 @@ class AbstractsMacro
 
                     for (field in abs.impl.get().statics.get())
                     {
-                        if (declared.contains(field.name))
+                        if (declared.contains(field.name) || field.meta.has(':deprecated'))
                             continue;
 
                         switch (field.kind)
                         {
-                            case FVar(AccNormal | AccInline, _):
+                            case FVar(g, s):
+                                if (g == AccCall)
+                                    declared.push('get_' + field.name);
+
+                                if (s == AccCall)
+                                    declared.push('set_' + field.name);
+                                
                                 defineField(field.name);
 
+                            case FMethod(_):
+                                defineField(field.name);
+                                
                             default:
                         }
                     }

@@ -457,7 +457,7 @@ class Parser
 
                 parseOptionalType();
 
-                final expr = fastExpr(EFunctionDecl(id, fastExpr(EFunction(args, parseBody()), cur), nextOverride, nextAccess), cur);
+                final expr = fastExpr(EFunctionDecl(id, nextAccess, fastExpr(EFunction(args, parseBody()), cur), nextOverride), cur);
 
                 nextOverride = false;
                 nextAccess = [];
