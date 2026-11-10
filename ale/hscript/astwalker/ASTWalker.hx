@@ -619,6 +619,8 @@ class ASTWalker implements IInterp
             if ((res = Type.resolveClass(mod)) != null)
                 break;
 
+        res ??= TypeListMacro.typedefs[module];
+
         if (res == null)
             throw ETypeNotFound(module);
 
