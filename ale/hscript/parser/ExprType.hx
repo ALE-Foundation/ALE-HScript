@@ -12,6 +12,7 @@ enum ExprType
     
     EVar(id:String);
     EField(object:Expr, property:String);
+    ESafeField(object:Expr, property:String);
     EType(module:String);
 
     EArrayAccess(object:Expr, key:Expr);

@@ -586,10 +586,15 @@ class Parser
                 case TLParen:
                     expr = fastExprFromExpr(ECall(expr, parseCallArguments()), expr);
 
-                case TDot, TQuestionDot:
+                case TDot:
                     advance();
                     
                     expr = fastExprFromExpr(EField(expr, parseIdent()), expr);
+
+                case TQuestionDot:
+                    advance();
+
+                    expr = fastExprFromExpr(ESafeField(expr, parseIdent()), expr);
 
                 case TEqual:
                     advance();

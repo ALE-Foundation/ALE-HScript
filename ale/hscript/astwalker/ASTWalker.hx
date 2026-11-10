@@ -125,6 +125,11 @@ class ASTWalker implements IInterp
             case EField(obj, id):
                 resolveField(eval(obj), id);
 
+            case ESafeField(obj, id):
+                final res:Dynamic = eval(obj);
+
+                res == null ? null : resolveField(res, id);
+
             case EArrayAccess(obj, key):
                 final res:Dynamic = eval(obj);
 
@@ -214,6 +219,21 @@ class ASTWalker implements IInterp
 
                         null;
 
+                    case ESafeField(target, id):
+                        final obj:Dynamic = eval(target);
+
+                        if (obj == null)
+                        {
+                            null;
+                        } else {
+                            final method:Dynamic = resolveField(obj, id);
+
+                            if (method == null)
+                                null;
+                            else
+                                Reflect.callMethod(obj, method, evalArray(args));
+                        }
+
                     case EField(target, id):
                         final obj:Dynamic = eval(target);
 
@@ -223,7 +243,9 @@ class ASTWalker implements IInterp
 
                             if (method != null)
                                 return Reflect.callMethod(obj, method, resArgs);
-                        } catch (_:Dynamic) {}
+                        } catch (_:Dynamic) {
+                            
+                        }
 
                         for (usingClass in usings)
                         {
