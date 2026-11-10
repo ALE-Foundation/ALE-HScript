@@ -352,6 +352,9 @@ class ASTWalker implements IInterp
 
                         switch (token)
                         {
+                            case TIs:
+                                isOfType(l, r);
+
                             case TTripleDot:
                                 new IntIterator(l, r);
 
@@ -564,7 +567,18 @@ class ASTWalker implements IInterp
         return switch (obj.type)
         {
             case EVar(id):
-                scope.set(id, value);
+                try
+                {
+                    scope.set(id, value);
+                } catch(e:ErrorType) {
+                    if (superInstance == null)
+                        throw e;
+                    else {
+                        Reflect.setProperty(superInstance, id, value);
+
+                        value;
+                    }
+                }
 
             case EArrayAccess(arr, key):
                 final id:Dynamic = eval(key);
@@ -610,6 +624,9 @@ class ASTWalker implements IInterp
                     null;
             }
         }
+
+    function isOfType(obj:Dynamic, type:Dynamic):Bool
+        return Std.isOfType(obj, type);
 
     function resolveClass(module:String):Dynamic
     {
