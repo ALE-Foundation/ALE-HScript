@@ -1,12 +1,10 @@
-final oso = {
-    donde: {
-        tu: {
-            ta: {
-                oso: () -> 'oso'
-            }
-        }
-    }
-}
+import ale.hscript.lexer.TokenType;
 
-trace(oso?.donde?.tu?.ta?.masha());
-trace(oso?.donde?.tu?.ta?.oso());
+import FlxKey;
+
+trace(TokenType.TNumber(67));
+
+trace(FlxKey.oso());
+trace(FlxKey.A);
+
+() -> {};

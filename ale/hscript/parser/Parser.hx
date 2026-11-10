@@ -46,10 +46,10 @@ class Parser
     function requiresSemicolon(expr:ExprType):Null<Bool>
         return switch (expr)
         {
-            case EExtendedConstructor(_, _, _), EClassDecl(_, _, _), EInterfaceDecl(_, _), EEof, ETypedef(_, _), EMetadata(_, _), ESwitch(_, _, _), EIf(_, _, _), EWhile(_, _), EFor(_), EStructure(_), ETry(_, _), EBlock(_), EFunctionDecl(_, _), EFunction(_, _):
+            case EExtendedConstructor(_, _, _), EClassDecl(_, _, _), EInterfaceDecl(_, _), EEof, ETypedef(_, _), EMetadata(_, _), ESwitch(_, _, _), EIf(_, _, _), EWhile(_, _), EFor(_), EStructure(_), ETry(_, _), EBlock(_), EFunctionDecl(_, _):
                 false;
 
-            case EReturn(val), EVarDecl(_, val, _, _, _), EAssign(_, val):
+            case EReturn(val), EVarDecl(_, val, _, _, _), EAssign(_, val), EFunction(_, val):
                 val == null ? true : requiresSemicolon(val.type) ? true : null;
 
             default:

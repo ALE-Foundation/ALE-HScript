@@ -12,9 +12,7 @@ class EnumsMacro
 
     #if macro
     public static function onAfterTyping(types:Array<ModuleType>)
-    {
         for (type in types)
-        {
             switch (type)
             {
                 case TEnumDecl(ref):
@@ -73,7 +71,18 @@ class EnumsMacro
                                 fields.push({
                                     name: val.name,
                                     access: [APublic, AStatic, AFinal],
-                                    kind: FVar(enumType, macro $p{ctorPath}),
+                                    kind: FProp('default', 'never', enumType, macro $p{ctorPath}),
+                                    pos: val.pos
+                                });
+
+                                fields.push({
+                                    name: 'get_' + val.name,
+                                    access: [AStatic],
+                                    kind: FFun({
+                                        ret: enumType,
+                                        expr: macro return $p{ctorPath},
+                                        args: []
+                                    }),
                                     pos: val.pos
                                 });
                         }
@@ -90,7 +99,5 @@ class EnumsMacro
 
                 default:
             }
-        }
-    }
     #end
 }
