@@ -1,6 +1,6 @@
 class Peru
 {
-    var oso:String;
+    var oso:String = 'donde';
 
     public function new(arg0, arg1)
     {

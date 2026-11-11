@@ -66,16 +66,19 @@ class Interp
         scopeStack = new GenericStack();
     }
 
-    public var lastExpr:Expr;
+    var lastExpr:Expr;
 
-    public function execute(exprs:Array<Expr>):Dynamic
+    inline function error(type:ErrorType, expr:Expr)
     {
-        var result:Dynamic = null;
-        
-        try
+        throw new Error(type, expr.line, expr.column);
+
+        return null;
+    }
+
+    function errorHandled<Dynamic>(call:Void -> Dynamic):Dynamic
+        return try
         {
-            for (expr in exprs)
-                eval(expr);
+            call();
         } catch(e:ErrorType) {
             error(e, lastExpr);
         } catch (e:Exception) {
@@ -91,13 +94,18 @@ class Interp
             }
         }
 
-        return null;
-    }
+    public function execute(exprs:Array<Expr>):Dynamic
+        return errorHandled(() -> {
+            for (expr in exprs)
+                eval(expr);
+
+            return null;
+        });
 
     var _package:String;
     var usings:Array<Dynamic>;
 
-    public function eval(expr:Expr, ?ctxt:Bool = true):Dynamic
+    public function eval(expr:Expr):Dynamic
         return switch ((lastExpr = expr)?.type)
         {
             case EClassDecl(id, body, parent, implem):
@@ -148,7 +156,7 @@ class Interp
                 else if (Std.isOfType(res, IMap))
                     cast(res, IMap<Dynamic, Dynamic>).get(eval(key));
                 else {
-                    error(EInvalidArrayAccess(Type.getClassName(Type.getClass(res))), expr);
+                    throw EInvalidArrayAccess(Type.getClassName(Type.getClass(res)));
                     
                     null;
                 }
@@ -165,12 +173,12 @@ class Interp
                 buf.toString();
 
             case EVarDecl(id, value, access, getter, setter, isFinal):
-                define(id, eval(value), access, getter, setter, isFinal, ctxt);
+                define(id, eval(value), access, getter, setter, isFinal);
 
                 null;
 
             case EFunctionDecl(id, access, value, _):
-                define(id, eval(value), access, PDefault, PNever, true, ctxt);
+                define(id, eval(value), access, PDefault, PNever, true);
 
                 null;
 
@@ -247,22 +255,28 @@ class Interp
                     case EField(target, id):
                         final obj:Dynamic = eval(target);
 
-                        try
+                        if (obj is ScriptedInstance)
                         {
-                            final method:Dynamic = resolveField(obj, id);
+                            if (obj.methods.exists(id))
+                                return Reflect.callMethod(obj, null, resArgs);
+                            else
+                                throw EUnknownVariable(id);
+                        } else {
+                            try
+                            {
+                                final method:Dynamic = resolveField(obj, id);
 
-                            if (method != null)
-                                return Reflect.callMethod(obj, method, resArgs);
-                        } catch (_:Dynamic) {
-                            
-                        }
+                                if (method != null)
+                                    return Reflect.callMethod(obj, method, resArgs);
+                            } catch (_:Dynamic) {}
 
-                        for (usingClass in usings)
-                        {
-                            final method:Dynamic = Reflect.field(usingClass, id);
+                            for (usingClass in usings)
+                            {
+                                final method:Dynamic = Reflect.field(usingClass, id);
 
-                            if (method != null)
-                                return Reflect.callMethod(usingClass, method, [obj].concat(resArgs));
+                                if (method != null)
+                                    return Reflect.callMethod(usingClass, method, [obj].concat(resArgs));
+                            }
                         }
 
                         null;
@@ -453,7 +467,7 @@ class Interp
                                 assign(a, Std.int(l) ^ Std.int(r));
 
                             default:
-                                error(EInvalidOp(token), expr);
+                                throw EInvalidOp(token);
                         }
                 }
 
@@ -478,7 +492,7 @@ class Interp
                         assign(a, l - 1);
 
                     default:
-                        error(EInvalidOp(token), expr);
+                        throw EInvalidOp(token);
                 }
 
             case EPostfix(token, a):
@@ -497,7 +511,7 @@ class Interp
                         l;
 
                     default:
-                        error(EInvalidOp(token), expr);
+                        throw EInvalidOp(token);
                 }
 
             case EIf(condition, a, b):
@@ -549,7 +563,7 @@ class Interp
                     final res:Dynamic = Std.downcast(resObj, eval(type));
 
                     if (res == null && resObj != null)
-                        error(EInvalidCast, expr);
+                        throw EInvalidCast;
 
                     res;
                 }
@@ -570,16 +584,14 @@ class Interp
                 null;
 
             default:
-                error(EInvalidExpression(expr.type), expr);
+                throw EInvalidExpression(expr.type);
         }
 
-    function define(id:String, val:Dynamic, access:Array<TokenType>, getter:Property, setter:Property, isFinal:Bool = false, ?ctxt:Bool = true):Void
-        if (ctxt && context != null && access != null)
+    function define(id:String, val:Dynamic, access:Array<TokenType>, getter:Property, setter:Property, isFinal:Bool = false):Void
+        if (context != null && access != null)
         {
-            if (access.contains(TStatic))
-                context.staticVariables.define(id, val, getter, setter, isFinal);
-            else if (access.contains(TPublic))
-                context.publicVariables.define(id, val, getter, setter, isFinal);
+            if (access.contains(TPublic))
+                context.variables.define(id, val, getter, setter, isFinal);
             else
                 scope.define(id, val, getter, setter, isFinal);
         } else {
@@ -601,17 +613,10 @@ class Interp
                     if (context != null)
                         try
                         {
-                            res = context.publicVariables.set(id, value);
+                            res = context.variables.set(id, value);
 
                             done = true;
-                        } catch(_) {
-                            try
-                            {
-                                res = context.staticVariables.set(id, value);
-
-                                done = true;
-                            } catch(_) {}
-                        }
+                        } catch(_) {}
 
                     if (!done)
                         if (superInstance == null)
@@ -660,17 +665,10 @@ class Interp
                     if (context != null)
                         try
                         {
-                            res = context.publicVariables.get(id);
+                            res = context.variables.get(id);
 
                             done = true;
-                        } catch(_) {
-                            try
-                            {
-                                res = context.staticVariables.get(id);
-
-                                done = true;
-                            } catch(_) {}
-                        }
+                        } catch(_) {}
 
                     if (done)
                         return res;
@@ -727,9 +725,7 @@ class Interp
     }
 
     function resolveField(obj:Dynamic, id:String):Dynamic
-    {
         return obj is ScriptedInstance ? obj.get(id) : Reflect.getProperty(obj, id);
-    }
 
     function assignField(obj:Dynamic, id:String, value:Dynamic):Dynamic
         return if (obj is ScriptedInstance)
@@ -743,7 +739,7 @@ class Interp
 
     function createInstance(obj:Dynamic, ?args:Array<Dynamic>):Dynamic
     {
-        return obj is ScriptedClass ? obj.instance(this, args) : Type.createInstance(obj, args ?? []);
+        return obj is ScriptedClass ? obj.instance(args) : Type.createInstance(obj, args ?? []);
     }
 
     function evalArray(exprs:Array<Expr>):Array<Dynamic>
@@ -770,14 +766,6 @@ class Interp
 
             throw e;
         }
-    }
-
-
-    inline function error(type:ErrorType, expr:Expr)
-    {
-        throw new Error(type, expr.line, expr.column);
-
-        return null;
     }
 
     

@@ -4,6 +4,22 @@ import ale.hscript.interp.Context;
 import ale.hscript.Script;
 import ale.hscript.Config;
 
+class Main
+{
+	public static var estaticoso = 'oso';
+
+	static function main()
+	{
+		#if cpp
+		cpp.CPPCrashHandler.runCPPCrashHandler();
+		#end
+
+		final context = new Context();
+
+		new Script('script', context).execute();
+	}
+}
+
 enum abstract FlxKey(Int) from Int to Int
 {
 	public static var fromStringMap(default, null):Map<String, FlxKey> = [];
@@ -122,22 +138,5 @@ enum abstract FlxKey(Int) from Int to Int
 	public inline function toString():String
 	{
 		return toStringMap.get(this);
-	}
-}
-
-
-class Main
-{
-	public static var estaticoso = 'oso';
-
-	static function main()
-	{
-		#if cpp
-		cpp.CPPCrashHandler.runCPPCrashHandler();
-		#end
-
-		final context = new Context();
-
-		new Script('script', context).execute();
 	}
 }
