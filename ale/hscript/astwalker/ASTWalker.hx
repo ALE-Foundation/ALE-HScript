@@ -98,9 +98,14 @@ class ASTWalker implements IInterp
     var _package:String;
     var usings:Array<Dynamic>;
 
-    public function eval(expr:Expr):Dynamic
+    public function eval(expr:Expr, ?ctxt:Bool = true):Dynamic
         return switch ((_lastExpr = expr)?.type)
         {
+            case EClassDecl(id, body, parent, implem):
+                imports[id] = new ScriptedClass(id, body, eval(parent));
+
+                null;
+
             case EPackage(module):
                 _package = module;
 
@@ -161,12 +166,12 @@ class ASTWalker implements IInterp
                 buf.toString();
 
             case EVarDecl(id, value, access, getter, setter, isFinal):
-                define(id, eval(value), access, getter, setter, isFinal);
+                define(id, eval(value), access, getter, setter, isFinal, ctxt);
 
                 null;
 
             case EFunctionDecl(id, access, value, overr):
-                define(id, eval(value), access, PDefault, PNever);
+                define(id, eval(value), access, PDefault, PNever, null, ctxt);
 
                 null;
 
@@ -569,8 +574,8 @@ class ASTWalker implements IInterp
                 error(EInvalidExpression(expr.type), expr);
         }
 
-    function define(id:String, val:Dynamic, access:Array<TokenType>, getter:Property, setter:Property, ?isFinal:Bool):Void
-        if (context != null && access != null)
+    function define(id:String, val:Dynamic, access:Array<TokenType>, getter:Property, setter:Property, isFinal:Bool = false, ctxt:Bool = true):Void
+        if (ctxt && context != null && access != null)
         {
             if (access.contains(TStatic))
                 context.staticVariables.define(id, val, getter, setter, isFinal);
@@ -723,17 +728,24 @@ class ASTWalker implements IInterp
     }
 
     function resolveField(obj:Dynamic, id:String):Dynamic
-        return Reflect.getProperty(obj, id);
-
-    function assignField(obj:Dynamic, id:String, value:Dynamic):Dynamic
     {
-        Reflect.setProperty(obj, id, value);
-
-        return value;
+        return obj is ScriptedInstance ? obj.get(id) : Reflect.getProperty(obj, id);
     }
 
+    function assignField(obj:Dynamic, id:String, value:Dynamic):Dynamic
+        return if (obj is ScriptedInstance)
+        {
+            obj.set(id, value);
+        } else {
+            Reflect.setProperty(obj, id, value);
+
+            value;
+        }
+
     function createInstance(obj:Dynamic, ?args:Array<Dynamic>):Dynamic
-        return Type.createInstance(obj, args ?? []);
+    {
+        return obj is ScriptedClass ? obj.instance(this, args) : Type.createInstance(obj, args ?? []);
+    }
 
     function evalArray(exprs:Array<Expr>):Array<Dynamic>
         return [for (expr in exprs) eval(expr)];
@@ -741,11 +753,11 @@ class ASTWalker implements IInterp
 
     var scopeStack:GenericStack<Scope>;
 
-    function scoped<T>(call:Void -> T, ?parent:Scope):T
+    public function scoped<T>(call:Void -> T, ?parent:Scope, ?create:Bool = true):T
     {
         scopeStack.add(scope);
 
-        scope = new Scope(parent ?? scope);
+        scope = parent != null && !create ? parent : new Scope(parent ?? scope);
 
         try
         {

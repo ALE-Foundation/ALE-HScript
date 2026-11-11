@@ -25,7 +25,7 @@ class Scope
             isFinal: isFinal
         }
 
-    public function get(id:String):Dynamic
+    public function get(id:String, ?accessorScope:Scope):Dynamic
     {
         final scope:Scope = resolve(id);
 
@@ -45,7 +45,7 @@ class Scope
 
                     data.bypassGetter = true;
 
-                    final res:Dynamic = call(scope, 'get_' + id);
+                    final res:Dynamic = call(accessorScope == null ? scope : resolve('get_' + id, accessorScope), 'get_' + id);
 
                     data.bypassGetter = oldBypass;
 
@@ -63,7 +63,7 @@ class Scope
     public function call(scope:Scope, id:String, ?args:Array<Dynamic>):Dynamic
         return Reflect.callMethod(null, scope.variables[id].value, args ?? []);
 
-    public function set(id:String, value:Dynamic):Dynamic
+    public function set(id:String, value:Dynamic, ?accessorScope:Scope):Dynamic
     {
         final scope:Scope = resolve(id);
 
@@ -86,7 +86,7 @@ class Scope
 
                     data.bypassSetter = true;
 
-                    final res:Dynamic = call(scope, 'set_' + id, [value]);
+                    final res:Dynamic = call(accessorScope == null ? scope : resolve('set_' + id, accessorScope), 'set_' + id, [value]);
 
                     data.bypassSetter = oldBypass;
 
@@ -111,9 +111,9 @@ class Scope
             false;
         }
 
-    function resolve(id:String):Scope
+    function resolve(id:String, ?scp:Scope):Scope
     {
-        var scope:Scope = this;
+        var scope:Scope = scp ?? this;
 
         while (scope != null)
             if (scope.variables.exists(id))
