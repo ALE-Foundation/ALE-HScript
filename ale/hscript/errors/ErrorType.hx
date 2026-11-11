@@ -35,6 +35,7 @@ enum ErrorType
 
     EInvalidControl(signal:ControlSignal);
 
+    EDuplicated(id:String);
     ENeededField(field:String, inter:String);
 
     ECannotExtend(id:String);

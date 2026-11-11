@@ -8,10 +8,8 @@ import ale.hscript.lexer.Lexer;
 import ale.hscript.parser.Parser;
 import ale.hscript.parser.Expr;
 
-import ale.hscript.interp.IInterp;
+import ale.hscript.interp.Interp;
 import ale.hscript.interp.Context;
-
-import ale.hscript.astwalker.ASTWalker;
 
 class Script
 {
@@ -24,11 +22,11 @@ class Script
         return data = val;
     }
 
-    public final interp:IInterp;
+    public final interp:Interp;
 
-    public function new(script:String, ?name:String, ?interp:IInterp, ?context:Context, ?superInstance:Dynamic)
+    public function new(script:String, ?name:String, ?interp:Interp, ?context:Context, ?superInstance:Dynamic)
     {
-        interp ??= cast new ASTWalker(superInstance, context);
+        interp ??= cast new Interp(superInstance, context);
 
         this.interp = interp;
 

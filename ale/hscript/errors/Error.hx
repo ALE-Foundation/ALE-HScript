@@ -94,6 +94,9 @@ class Error extends Exception
                         'continue';
                 };
 
+            case EDuplicated(id):
+                'Redefinition of field "$id" in subclass is not allowed';
+
             case ENeededField(id, imp):
                 'Field "$id" needed by "$imp" is missing';
 

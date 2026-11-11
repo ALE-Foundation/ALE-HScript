@@ -1,7 +1,6 @@
-package ale.hscript.astwalker;
+package ale.hscript.interp;
 
 import ale.hscript.interp.ControlSignal;
-import ale.hscript.interp.*;
 
 import ale.hscript.lexer.TokenType;
 
@@ -24,7 +23,7 @@ import haxe.Constraints.IMap;
 import haxe.Exception;
 import haxe.Log;
 
-class ASTWalker implements IInterp
+class Interp
 {
     public var variables:Scope;
 
@@ -67,7 +66,7 @@ class ASTWalker implements IInterp
         scopeStack = new GenericStack();
     }
 
-    var _lastExpr:Expr;
+    public var lastExpr:Expr;
 
     public function execute(exprs:Array<Expr>):Dynamic
     {
@@ -78,9 +77,9 @@ class ASTWalker implements IInterp
             for (expr in exprs)
                 eval(expr);
         } catch(e:ErrorType) {
-            error(e, _lastExpr);
+            error(e, lastExpr);
         } catch (e:Exception) {
-            throw new Exception(_lastExpr.line + ':' + _lastExpr.column + ': ' + e.message);
+            throw new Exception(lastExpr.line + ':' + lastExpr.column + ': ' + e.message);
         } catch(ctrl:ControlSignal) {
             switch (ctrl)
             {
@@ -88,7 +87,7 @@ class ASTWalker implements IInterp
                     return val;
 
                 default:
-                    error(EInvalidControl(ctrl), _lastExpr);
+                    error(EInvalidControl(ctrl), lastExpr);
             }
         }
 
@@ -99,7 +98,7 @@ class ASTWalker implements IInterp
     var usings:Array<Dynamic>;
 
     public function eval(expr:Expr, ?ctxt:Bool = true):Dynamic
-        return switch ((_lastExpr = expr)?.type)
+        return switch ((lastExpr = expr)?.type)
         {
             case EClassDecl(id, body, parent, implem):
                 imports[id] = new ScriptedClass(id, body, eval(parent));
@@ -170,8 +169,8 @@ class ASTWalker implements IInterp
 
                 null;
 
-            case EFunctionDecl(id, access, value, overr):
-                define(id, eval(value), access, PDefault, PNever, null, ctxt);
+            case EFunctionDecl(id, access, value, _):
+                define(id, eval(value), access, PDefault, PNever, true, ctxt);
 
                 null;
 
@@ -574,7 +573,7 @@ class ASTWalker implements IInterp
                 error(EInvalidExpression(expr.type), expr);
         }
 
-    function define(id:String, val:Dynamic, access:Array<TokenType>, getter:Property, setter:Property, isFinal:Bool = false, ctxt:Bool = true):Void
+    function define(id:String, val:Dynamic, access:Array<TokenType>, getter:Property, setter:Property, isFinal:Bool = false, ?ctxt:Bool = true):Void
         if (ctxt && context != null && access != null)
         {
             if (access.contains(TStatic))

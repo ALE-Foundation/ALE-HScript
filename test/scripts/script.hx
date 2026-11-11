@@ -1,32 +1,22 @@
 class Peru
 {
-    public var oso(get, never):String = 'donde';
-    function get_oso():String
-    {
-        trace('donde');
-
-        return oso;
-    }
+    var oso:String;
 
     public function new(arg0, arg1)
     {
         trace(arg0, arg1);
+
+        method();
     }
 
-    public function donde()
-        return 67;
+    public function method()
+        trace('oso');
 }
 
 class Peruano extends Peru
 {
-    function get_oso():String
-    {
-        trace('tuta');
-
-        return oso;
-    }
+    override function method()
+        trace('donde');
 }
 
 final peru = new Peruano('oso', 'donde');
-
-trace(peru.oso);
