@@ -17,7 +17,7 @@ class ScriptedInstance extends Interp
     {
         this.type = type;
 
-        super();
+        super(parent);
 
         name = type.toString();
 
@@ -31,7 +31,7 @@ class ScriptedInstance extends Interp
         executeBody(body);
 
         if (args != null)
-            Reflect.callMethod(this, get('new'), args);
+            Reflect.callMethod(null, get('new'), args);
     }
 
     public function executeBody(body:Array<Expr>)
@@ -68,6 +68,9 @@ class ScriptedInstance extends Interp
     override function eval(expr:Expr):Dynamic
         return switch ((lastExpr = expr)?.type)
         {
+            case EThis:
+                this;
+
             case ECall(obj, args):
                 switch (obj.type)
                 {
@@ -87,18 +90,18 @@ class ScriptedInstance extends Interp
                 super.eval(expr);
         }
 
-    override function defaultAssign(id:String, value:Dynamic):Dynamic
-        return scope.set(id, value, methods['set_' + id]);
+    public function call(id:String, args:Array<Dynamic>):Dynamic
+        return Reflect.callMethod(null, methods[id].get(id), args);
 
     override function defaultResolve(id:String):Dynamic
         return scope.get(id, methods['get_' + id]);
 
-    public function call(id:String, args:Array<Dynamic>):Dynamic
-        return Reflect.callMethod(this, methods[id].get(id), args);
+    override function defaultAssign(id:String, value:Dynamic):Dynamic
+        return scope.set(id, value, methods['set_' + id]);
 
     public function get(id:String):Dynamic
-        return defaultResolve(id);
+        return variables.get(id, methods['get_' + id]);
 
     public function set(id:String, value:Dynamic):Dynamic
-        return defaultAssign(id, value);
+        return variables.set(id, value, methods['set_' + id]);
 }

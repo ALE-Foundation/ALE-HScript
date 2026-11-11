@@ -108,6 +108,9 @@ class Interp
     public function eval(expr:Expr):Dynamic
         return switch ((lastExpr = expr)?.type)
         {
+            case ESuperFieldCall(id, args):
+                Reflect.callMethod(null, resolveField(superInstance, id), evalArray(args));
+
             case EClassDecl(id, body, parent, implem):
                 imports[id] = new ScriptedClass(id, body, eval(parent));
 
@@ -550,7 +553,7 @@ class Interp
                 final res:Dynamic = {};
 
                 for (key => val in values)
-                    Reflect.setProperty(res, key, eval(val));
+                    assignField(res, key, eval(val));
 
                 res;
 
@@ -625,7 +628,7 @@ class Interp
                         if (superInstance == null)
                             throw e;
                         else {
-                            Reflect.setProperty(superInstance, id, value);
+                            assignField(superInstance, id, value);
 
                             res = value;
                         }

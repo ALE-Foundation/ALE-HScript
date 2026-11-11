@@ -4,18 +4,33 @@ class Peru
     function set_oso(val:String):String
         return oso = val;
 
+    var arg0(default, set):Dynamic;
+    function set_arg0(val:Dynamic):Dynamic
+    {
+        trace('arg0 assign');
+
+        return arg0 = val;
+    }
+
     public function new(arg0, arg1)
     {
-        trace(arg0, arg1);
+        this.arg0 = arg0;
 
         method();
     }
+
+    function method()
+        trace('methodoso');
 }
 
 class Peruano extends Peru
 {
     override function method()
-        trace('donde');
+    {
+        trace('methodoso override');
+
+        super.method();
+    }
 
     override function set_oso(val:String):String
     {
