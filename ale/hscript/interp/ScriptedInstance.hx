@@ -11,7 +11,7 @@ class ScriptedInstance extends Interp
     function toString()
         return type.toString();
 
-    public var methods:Map<String, Dynamic> = [];
+    public var methods:Map<String, Scope> = [];
 
     public function new(type:ScriptedClass, body:Array<Expr>, ?args:Array<Dynamic>, ?parent:ScriptedInstance)
     {
@@ -22,7 +22,11 @@ class ScriptedInstance extends Interp
         name = type.toString();
 
         if (parent != null)
+        {
             scope = variables = new Scope(parent.variables);
+
+            methods = parent.methods;
+        }
 
         executeBody(body);
 
@@ -51,7 +55,7 @@ class ScriptedInstance extends Interp
                             define(id, func, access, PDefault, PNever, true);
 
                             if (id != 'new')
-                                methods[id] = func;
+                                methods[id] = scope;
                         }
 
                     case null:
@@ -61,9 +65,40 @@ class ScriptedInstance extends Interp
                 }
         });
 
+    override function eval(expr:Expr):Dynamic
+        return switch ((lastExpr = expr)?.type)
+        {
+            case ECall(obj, args):
+                switch (obj.type)
+                {
+                    case EVar(id) if (id != 'cast' && id != 'trace'):
+                        if (methods.exists(id))
+                            call(id, evalArray(args));
+                        else
+                            throw EUnknownVariable(id);
+
+                        null;
+
+                    default:
+                        super.eval(expr);
+                }
+
+            default:
+                super.eval(expr);
+        }
+
+    override function defaultAssign(id:String, value:Dynamic):Dynamic
+        return scope.set(id, value, methods['set_' + id]);
+
+    override function defaultResolve(id:String):Dynamic
+        return scope.get(id, methods['get_' + id]);
+
+    public function call(id:String, args:Array<Dynamic>):Dynamic
+        return Reflect.callMethod(this, methods[id].get(id), args);
+
     public function get(id:String):Dynamic
-        return variables.get(id, variables);
+        return defaultResolve(id);
 
     public function set(id:String, value:Dynamic):Dynamic
-        return variables.set(id, value, variables);
+        return defaultAssign(id, value);
 }

@@ -9,7 +9,7 @@ import ale.hscript.parser.Parser;
 import ale.hscript.parser.Expr;
 
 import ale.hscript.interp.Interp;
-import ale.hscript.interp.Context;
+import ale.hscript.interp.Scope;
 
 class Script
 {
@@ -24,7 +24,7 @@ class Script
 
     public final interp:Interp;
 
-    public function new(script:String, ?name:String, ?interp:Interp, ?context:Context, ?superInstance:Dynamic)
+    public function new(script:String, ?name:String, ?interp:Interp, ?context:Scope, ?superInstance:Dynamic)
     {
         interp ??= cast new Interp(superInstance, context);
 

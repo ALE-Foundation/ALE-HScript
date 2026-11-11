@@ -1,6 +1,6 @@
 package;
 
-import ale.hscript.interp.Context;
+import ale.hscript.interp.Scope;
 import ale.hscript.Script;
 import ale.hscript.Config;
 
@@ -14,7 +14,7 @@ class Main
 		cpp.CPPCrashHandler.runCPPCrashHandler();
 		#end
 
-		final context = new Context();
+		final context = new Scope();
 
 		new Script('script', context).execute();
 	}

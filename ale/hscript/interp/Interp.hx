@@ -33,11 +33,11 @@ class Interp
 
     public var name:String = 'ale-hscript';
 
-    public var context:Context;
+    public var context:Scope;
 
     var imports:Map<String, Dynamic>;
 
-    public function new(?superInstance:Dynamic, ?context:Context)
+    public function new(?superInstance:Dynamic, ?context:Scope)
     {
         this.superInstance = superInstance;
         this.context = context;
@@ -258,7 +258,7 @@ class Interp
                         if (obj is ScriptedInstance)
                         {
                             if (obj.methods.exists(id))
-                                return Reflect.callMethod(obj, null, resArgs);
+                                return obj.call(id, args);
                             else
                                 throw EUnknownVariable(id);
                         } else {
@@ -591,12 +591,15 @@ class Interp
         if (context != null && access != null)
         {
             if (access.contains(TPublic))
-                context.variables.define(id, val, getter, setter, isFinal);
+                context.define(id, val, getter, setter, isFinal);
             else
                 scope.define(id, val, getter, setter, isFinal);
         } else {
             scope.define(id, val, getter, setter, isFinal);
         }
+
+    function defaultAssign(id:String, value:Dynamic):Dynamic
+        return scope.set(id, value);
 
     function assign(obj:Expr, value:Dynamic):Dynamic
         return switch (obj.type)
@@ -604,7 +607,7 @@ class Interp
             case EVar(id):
                 try
                 {
-                    scope.set(id, value);
+                    defaultAssign(id, value);
                 } catch(e:ErrorType) {
                     var done:Bool = false;
 
@@ -613,7 +616,7 @@ class Interp
                     if (context != null)
                         try
                         {
-                            res = context.variables.set(id, value);
+                            res = context.set(id, value);
 
                             done = true;
                         } catch(_) {}
@@ -650,10 +653,13 @@ class Interp
                 throw EInvalidAssignment;
         }
 
+    function defaultResolve(id:String):Dynamic
+        return scope.get(id);
+
     function resolve(id:String)
         return try
         {
-            scope.get(id);
+            defaultResolve(id);
         } catch(e:ErrorType) {
             switch (e)
             {
@@ -665,7 +671,7 @@ class Interp
                     if (context != null)
                         try
                         {
-                            res = context.variables.get(id);
+                            res = context.get(id);
 
                             done = true;
                         } catch(_) {}

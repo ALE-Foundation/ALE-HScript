@@ -10,7 +10,7 @@ class Scope
 
     public var variables:Map<String, Variable>;
 
-    public function new(parent:Null<Scope>)
+    public function new(?parent:Scope)
     {
         this.parent = parent;
 
@@ -45,7 +45,7 @@ class Scope
 
                     data.bypassGetter = true;
 
-                    final res:Dynamic = call(accessorScope == null ? scope : resolve('get_' + id, accessorScope), 'get_' + id);
+                    final res:Dynamic = call(accessorScope ?? scope, 'get_' + id);
 
                     data.bypassGetter = oldBypass;
 
@@ -86,7 +86,7 @@ class Scope
 
                     data.bypassSetter = true;
 
-                    final res:Dynamic = call(accessorScope == null ? scope : resolve('set_' + id, accessorScope), 'set_' + id, [value]);
+                    final res:Dynamic = call(accessorScope ?? scope, 'set_' + id, [value]);
 
                     data.bypassSetter = oldBypass;
 
