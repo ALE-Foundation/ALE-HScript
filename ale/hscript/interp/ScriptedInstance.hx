@@ -13,6 +13,15 @@ class ScriptedInstance extends Interp
 
     public var methods:Map<String, Scope> = [];
 
+    var _this(default, set):Dynamic;
+    function set__this(val:Dynamic):Dynamic
+    {
+        if (superInstance is ScriptedInstance)
+            (superInstance : ScriptedInstance)._this = val;
+
+        return _this = val;
+    }
+
     public function new(type:ScriptedClass, body:Array<Expr>, ?args:Array<Dynamic>, ?parent:ScriptedInstance)
     {
         this.type = type;
@@ -20,6 +29,8 @@ class ScriptedInstance extends Interp
         super(parent);
 
         name = type.toString();
+
+        _this = this;
 
         if (parent != null)
         {
@@ -69,7 +80,7 @@ class ScriptedInstance extends Interp
         return switch ((lastExpr = expr)?.type)
         {
             case EThis:
-                this;
+                _this;
 
             case ECall(obj, args):
                 switch (obj.type)
@@ -79,8 +90,6 @@ class ScriptedInstance extends Interp
                             call(id, evalArray(args));
                         else
                             throw EUnknownVariable(id);
-
-                        null;
 
                     default:
                         super.eval(expr);

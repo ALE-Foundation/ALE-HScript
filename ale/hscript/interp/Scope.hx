@@ -33,7 +33,7 @@ class Scope
 
         return switch (data.getter)
         {
-            case PDefault, null:
+            case PDefault, PNull, null:
                 data.value;
 
             case PGet:
@@ -74,7 +74,7 @@ class Scope
 
         return switch (data.setter)
         {
-            case PDefault, null:
+            case PDefault, PNull, null:
                 data.value = value;
 
             case PSet:
