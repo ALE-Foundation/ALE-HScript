@@ -17,7 +17,7 @@ class ScriptedInstance extends Interp
     var _this(default, set):Dynamic;
     function set__this(val:Dynamic):Dynamic
     {
-        if (superInstance is ScriptedInstance)
+        if (superType is ScriptedClass)
             (superInstance : ScriptedInstance)._this = val;
 
         return _this = val;
@@ -73,14 +73,14 @@ class ScriptedInstance extends Interp
         exitScope();
     }
 
-    public function callConstructor(?args:Array<Dynamic>)
+    public function callConstructor(?args:Array<Dynamic>):Dynamic
     {
         if (args != null)
             if (_constructor == null)
             {
                 Reflect.callMethod(null, get('new'), args);
             } else {
-                if (superType is ScriptedInstance)
+                if (superType is ScriptedClass)
                 {
                     var removeScope:Bool = false;
                     
@@ -100,7 +100,7 @@ class ScriptedInstance extends Interp
                         throw e;
                     }
                 } else {
-
+                    return Type.createInstance((superType : Class<IExtensible>), [this, args]);
                 }
             }
 

@@ -1,3 +1,3 @@
 package ale.hscript.interp;
 
-abstract Extensible(Dynamic) from ScriptedClass from IExtensible to ScriptedClass to IExtensible {}
+abstract Extensible(Dynamic) from ScriptedClass from Class<IExtensible> to ScriptedClass to Class<IExtensible> {}
