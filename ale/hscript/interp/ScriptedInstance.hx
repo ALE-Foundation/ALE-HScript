@@ -9,7 +9,7 @@ class ScriptedInstance extends Interp
     var type:ScriptedClass;
 
     function toString()
-        return type.toString();
+        return methods.exists('toString') ? call('toString') : type.toString();
 
     public var methods:Map<String, Scope> = [];
 
@@ -90,8 +90,8 @@ class ScriptedInstance extends Interp
                 super.eval(expr);
         }
 
-    public function call(id:String, args:Array<Dynamic>):Dynamic
-        return Reflect.callMethod(null, methods[id].get(id), args);
+    public function call(id:String, ?args:Array<Dynamic>):Dynamic
+        return Reflect.callMethod(null, methods[id].get(id), args ?? []);
 
     override function defaultResolve(id:String):Dynamic
         return scope.get(id, methods['get_' + id]);

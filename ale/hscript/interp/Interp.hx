@@ -252,7 +252,7 @@ class Interp
                             if (method == null)
                                 null;
                             else
-                                Reflect.callMethod(obj, method, evalArray(args));
+                                Reflect.callMethod(obj, method, resArgs);
                         }
 
                     case EField(target, id):
@@ -261,7 +261,7 @@ class Interp
                         if (obj is ScriptedInstance)
                         {
                             if (obj.methods.exists(id))
-                                return obj.call(id, args);
+                                return obj.call(id, resArgs);
                             else
                                 throw EUnknownVariable(id);
                         } else {
