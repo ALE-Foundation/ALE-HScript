@@ -52,7 +52,10 @@ jobs:
 
       - name: Setup LuaJIT
         if: matrix.platform == 'Lua'
-        run: sudo apt-get install -y luajit
+        run: |
+          sudo apt-get install -y luajit
+          sudo apt install luarocks libpcre2-dev
+          sudo luarocks install lrexlib-pcre2
 
       - name: Install Dependencies
         run: |
