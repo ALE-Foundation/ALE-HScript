@@ -14,26 +14,18 @@ jobs:
       matrix:
         include:
           - platform: Interp
-            dependencies: 
             build_suffix: --interp
 
           - platform: C++
-            dependencies: |
-              haxelib install libhxcpp
-              haxelib run libhxcpp setup
-
             build_suffix: --cpp bin --cmd ./bin/Main
 
           - platform: Hashlink
-            dependencies: 
             build_suffix: --hl bin.hl -cmd "hl bin.hl"
 
           - platform: Lua
-            dependencies: haxelib install hxluajit
             build_suffix: --lua bin.lua --cmd "luajit bin.lua"
 
           - platform: JS
-            dependencies: 
             build_suffix: --js bin.js
 
     steps:
@@ -53,17 +45,17 @@ jobs:
       - name: Setup LuaJIT
         if: matrix.platform == 'Lua'
         run: |
-          sudo apt-get install -y luajit
+          sudo apt-get install -y luajitLuaJIT
           sudo apt install luarocks libpcre2-dev
           sudo luarocks install lrexlib-pcre2
           sudo luarocks install luautf8
           sudo luarocks install luv
 
-      - name: Install Dependencies
+      - name: Setup hxcpp
+        if: matrix.platform == 'C++'
         run: |
-          haxelib dev ale-hscript .
-          haxelib git hxcppcrashhandler https://github.com/Slushi-Github/HxCPPCrashHandler
-          ${{ matrix.dependencies }}
+          haxelib install libhxcpp
+          haxelib run libhxcpp setup
 
       - name: Build
         run: |
