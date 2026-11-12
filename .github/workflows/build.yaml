@@ -20,7 +20,7 @@ jobs:
             build_suffix: --cpp bin --cmd ./bin/Main
 
           - platform: Hashlink
-            build_suffix: --hl bin.hl -cmd "hl bin.hl"
+            build_suffix: --hl bin.hl
 
           - platform: Lua
             build_suffix: --lua bin.lua --cmd "luajit bin.lua"
@@ -35,12 +35,6 @@ jobs:
         uses: krdlab/setup-haxe@master
         with:
           haxe-version: 4.3.7
-
-      - name: Setup HashLink
-        if: matrix.platform == 'Hashlink'
-        uses: cedx/SetupHashLink@v8
-        with:
-          version: latest
 
       - name: Setup LuaJIT
         if: matrix.platform == 'Lua'
