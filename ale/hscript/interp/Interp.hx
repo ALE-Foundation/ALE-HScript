@@ -16,6 +16,8 @@ import ale.hscript.macros.AbstractsMacro;
 import ale.hscript.macros.TypeListMacro;
 import ale.hscript.macros.EnumsMacro;
 
+import ale.hscript.utils.Util;
+
 import haxe.ds.GenericStack;
 import haxe.ds.ObjectMap;
 
@@ -111,7 +113,7 @@ class Interp
         return switch ((lastExpr = expr)?.type)
         {
             case ESuperFieldCall(id, args):
-                Reflect.callMethod(null, resolveField(superInstance, id), evalArray(args));
+                Reflect.callMethod(null, Util.resolveField(superInstance, id), evalArray(args));
 
             case EClassDecl(id, body, parent, implem):
                 imports[id] = new ScriptedClass(id, body, eval(parent));
@@ -124,13 +126,13 @@ class Interp
                 null;
 
             case EImport(module, alias):
-                imports[alias ?? module.split('.').pop()] = resolveClass(module);
+                imports[alias ?? module.split('.').pop()] = Util.resolveClass(module);
 
                 null;
 
             case EPackageImport(module):
                 for (type in TypeListMacro.list[module])
-                    imports[type] = resolveClass(module + '.' + type);
+                    imports[type] = Util.resolveClass(module + '.' + type);
 
                 null;
 
@@ -146,12 +148,12 @@ class Interp
                 imports[id] = eval(type);
 
             case EField(obj, id):
-                resolveField(eval(obj), id);
+                Util.resolveField(eval(obj), id);
 
             case ESafeField(obj, id):
                 final res:Dynamic = eval(obj);
 
-                res == null ? null : resolveField(res, id);
+                res == null ? null : Util.resolveField(res, id);
 
             case EArrayAccess(obj, key):
                 final res:Dynamic = eval(obj);
@@ -167,7 +169,7 @@ class Interp
                 }
 
             case ENew(type, args):
-                createInstance(eval(type), evalArray(args));
+                Util.createInstance(eval(type), evalArray(args), imports);
 
             case EInterpolatedString(parts):
                 final buf:StringBuf = new StringBuf();
@@ -254,7 +256,7 @@ class Interp
                             else
                                 null;
                         } else {
-                            final method:Dynamic = resolveField(obj, id);
+                            final method:Dynamic = Util.resolveField(obj, id);
 
                             if (method == null)
                                 null;
@@ -271,7 +273,7 @@ class Interp
                         } else {
                             try
                             {
-                                final method:Dynamic = resolveField(obj, id);
+                                final method:Dynamic = Util.resolveField(obj, id);
 
                                 if (method != null)
                                     return Reflect.callMethod(obj, method, resArgs);
@@ -384,7 +386,7 @@ class Interp
                         switch (token)
                         {
                             case TIs:
-                                isOfType(l, r);
+                                Util.isOfType(l, r);
 
                             case TTripleDot:
                                 new IntIterator(l, r);
@@ -557,7 +559,7 @@ class Interp
                 final res:Dynamic = {};
 
                 for (key => val in values)
-                    assignField(res, key, eval(val));
+                    Util.assignField(res, key, eval(val));
 
                 res;
 
@@ -632,7 +634,7 @@ class Interp
                         if (superInstance == null)
                             throw e;
                         else {
-                            assignField(superInstance, id, value);
+                            Util.assignField(superInstance, id, value);
 
                             res = value;
                         }
@@ -654,7 +656,7 @@ class Interp
                 value;
 
             case EField(obj, id):
-                assignField(eval(obj), id, value);
+                Util.assignField(eval(obj), id, value);
 
             default:
                 throw EInvalidAssignment;
@@ -703,56 +705,19 @@ class Interp
             }
         }
 
-    function isOfType(obj:Dynamic, type:Dynamic):Bool
-        return Std.isOfType(obj, type);
-
-    function resolveClass(module:String):Dynamic
-    {
-        var res:Dynamic = null;
-        
-        for (mod in [module, module + EnumsMacro.SUFFIX, module + AbstractsMacro.SUFFIX])
-            if ((res = Type.resolveClass(mod)) != null)
-                break;
-
-        res ??= TypeListMacro.typedefs[module];
-
-        if (res == null)
-            throw ETypeNotFound(module);
-
-        return res;
-    }
-
     function resolveType(module:String):Dynamic
     {
         var res:Dynamic = imports[module];
 
         try
         {
-            res ??= resolveClass(module);
+            res ??= Util.resolveClass(module);
         } catch(e:ErrorType) {}
 
         if (res == null)
             throw ETypeNotFound(module);
 
         return res;
-    }
-
-    function resolveField(obj:Dynamic, id:String):Dynamic
-        return obj is ScriptedInstance ? obj.get(id) : Reflect.getProperty(obj, id);
-
-    function assignField(obj:Dynamic, id:String, value:Dynamic):Dynamic
-        return if (obj is ScriptedInstance)
-        {
-            obj.set(id, value);
-        } else {
-            Reflect.setProperty(obj, id, value);
-
-            value;
-        }
-
-    function createInstance(obj:Dynamic, ?args:Array<Dynamic>):Dynamic
-    {
-        return obj is ScriptedClass ? obj.instance(args, imports) : Type.createInstance(obj, args ?? []);
     }
 
     function evalArray(exprs:Array<Expr>):Array<Dynamic>
@@ -855,7 +820,7 @@ class Interp
     {
         final res:Array<Dynamic> = [];
 
-        final iterator = indexId == null ? makeIterator(eval(iter)) : makeKeyValueIterator(eval(iter));
+        final iterator = indexId == null ? Util.makeIterator(eval(iter)) : Util.makeKeyValueIterator(eval(iter));
 
         while (iterator.hasNext())
         {
@@ -893,49 +858,5 @@ class Interp
         }
 
         return res;
-    }
-
-
-    function makeIterator(obj:Dynamic):Iterator<Dynamic>
-    {
-        #if js
-        if (obj is Array)
-            return (obj : Array<Dynamic>).iterator();
-
-        if (obj.iterator != null)
-            obj = obj.iterator();
-        #else
-        #if cpp if (obj.iterator != null) #end
-            try
-            {
-                obj = obj.iterator();
-            } catch(e:Dynamic) {}
-        #end
-            
-        if (obj.hasNext == null || obj.next == null)
-            obj = null;
-
-        return obj;
-    }
-
-    function makeKeyValueIterator(obj:Dynamic):KeyValueIterator<Dynamic, Dynamic>
-    {
-        #if js
-        if (obj is Array)
-            return (obj : Array<Dynamic>).keyValueIterator();
-
-        if (obj.keyValueIterator != null)
-            obj = obj.keyValueIterator();
-        #else
-        try
-        {
-            obj = obj.keyValueIterator();
-        } catch(e:Dynamic) {}
-        #end
-
-        if (obj.hasNext == null || obj.next == null)
-            obj = null;
-
-        return obj;
     }
 }

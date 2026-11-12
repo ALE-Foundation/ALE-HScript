@@ -1,12 +1,15 @@
 package ale.hscript.utils;
 
 import ale.hscript.lexer.TokenType;
-import ale.hscript.lexer.Token;
 
-import ale.hscript.parser.ExprType;
-import ale.hscript.parser.Expr;
+import ale.hscript.interp.ScriptedInstance;
+import ale.hscript.interp.ScriptedClass;
 
-import ale.hscript.Config;
+import ale.hscript.macros.AbstractsMacro;
+import ale.hscript.macros.TypeListMacro;
+import ale.hscript.macros.EnumsMacro;
+
+import ale.hscript.errors.ErrorType;
 
 import haxe.PosInfos;
 import haxe.Log;
@@ -14,13 +17,84 @@ import haxe.Log;
 @:publicFields
 class Util
 {
-    // I need a quick print with a return to speed up debugging
-    static function print<T>(val:T, ?pos:PosInfos):T
+    static function makeIterator(obj:Dynamic):Iterator<Dynamic>
     {
-        Log.trace(val, pos);
+        #if js
+        if (obj is Array)
+            return (obj : Array<Dynamic>).iterator();
 
-        return val;
+        if (obj.iterator != null)
+            obj = obj.iterator();
+        #else
+        #if cpp if (obj.iterator != null) #end
+            try
+            {
+                obj = obj.iterator();
+            } catch(e:Dynamic) {}
+        #end
+            
+        if (obj.hasNext == null || obj.next == null)
+            obj = null;
+
+        return obj;
     }
+
+    static function makeKeyValueIterator(obj:Dynamic):KeyValueIterator<Dynamic, Dynamic>
+    {
+        #if js
+        if (obj is Array)
+            return (obj : Array<Dynamic>).keyValueIterator();
+
+        if (obj.keyValueIterator != null)
+            obj = obj.keyValueIterator();
+        #else
+        try
+        {
+            obj = obj.keyValueIterator();
+        } catch(e:Dynamic) {}
+        #end
+
+        if (obj.hasNext == null || obj.next == null)
+            obj = null;
+
+        return obj;
+    }
+
+    static function resolveField(obj:Dynamic, id:String):Dynamic
+        return obj is ScriptedInstance ? obj.get(id) : Reflect.getProperty(obj, id);
+
+    static function assignField(obj:Dynamic, id:String, value:Dynamic):Dynamic
+        return if (obj is ScriptedInstance)
+        {
+            obj.set(id, value);
+        } else {
+            Reflect.setProperty(obj, id, value);
+
+            value;
+        }
+
+    static function createInstance(obj:Dynamic, ?args:Array<Dynamic>, ?imports:Map<String, Dynamic>):Dynamic
+        return obj is ScriptedClass ? obj.instance(args, imports) : Type.createInstance(obj, args ?? []);
+
+    static function resolveClass(module:String):Dynamic
+    {
+        var res:Dynamic = null;
+        
+        for (mod in [module, module + EnumsMacro.SUFFIX, module + AbstractsMacro.SUFFIX])
+            if ((res = Type.resolveClass(mod)) != null)
+                break;
+
+        res ??= TypeListMacro.typedefs[module];
+
+        if (res == null)
+            throw ETypeNotFound(module);
+
+        return res;
+    }
+
+    static function isOfType(obj:Dynamic, type:Dynamic):Bool
+        return Std.isOfType(obj, type);
+
 
     static function resolveSourceData(script:String, ?name:String):SourceData
     {
@@ -89,10 +163,11 @@ class Util
         'while' => TWhile
     ];
 
-    static function tokensToTokenTypes(tokens:Array<Token>):Array<TokenType>
-        return tokens.map(token -> token.type);
 
+    static function print<T>(val:T, ?pos:PosInfos):T
+    {
+        Log.trace(val, pos);
 
-    static function exprsToExprTypes(exprs:Array<Expr>):Array<ExprType>
-        return exprs.map(expr -> expr.type);
+        return val;
+    }
 }
