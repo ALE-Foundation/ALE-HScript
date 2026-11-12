@@ -7,6 +7,7 @@ import ale.hscript.parser.Expr;
 class ScriptedInstance extends Interp
 {
     var type:ScriptedClass;
+    var superType:ScriptedClass;
 
     function toString()
         return methods.exists('toString') ? call('toString') : type.toString();
@@ -22,27 +23,84 @@ class ScriptedInstance extends Interp
         return _this = val;
     }
 
-    public function new(type:ScriptedClass, body:Array<Expr>, ?args:Array<Dynamic>, ?parent:ScriptedInstance)
+    var _constructor:Constructor;
+
+    public function new(type:ScriptedClass, body:Array<Expr>, ?superType:ScriptedClass, ?imports:Map<String, Dynamic>)
     {
         this.type = type;
+        this.superType = superType;
 
-        super(parent);
+        super();
 
         name = type.toString();
 
-        _this = this;
-
-        if (parent != null)
+        if (superType != null && superType is ScriptedClass)
         {
-            scope = variables = new Scope(parent.variables);
+            superInstance = superType.instance();
 
-            methods = parent.methods;
+            final sup:ScriptedInstance = cast superInstance;
+
+            scope = variables = new Scope(sup.variables);
+
+            methods = sup.methods;
         }
 
-        executeBody(body);
+        _this = this;
 
+        if (imports != null)
+            this.imports = imports;
+
+        executeBody(body);
+    }
+
+    public function initPreConstructor(args:Array<Dynamic>)
+    {
+        enterScope(variables);
+
+        for (i => arg in _constructor.funcArgs)
+            scope.define(arg.id, args[i] ?? eval(arg.value));
+
+        eval(_constructor.pre);
+    }
+
+    public function getConstructorArgs():Array<Dynamic>
+        return evalArray(_constructor.superArgs);
+
+    public function initPostConstructor()
+    {
+        eval(_constructor.post);
+
+        exitScope();
+    }
+
+    public function callConstructor(?args:Array<Dynamic>)
+    {
         if (args != null)
-            Reflect.callMethod(null, get('new'), args);
+            if (_constructor == null)
+            {
+                Reflect.callMethod(null, get('new'), args);
+            } else {
+                var removeScope:Bool = false;
+                
+                try
+                {
+                    initPreConstructor(args);
+
+                    removeScope = true;
+
+                    if (superInstance is ScriptedInstance)
+                        superInstance.callConstructor(getConstructorArgs());
+
+                    initPostConstructor();
+                } catch(e:Dynamic) {
+                    if (removeScope)
+                        exitScope();
+
+                    throw e;
+                }
+            }
+
+        return this;
     }
 
     public function executeBody(body:Array<Expr>)
@@ -50,6 +108,11 @@ class ScriptedInstance extends Interp
             for (expr in body)
                 switch ((lastExpr = expr)?.type)
                 {
+                    case EExtendedConstructor(pre, superArgs, post, funcArgs):
+                        _constructor = new Constructor(pre, superArgs, post, funcArgs);
+
+                        null;
+
                     case EVarDecl(id, _, _, _, _, _):
                         if (variables.exists(id))
                             throw EDuplicated(id);
@@ -82,31 +145,34 @@ class ScriptedInstance extends Interp
             case EThis:
                 _this;
 
-            case ECall(obj, args):
-                switch (obj.type)
-                {
-                    case EVar(id) if (id != 'cast' && id != 'trace'):
-                        if (methods.exists(id))
-                            call(id, evalArray(args));
-                        else
-                            throw EUnknownVariable(id);
-
-                    default:
-                        super.eval(expr);
-                }
-
             default:
                 super.eval(expr);
         }
 
-    public function call(id:String, ?args:Array<Dynamic>):Dynamic
-        return Reflect.callMethod(null, methods[id].get(id), args ?? []);
-
     override function defaultResolve(id:String):Dynamic
-        return scope.get(id, methods['get_' + id]);
+    {
+        if (scope.exists(id, variables))
+            return scope.get(id, methods['get_' + id], variables);
+
+        if (methods.exists(id))
+            return methods[id].variables[id].value;
+
+        return get(id);
+    }
 
     override function defaultAssign(id:String, value:Dynamic):Dynamic
-        return scope.set(id, value, methods['set_' + id]);
+    {
+        if (scope.exists(id, variables))
+            return scope.set(id, value);
+
+        if (methods.exists(id))
+            return methods[id].variables[id].value = value;
+
+        return set(id, value);
+    }
+    
+    public function call(id:String, ?args:Array<Dynamic>):Dynamic
+        return Reflect.callMethod(null, methods[id].get(id), args ?? []);
 
     public function get(id:String):Dynamic
         return variables.get(id, methods['get_' + id]);

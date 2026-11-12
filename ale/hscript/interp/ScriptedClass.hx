@@ -22,6 +22,6 @@ class ScriptedClass
         this.parent = parent;
     }
 
-    public function instance(?args:Array<Dynamic>):ScriptedInstance
-        return new ScriptedInstance(this, body, args, parent?.instance());
+    public function instance(?args:Array<Dynamic>, ?imports:Map<String, Dynamic>):ScriptedInstance
+        return new ScriptedInstance(this, body, parent, imports).callConstructor(args);
 }

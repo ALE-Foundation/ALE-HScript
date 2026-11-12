@@ -25,9 +25,9 @@ class Scope
             isFinal: isFinal
         }
 
-    public function get(id:String, ?accessorScope:Scope):Dynamic
+    public function get(id:String, ?accessorScope:Scope, ?until:Scope):Dynamic
     {
-        final scope:Scope = resolve(id);
+        final scope:Scope = resolve(id, this, until);
 
         final data:Variable = scope.variables[id];
 
@@ -101,27 +101,27 @@ class Scope
         }
     }
 
-    public function exists(id:String):Bool
+    public function exists(id:String, ?until:Scope):Bool
         return try
         {
-            resolve(id);
+            resolve(id, this, until);
 
             true;
         } catch(_) {
             false;
         }
 
-    function resolve(id:String, ?scp:Scope):Scope
+    function resolve(id:String, ?scp:Scope, ?until:Scope):Scope
     {
         var scope:Scope = scp ?? this;
 
-        while (scope != null)
+        while (scope != null && scope != until)
             if (scope.variables.exists(id))
                 break;
             else
                 scope = scope.parent;
 
-        if (scope == null)
+        if (scope == null || scope == until)
             throw EUnknownVariable(id);
 
         return scope;

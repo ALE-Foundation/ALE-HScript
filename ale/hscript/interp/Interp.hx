@@ -79,6 +79,8 @@ class Interp
         return try
         {
             call();
+        } catch(e:Error) {
+            throw e;
         } catch(e:ErrorType) {
             error(e, lastExpr);
         } catch (e:Exception) {
@@ -748,7 +750,7 @@ class Interp
 
     function createInstance(obj:Dynamic, ?args:Array<Dynamic>):Dynamic
     {
-        return obj is ScriptedClass ? obj.instance(args) : Type.createInstance(obj, args ?? []);
+        return obj is ScriptedClass ? obj.instance(args, imports) : Type.createInstance(obj, args ?? []);
     }
 
     function evalArray(exprs:Array<Expr>):Array<Dynamic>
@@ -757,27 +759,36 @@ class Interp
 
     var scopeStack:GenericStack<Scope>;
 
-    public function scoped<T>(call:Void -> T, ?parent:Scope, ?create:Bool = true):T
+    function enterScope(?parent:Scope, ?create:Bool = true):Void
     {
         scopeStack.add(scope);
 
         scope = parent != null && !create ? parent : new Scope(parent ?? scope);
+    }
+
+    function exitScope():Void
+        scope = scopeStack.pop();
+
+    function scoped<T>(call:Void -> T, ?parent:Scope, ?create:Bool = true):T
+    {
+        enterScope(parent, create);
 
         try
         {
             final res:T = call();
 
-            scope = scopeStack.pop();
+            exitScope();
 
             return res;
-        } catch (e:Dynamic) {
-            scope = scopeStack.pop();
-
+        }
+        catch (e:Dynamic)
+        {
+            exitScope();
+            
             throw e;
         }
     }
 
-    
     function evalWhile(condition:Expr, body:Expr):Array<Dynamic>
     {
         final res:Array<Dynamic> = [];
