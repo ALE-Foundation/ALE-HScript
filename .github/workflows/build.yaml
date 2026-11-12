@@ -15,26 +15,26 @@ jobs:
         include:
           - platform: Interp
             dependencies: 
-            build_postfix: --interp
+            build_suffix: --interp
 
           - platform: C++
             dependencies: |
               haxelib install libhxcpp
               haxelib run libhxcpp setup
 
-            build_postfix: --cpp bin --cmd ./bin/Main
+            build_suffix: --cpp bin --cmd ./bin/Main
 
           - platform: Hashlink
             dependencies: 
-            build_postfix: --hl bin\bin.hl
+            build_suffix: --hl bin.hl -cmd "hl bin.hl"
 
           - platform: Lua
             dependencies: haxelib install hxluajit
-            build_postfix: --lua bin/bin.lua
+            build_suffix: --lua bin.lua --cmd "luajit bin.lua"
 
-          - platform: JavaScript
+          - platform: JS
             dependencies: 
-            build_postfix: --js bin/bin.js
+            build_suffix: --js bin.js
 
     steps:
       - uses: actions/checkout@v4
@@ -59,4 +59,4 @@ jobs:
       - name: Build
         run: |
           cd test
-          haxe build.hxml -D VERBOSE_TEST ${{ matrix.build_postfix }}
+          haxe build.hxml ${{ matrix.build_suffix }}
