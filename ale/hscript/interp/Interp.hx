@@ -248,6 +248,11 @@ class Interp
                         if (obj == null)
                         {
                             null;
+                        } else if (obj is ScriptedInstance) {
+                            if (obj.methods.exists(id))
+                                obj.call(id, resArgs);
+                            else
+                                null;
                         } else {
                             final method:Dynamic = resolveField(obj, id);
 
@@ -262,10 +267,7 @@ class Interp
 
                         if (obj is ScriptedInstance)
                         {
-                            if (obj.methods.exists(id))
-                                return obj.call(id, resArgs);
-                            else
-                                throw EUnknownVariable(id);
+                            return obj.call(id, resArgs);
                         } else {
                             try
                             {

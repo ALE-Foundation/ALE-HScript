@@ -44,3 +44,5 @@ class Ch3erea extends Peruano {}
 
 final peru = new Ch3erea('oso', 'donde');
 peru.oso = 67;
+
+trace(peru.toString());

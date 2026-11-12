@@ -9,8 +9,10 @@ class ScriptedInstance extends Interp
     var type:ScriptedClass;
     var superType:Extensible;
 
+    var allowMethodToString:Bool = true;
+    
     function toString()
-        return methods.exists('toString') ? call('toString') : type.toString();
+        return (allowMethodToString && methods.exists('toString')) ? call('toString') : type.toString();
 
     public var methods:Map<String, Scope> = [];
 
@@ -24,7 +26,7 @@ class ScriptedInstance extends Interp
     }
 
     var _constructor:Constructor;
-
+        
     public function new(type:ScriptedClass, body:Array<Expr>, ?superType:Extensible, ?imports:Map<String, Dynamic>)
     {
         this.type = type;
@@ -51,6 +53,21 @@ class ScriptedInstance extends Interp
             this.imports = imports;
 
         executeBody(body);
+
+        if (!methods.exists('toString'))
+        {
+            define('toString', () -> {
+                _this.allowMethodToString = false;
+
+                final res:String = _this.toString();
+
+                _this.allowMethodToString = true;
+
+                return res;
+            }, [], PDefault, PNever, true);
+
+            methods['toString'] = variables;
+        }
     }
 
     public function initPreConstructor(args:Array<Dynamic>)
