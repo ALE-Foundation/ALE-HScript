@@ -18,7 +18,10 @@ jobs:
             build_postfix: --interp
 
           - platform: C++
-            dependencies: haxelib git hxcpp https://github.com/ALE-Psych-Crew/hxcpp
+            dependencies: |
+              haxelib install libhxcpp
+              haxelib run libhxcpp setup
+
             build_postfix: --cpp bin --cmd ./bin/Main
 
           - platform: Hashlink
