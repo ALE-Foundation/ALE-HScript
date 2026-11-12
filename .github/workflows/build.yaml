@@ -59,5 +59,6 @@ jobs:
 
       - name: Build
         run: |
+          haxelib dev ale-hscript .
           cd test
           haxe build.hxml ${{ matrix.build_suffix }}
