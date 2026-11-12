@@ -10,10 +10,6 @@ class Main
 
 	static function main()
 	{
-		#if (hxcppcrashhandler && cpp)
-		cpp.CPPCrashHandler.runCPPCrashHandler();
-		#end
-
 		final context = new Scope();
 
 		new Script('script', context).execute();
