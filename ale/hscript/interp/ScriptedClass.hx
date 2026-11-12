@@ -13,9 +13,9 @@ class ScriptedClass
 
     final body:Array<Expr>;
 
-    final parent:Null<ScriptedClass>;
+    final parent:Null<Extensible>;
 
-    public function new(id:String, body:Array<Expr>, ?parent:ScriptedClass)
+    public function new(id:String, body:Array<Expr>, ?parent:Extensible)
     {
         this.id = id;
         this.body = body;

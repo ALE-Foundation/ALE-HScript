@@ -7,7 +7,7 @@ import ale.hscript.parser.Expr;
 class ScriptedInstance extends Interp
 {
     var type:ScriptedClass;
-    var superType:ScriptedClass;
+    var superType:Extensible;
 
     function toString()
         return methods.exists('toString') ? call('toString') : type.toString();
@@ -25,7 +25,7 @@ class ScriptedInstance extends Interp
 
     var _constructor:Constructor;
 
-    public function new(type:ScriptedClass, body:Array<Expr>, ?superType:ScriptedClass, ?imports:Map<String, Dynamic>)
+    public function new(type:ScriptedClass, body:Array<Expr>, ?superType:Extensible, ?imports:Map<String, Dynamic>)
     {
         this.type = type;
         this.superType = superType;
@@ -36,7 +36,7 @@ class ScriptedInstance extends Interp
 
         if (superType != null && superType is ScriptedClass)
         {
-            superInstance = superType.instance();
+            superInstance = (superType : ScriptedClass).instance();
 
             final sup:ScriptedInstance = cast superInstance;
 
@@ -80,23 +80,27 @@ class ScriptedInstance extends Interp
             {
                 Reflect.callMethod(null, get('new'), args);
             } else {
-                var removeScope:Bool = false;
-                
-                try
+                if (superType is ScriptedInstance)
                 {
-                    initPreConstructor(args);
+                    var removeScope:Bool = false;
+                    
+                    try
+                    {
+                        initPreConstructor(args);
 
-                    removeScope = true;
+                        removeScope = true;
 
-                    if (superInstance is ScriptedInstance)
-                        superInstance.callConstructor(getConstructorArgs());
+                        (superInstance : ScriptedInstance).callConstructor(getConstructorArgs());
 
-                    initPostConstructor();
-                } catch(e:Dynamic) {
-                    if (removeScope)
-                        exitScope();
+                        initPostConstructor();
+                    } catch(e:Dynamic) {
+                        if (removeScope)
+                            exitScope();
 
-                    throw e;
+                        throw e;
+                    }
+                } else {
+
                 }
             }
 
