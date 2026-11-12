@@ -10,7 +10,7 @@ class Main
 
 	static function main()
 	{
-		#if cpp
+		#if (hxcppcrashhandler && cpp)
 		cpp.CPPCrashHandler.runCPPCrashHandler();
 		#end
 
