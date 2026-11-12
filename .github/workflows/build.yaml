@@ -50,6 +50,10 @@ jobs:
         with:
           version: latest
 
+      - name: Setup LuaJIT
+        if: matrix.platform == 'Lua'
+        run: sudo apt-get install -y luajit
+
       - name: Install Dependencies
         run: |
           haxelib dev ale-hscript .
