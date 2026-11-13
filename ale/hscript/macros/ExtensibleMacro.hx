@@ -104,7 +104,7 @@ class ExtensibleMacro
 
                                     $i{INSTANCE} = instance;
 
-                                    instance.preConstructor();
+                                    instance.preConstructor(args);
 
                                     var localArgs = instance.constructorArgs() ?? args;
 

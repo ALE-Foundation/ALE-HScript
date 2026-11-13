@@ -2,14 +2,15 @@ import Test;
 
 class Oso extends Test
 {
-    override function method()
+    public function new(arg)
     {
-        trace('pre');
+        trace(arg);
 
-        super.method();
-
-        trace('post');
+        super('osoooo');
     }
+
+    override function method()
+        trace('oso');
 }
 
 final osoInstance = new Oso('donde');
