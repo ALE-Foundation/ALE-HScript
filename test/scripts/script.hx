@@ -1,23 +1,17 @@
-import Test;
-
 class Oso extends Test
 {
-    public function new(arg)
+    override function set_oso(val:Dynamic):Dynamic
+        return oso = val;
+
+    override function get_oso():Dynamic
     {
-        trace(arg);
-
-        super('osoooo');
-        
         trace(oso);
 
-        oso = 'tengo hambre oso';
-
-        trace(oso);
+        return oso;
     }
-
-    override function method()
-        trace('oso');
 }
 
-final osoInstance = new Oso('donde');
-osoInstance.method();
+final oso = new Oso();
+oso.oso = 67;
+
+trace(oso.oso);

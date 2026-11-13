@@ -18,6 +18,7 @@ class ExtensibleMacro
     static final LIST:String = '_ALE_HScript_Fields';
     static final RESOLVE:String = '_ALE_HSCRIPT_ResolveField';
     static final SET:String = '_ALE_HSCRIPT_SetField';
+    static final ACCESORS:String = '_ALE_HSCRIPT_AccessorsBypass';
 
     #if macro
     public static function onAfterTyping(types:Array<ModuleType>)
@@ -48,14 +49,22 @@ class ExtensibleMacro
                     if (shouldContinue)
                         continue;
 
-                    var constructor:ClassField = null;
-                    var constructorClass:ClassType = type;
+                    var classes:Array<ClassType> = [];
 
-                    while (constructor == null && constructorClass != null)
+                    var curClass:ClassType = type;
+
+                    while (curClass != null)
                     {
-                        constructor = constructorClass.constructor?.get();
-                        constructorClass = constructorClass.superClass?.t?.get();
+                        classes.push(curClass);
+                        
+                        curClass = curClass.superClass?.t?.get();
                     }
+
+                    var constructor:ClassField = null;
+
+                    for (cls in classes)
+                        if ((constructor = cls.constructor?.get()) != null)
+                            break;
 
                     if (constructor == null)
                         continue;
@@ -76,7 +85,13 @@ class ExtensibleMacro
                             pos: Context.currentPos(),
                             name: LIST,
                             access: [AFinal, APublic],
-                            kind: FVar(macro : Array<String>)
+                            kind: FVar(macro : Map<String, Bool>, macro [])
+                        },
+                        {
+                            pos: Context.currentPos(),
+                            name: ACCESORS,
+                            access: [AFinal, APublic],
+                            kind: FVar(macro : Map<String, Bool>, macro [])
                         },
                         {
                             pos: Context.currentPos(),
@@ -101,7 +116,7 @@ class ExtensibleMacro
                                     {
                                         $i{INSTANCE}.get(id);
                                     } catch(e:Dynamic) {
-                                        if ($i{LIST}.contains(id))
+                                        if ($i{LIST}.exists(id))
                                             Reflect.getProperty(this, id);
                                         else
                                             throw e;
@@ -130,7 +145,7 @@ class ExtensibleMacro
                                     {
                                         $i{INSTANCE}.set(id, value);
                                     } catch(e:Dynamic) {
-                                        if ($i{LIST}.contains(id))
+                                        if ($i{LIST}.exists(id))
                                         {
                                             Reflect.setProperty(this, id, value);
 
@@ -160,7 +175,8 @@ class ExtensibleMacro
                                     instance.superInstance = this;
                                     instance._this = this;
 
-                                    $i{LIST} = std.Type.getInstanceFields(std.Type.getSuperClass(std.Type.getClass(this)));
+                                    for (id in std.Type.getInstanceFields(std.Type.getSuperClass(std.Type.getClass(this))))
+                                        $i{LIST}[id] = true;
 
                                     $i{INSTANCE} = instance;
 
@@ -176,12 +192,35 @@ class ExtensibleMacro
                         }
                     ];
 
+                    final getters:Map<String, String> = [];
+                    final setters:Map<String, String> = [];
+
+                    for (fieldsClass in classes)
+                        for (field in fieldsClass.fields.get())
+                            switch (field.kind)
+                            {
+                                case FVar(get, set):
+                                    switch ([get, set])
+                                    {
+                                        case [AccCall | AccNever, AccCall | AccNever]:
+                                            if (!field.meta.has(':isVar'))
+                                                continue;
+
+                                        default:
+                                    }
+
+                                    if (get == AccCall)
+                                        getters['get_' + field.name] = field.name;
+
+                                    if (set == AccCall)
+                                        setters['set_' + field.name] = field.name;
+
+                                default:
+                            }
+
                     final fieldsList:Array<String> = ['new'];
 
-                    var fieldsClass:ClassType = type;
-
-                    while (fieldsClass != null)
-                    {
+                    for (fieldsClass in classes)
                         for (field in fieldsClass.fields.get())
                         {
                             if (field.params.length > 0 || field.isFinal || fieldsList.contains(field.name))
@@ -252,6 +291,11 @@ class ExtensibleMacro
                                         })
                                     });
 
+                                    final getter:Null<String> = getters[name];
+                                    final setter:Null<String> = setters[name];
+
+                                    final valueExpr:Expr = callArgs[0];
+
                                     fields.push({
                                         pos: Context.currentPos(),
                                         name: name,
@@ -259,7 +303,43 @@ class ExtensibleMacro
                                         kind: FFun({
                                             ret: Context.toComplexType(ret),
                                             args: arguments,
-                                            expr: isVoid ? macro {
+                                            expr: getter != null ? macro {
+                                                if ($i{INSTANCE}.methods.exists($v{name}))
+                                                {
+                                                    if ($i{ACCESORS}[$v{name}])
+                                                    {
+                                                        return $i{getter};
+                                                    } else {
+                                                        $i{ACCESORS}[$v{name}] = true;
+
+                                                        final res = $i{INSTANCE}.call($v{name}, [$a{callArgs}]);
+
+                                                        $i{ACCESORS}[$v{name}] = false;
+
+                                                        return res;
+                                                    }
+                                                } else {
+                                                    return $p{['super', name]}($a{callArgs});
+                                                }
+                                            } : setter != null ? macro {
+                                                if ($i{INSTANCE}.methods.exists($v{name}))
+                                                {
+                                                    if ($i{ACCESORS}[$v{name}])
+                                                    {
+                                                        return $i{setter} = $e{valueExpr};
+                                                    } else {
+                                                        $i{ACCESORS}[$v{name}] = true;
+
+                                                        final res = $i{INSTANCE}.call($v{name}, [$a{callArgs}]);
+
+                                                        $i{ACCESORS}[$v{name}] = false;
+
+                                                        return res;
+                                                    }
+                                                } else {
+                                                    return $p{['super', name]}($a{callArgs});
+                                                }
+                                            } : isVoid ? macro {
                                                 if ($i{INSTANCE}.methods.exists($v{name}))
                                                     $i{INSTANCE}.call($v{name}, [$a{callArgs}]);
                                                 else
@@ -276,9 +356,6 @@ class ExtensibleMacro
                                 default:
                             }
                         }
-
-                        fieldsClass = fieldsClass.superClass?.t?.get();
-                    }
 
                     final moduleName:String = type.module.split('.').pop();
 

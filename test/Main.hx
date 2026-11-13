@@ -6,15 +6,16 @@ import ale.hscript.Config;
 
 class Test
 {
-	var oso:String = 'masha';
+	@:isVar
+	var oso(get, set):Float = -1;
 
-	public function new(arg)
-		trace(arg);
+	function get_oso():Float
+		return oso;
 
-	public function method()
-	{
-		trace('donde');
-	}
+	function set_oso(val:Float):Float
+		return oso = val;
+
+	public function new() {}
 }
 
 class Main
