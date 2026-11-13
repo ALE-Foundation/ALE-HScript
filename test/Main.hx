@@ -6,6 +6,8 @@ import ale.hscript.Config;
 
 class Test
 {
+	var oso:String = 'masha';
+
 	public function new(arg)
 		trace(arg);
 
@@ -17,8 +19,6 @@ class Test
 
 class Main
 {
-	public static var estaticoso = 'oso';
-
 	static function main()
 	{
 		final context = new Scope();

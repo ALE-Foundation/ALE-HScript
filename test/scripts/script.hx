@@ -7,6 +7,12 @@ class Oso extends Test
         trace(arg);
 
         super('osoooo');
+        
+        trace(oso);
+
+        oso = 'tengo hambre oso';
+
+        trace(oso);
     }
 
     override function method()

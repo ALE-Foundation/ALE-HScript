@@ -63,11 +63,13 @@ class Util
     }
 
     static function resolveField(obj:Dynamic, id:String):Dynamic
-        return obj is ScriptedInstance ? obj.get(id) : Reflect.getProperty(obj, id);
+        return obj is IExtensible ? obj._ALE_HSCRIPT_ResolveField(id) : obj is ScriptedInstance ? obj.get(id) : Reflect.getProperty(obj, id);
 
     static function assignField(obj:Dynamic, id:String, value:Dynamic):Dynamic
-        return if (obj is ScriptedInstance)
+        return if (obj is IExtensible)
         {
+            return obj._ALE_HSCRIPT_SetField(id, value);
+        } else if (obj is ScriptedInstance) {
             obj.set(id, value);
         } else {
             Reflect.setProperty(obj, id, value);

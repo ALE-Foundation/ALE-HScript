@@ -14,8 +14,10 @@ class ExtensibleMacro
 {
     public static final SUFFIX:String = '_ALE_HScript_Extensible';
     public static final SUPER_SUFFIX:String = '_ALE_HScript_super';
-    public static final INSTANCE:String = '_ALE_HScript_Scripted';
-    public static final LIST:String = '_ALE_HScript_Fields';
+    static final INSTANCE:String = '_ALE_HScript_Scripted';
+    static final LIST:String = '_ALE_HScript_Fields';
+    static final RESOLVE:String = '_ALE_HSCRIPT_ResolveField';
+    static final SET:String = '_ALE_HSCRIPT_SetField';
 
     #if macro
     public static function onAfterTyping(types:Array<ModuleType>)
@@ -73,14 +75,72 @@ class ExtensibleMacro
                         {
                             pos: Context.currentPos(),
                             name: LIST,
-                            access: [AFinal],
+                            access: [AFinal, APublic],
                             kind: FVar(macro : Array<String>)
                         },
                         {
                             pos: Context.currentPos(),
                             name: INSTANCE,
-                            access: [AFinal],
+                            access: [AFinal, APublic],
                             kind: FVar(macro : ale.hscript.interp.ScriptedInstance)
+                        },
+                        {
+                            pos: Context.currentPos(),
+                            name: RESOLVE,
+                            access: [APublic],
+                            kind: FFun({
+                                ret: macro : Dynamic,
+                                args: [
+                                    {
+                                        name: 'id',
+                                        type: macro : String
+                                    }
+                                ],
+                                expr: macro {
+                                    return try
+                                    {
+                                        $i{INSTANCE}.get(id);
+                                    } catch(e:Dynamic) {
+                                        if ($i{LIST}.contains(id))
+                                            Reflect.getProperty(this, id);
+                                        else
+                                            throw e;
+                                    }
+                                }
+                            })
+                        },
+                        {
+                            pos: Context.currentPos(),
+                            name: SET,
+                            access: [APublic],
+                            kind: FFun({
+                                ret: macro : Dynamic,
+                                args: [
+                                    {
+                                        name: 'id',
+                                        type: macro : String
+                                    },
+                                    {
+                                        name: 'value',
+                                        type: macro : Dynamic
+                                    }
+                                ],
+                                expr: macro {
+                                    return try
+                                    {
+                                        $i{INSTANCE}.set(id, value);
+                                    } catch(e:Dynamic) {
+                                        if ($i{LIST}.contains(id))
+                                        {
+                                            Reflect.setProperty(this, id, value);
+
+                                            value;
+                                        } else {
+                                            throw e;
+                                        }
+                                    }
+                                }
+                            })
                         },
                         {
                             pos: Context.currentPos(),
