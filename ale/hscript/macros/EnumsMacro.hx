@@ -25,6 +25,21 @@ class EnumsMacro
 
                     final path:Array<String> = enumDecl.module.split('.').concat([enumDecl.name]);
 
+                    final joinPath:String = path.join('.');
+
+                    var shouldContinue:Bool = false;
+
+                    for (ignore in MacrosConfig.ABSTRACTS_IGNORE)
+                        if (joinPath.startsWith(ignore))
+                        {
+                            shouldContinue = true;
+
+                            break;
+                        }
+
+                    if (shouldContinue)
+                        continue;
+
                     final enumType:ComplexType = Context.toComplexType(TEnum(ref, []));
 
                     final fields:Array<Field> = [];

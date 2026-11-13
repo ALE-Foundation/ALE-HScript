@@ -1,4 +1,7 @@
+
 package ale.hscript.macros;
+
+import ale.hscript.MacrosConfig;
 
 import haxe.macro.Compiler;
 import haxe.macro.Context;
@@ -9,230 +12,233 @@ using StringTools;
 
 class ExtensibleMacro
 {
-    #if macro
-    public static function init(?whiteList:Array<String>)
-        for (pack in whiteList)
-            Compiler.addGlobalMetadata(pack, '@:build(ale.hscript.macros.ExtensibleMacro.build())', true, true, false);
-    #end
-
     public static final SUFFIX:String = '_ALE_HScript_Extensible';
     public static final SUPER_SUFFIX:String = '_ALE_HScript_super';
     public static final INSTANCE:String = '_ALE_HScript_Scripted';
+    public static final LIST:String = '_ALE_HScript_Fields';
 
     #if macro
-    macro public static function build():Array<Field>
+    public static function onAfterTyping(types:Array<ModuleType>)
     {
-        final baseClass = Context.getLocalClass()?.get();
-
-        if (baseClass == null || baseClass.name.endsWith(SUFFIX) || baseClass.isInterface || baseClass.isExtern || baseClass.isFinal || baseClass.isAbstract)
-            return Context.getBuildFields();
-
-        final ogFields = Context.getBuildFields();
-
-        var totalArgs:Null<Int> = null;
-
-        for (field in ogFields)
-            switch (field.kind)
+        for (moduleType in types)
+            switch (moduleType)
             {
-                case FFun(func):
-                    if (field.name != 'new')
+                case TClassDecl(clsRef):
+                    final type:ClassType = clsRef.get();
+
+                    if (type.isExtern || type.isAbstract || type.isFinal || type.isInterface || type.isPrivate || type.name.endsWith(AbstractsMacro.SUFFIX) || type.name.endsWith(EnumsMacro.SUFFIX) || type.name.endsWith(SUFFIX) || type.params.length > 0)
+                        continue;
+                    
+                    final path:Array<String> = type.pack.concat([type.name]);
+                    
+                    final joinPath:String = path.join('.');
+
+                    var shouldContinue:Bool = false;
+
+                    for (ignore in MacrosConfig.CLASSES_IGNORE)
+                        if (joinPath.startsWith(ignore))
+                        {
+                            shouldContinue = true;
+
+                            break;
+                        }
+
+                    if (shouldContinue)
                         continue;
 
-                    totalArgs = func.args.length;
+                    var constructor:ClassField = null;
+                    var constructorClass:ClassType = type;
 
-                    break;
+                    while (constructor == null && constructorClass != null)
+                    {
+                        constructor = constructorClass.constructor?.get();
+                        constructorClass = constructorClass.superClass?.t?.get();
+                    }
 
-                default:
-            }
+                    if (constructor == null)
+                        continue;
 
-        final baseFields = [];
+                    final constructorArgs:Int = switch (constructor.type)
+                    {
+                        case TFun(args, _):
+                            args.length;
 
-        final names = new Map<String, Bool>();
+                        default:
+                            -1;
+                    }
 
-        final classes:Array<ClassType> = [baseClass];
+                    var superArgs:Array<Expr> = [for (i in 0...constructorArgs) macro cast localArgs[$v{i}]];
 
-        var sup = baseClass.superClass?.t.get();
-
-        while (sup != null)
-        {
-            classes.push(sup);
-
-            sup = sup.superClass?.t.get();
-        }
-
-        for (cls in classes)
-        {
-            for (field in cls.fields.get())
-            {
-                if (names.exists(field.name))
-                    continue;
-
-                names[field.name] = true;
-
-                if (field.isFinal)
-                    continue;
-
-                switch (field.kind)
-                {
-                    case FMethod(MethNormal):
-                        baseFields.push(field);
-
-                    default:
-                }
-            }
-
-            if (totalArgs == null && cls.constructor != null)
-                switch (Context.follow(cls.constructor?.get().type))
-                {
-                    case TFun(args, _):
-                        totalArgs = args.length;
-
-                    default:
-                }
-        }
-
-        final extensibleFields:Array<Field> = [{
-            pos: Context.currentPos(),
-            name: INSTANCE,
-            kind: FVar(macro:ale.hscript.interp.ScriptedInstance<Dynamic>),
-            access: [AFinal]
-        }];
-
-        if (totalArgs != null)
-        {
-            var superArgs:Array<Expr> = [for (i in 0...totalArgs) macro cast localArgs[$v{i}]];
-
-            extensibleFields.push({
-                pos: Context.currentPos(),
-                name: 'new',
-                kind: FFun({
-                    args: [
+                    final fields:Array<Field> = [
                         {
-                            name: 'instance',
-                            type: macro:ale.hscript.interp.ScriptedInstance<Dynamic>
+                            pos: Context.currentPos(),
+                            name: LIST,
+                            access: [AFinal],
+                            kind: FVar(macro : Array<String>)
                         },
                         {
-                            name: 'args',
-                            type: macro:Array<Dynamic>
-                        }
-                    ],
-                    expr: macro {
-                        var localArgs = args;
-
-                        final consData = instance.scope.constructorData;
-
-                        if (consData != null)
+                            pos: Context.currentPos(),
+                            name: INSTANCE,
+                            access: [AFinal],
+                            kind: FVar(macro : ale.hscript.interp.ScriptedInstance)
+                        },
                         {
-                            consData.initScope(args);
-                            consData.initPre();
-                            
-                            localArgs = consData.getSuperArgs();
+                            pos: Context.currentPos(),
+                            name: 'new',
+                            kind: FFun({
+                                args: [
+                                    {
+                                        name: 'instance',
+                                        type: macro : ale.hscript.interp.ScriptedInstance
+                                    },
+                                    {
+                                        name: 'args',
+                                        type: macro : Array<Dynamic>
+                                    }
+                                ],
+                                expr: macro {
+                                    instance.superInstance = this;
+                                    instance._this = this;
+
+                                    $i{LIST} = std.Type.getInstanceFields(std.Type.getSuperClass(std.Type.getClass(this)));
+
+                                    $i{INSTANCE} = instance;
+
+                                    instance.preConstructor();
+
+                                    var localArgs = instance.constructorArgs() ?? args;
+
+                                    super($a{superArgs});
+
+                                    instance.postConstructor();
+                                }
+                            })
                         }
-                        
-                        super($a{superArgs});
-
-                        if (consData != null)
-                        {
-                            consData.initPost();
-                            consData.destroyScope();
-                        }
-
-                        $i{INSTANCE} = instance;
-
-                        $i{INSTANCE}.nativeExtension = this;
-                    }
-                })
-            });
-        } else {
-            return Context.getBuildFields();
-        }
-
-        for (field in baseFields)
-        {
-            final fieldName = field.name;
-
-            switch (Context.follow(field.type))
-            {
-                case TFun(funcArgs, ret):
-                    final call:Expr = {
-                        expr: ECall({
-                            expr: EField(macro super, fieldName),
-                            pos: Context.currentPos()
-                        }, [for (a in funcArgs) macro $i{a.name}]),
-                        pos: Context.currentPos()
-                    };
-
-                    final fixedArgs = [
-                        for (arg in funcArgs)
-                            {
-                                name: arg.name,
-                                opt: arg.opt,
-                                type: Context.toComplexType(arg.t)
-                            }
                     ];
 
-                    final isVoid = Context.follow(ret).match(TAbstract(_.get() => {name: 'Void'}, _));
+                    final fieldsList:Array<String> = ['new'];
 
-                    extensibleFields.push({
-                        pos: Context.currentPos(),
-                        name: fieldName + SUPER_SUFFIX,
-                        kind: FFun({
-                            args: fixedArgs.copy(),
-                            ret: Context.toComplexType(ret),
-                            expr: isVoid ? call : macro return $call
-                        })
-                    });
+                    var fieldsClass:ClassType = type;
 
-                    var argExprs:Array<Expr> = [for (i in 0...fixedArgs.length) macro $i{'arg' + i}];
+                    while (fieldsClass != null)
+                    {
+                        for (field in fieldsClass.fields.get())
+                        {
+                            if (field.params.length > 0 || field.isFinal || fieldsList.contains(field.name))
+                                continue;
 
-                    extensibleFields.push({
-                        pos: Context.currentPos(),
-                        name: fieldName,
-                        access: [AOverride],
-                        kind: FFun({
-                            args: [for (i => arg in fixedArgs) {
-                                name: 'arg' + i,
-                                opt: arg.opt,
-                                type: arg.type
-                            }],
-                            ret: Context.toComplexType(ret),
-                            expr: isVoid ? macro {
-                                if ($i{INSTANCE}.scope.exists($v{fieldName}, false))
-                                    Reflect.callMethod(this, $i{INSTANCE}.get($v{fieldName}), [$a{argExprs}]);
-                                else
-                                    super.$fieldName($a{argExprs});
-                            } : macro {
-                                if ($i{INSTANCE}.scope.exists($v{fieldName}, false))
-                                    return Reflect.callMethod(this, $i{INSTANCE}.get($v{fieldName}), [$a{argExprs}]);
+                            fieldsList.push(field.name);
 
-                                return super.$fieldName($a{argExprs});
+                            switch (field.kind)
+                            {
+                                case FMethod(MethNormal | MethDynamic):
+
+                                default:
+                                    continue;
                             }
-                        })
+
+                            final typedExpr = field.expr();
+
+                            if (typedExpr == null)
+                                continue;
+
+                            switch (Context.follow(field.type))
+                            {
+                                case TFun(args, ret):
+                                    final name:String = field.name;
+                                    final callArgs:Array<Expr> = [for (i in 0...args.length) macro $i{'a' + i}];
+
+                                    final defaults:Array<Null<Expr>> = [for (_ in args) null];
+
+                                    switch (typedExpr.expr)
+                                    {
+                                        case TFunction(func):
+                                            for (i => arg in func.args)
+                                                defaults[i] = arg.value == null ? null : Context.getTypedExpr(arg.value);
+
+                                        default:
+                                    }
+
+                                    final isVoid:Bool = switch (Context.follow(ret))
+                                    {
+                                        case TAbstract(ref, _):
+                                            ref.get().name == 'Void';
+
+                                        default:
+                                            false;
+                                    }
+
+                                    final arguments = [
+                                        for (i => arg in args)
+                                            {
+                                                type: Context.toComplexType(arg.t),
+                                                name: 'a' + i,
+                                                opt: arg.opt && defaults[i] == null,
+                                                value: defaults[i]
+                                            }
+                                    ];
+
+                                    fields.push({
+                                        pos: Context.currentPos(),
+                                        name: name + SUPER_SUFFIX,
+                                        kind: FFun({
+                                            ret: Context.toComplexType(ret),
+                                            args: arguments,
+                                            expr: isVoid ? macro {
+                                                $p{['super', name]}($a{callArgs});
+                                            } : macro {
+                                                return $p{['super', name]}($a{callArgs});
+                                            }
+                                        })
+                                    });
+
+                                    fields.push({
+                                        pos: Context.currentPos(),
+                                        name: name,
+                                        access: [AOverride],
+                                        kind: FFun({
+                                            ret: Context.toComplexType(ret),
+                                            args: arguments,
+                                            expr: isVoid ? macro {
+                                                if ($i{INSTANCE}.methods.exists($v{name}))
+                                                    $i{INSTANCE}.call($v{name}, [$a{callArgs}]);
+                                                else
+                                                    $p{['super', name]}($a{callArgs});
+                                            } : macro {
+                                                if ($i{INSTANCE}.methods.exists($v{name}))
+                                                    return $i{INSTANCE}.call($v{name}, [$a{callArgs}]);
+
+                                                return $p{['super', name]}($a{callArgs});
+                                            }
+                                        }),
+                                    });
+
+                                default:
+                            }
+                        }
+
+                        fieldsClass = fieldsClass.superClass?.t?.get();
+                    }
+
+                    final moduleName:String = type.module.split('.').pop();
+
+                    Context.defineType({
+                        pos: Context.currentPos(),
+                        pack: type.pack,
+                        name: type.name + SUFFIX,
+                        fields: fields,
+                        kind: TDClass({
+                            pack: type.pack,
+                            name: moduleName,
+                            sub: moduleName == type.name ? null : type.name
+                        }, [{
+                            pack: ['ale', 'hscript', 'interp'],
+                            name: 'IExtensible'
+                        }])
                     });
 
                 default:
             }
-        }
-
-        final modName = baseClass.name + SUFFIX;
-
-        Context.defineModule(baseClass.pack.concat([modName]).join('.'), [{
-            pack: baseClass.pack,
-            name: modName,
-            pos: Context.currentPos(),
-            kind: TDClass({
-                pack: baseClass.pack,
-                name: baseClass.module.split('.').pop(),
-                sub: baseClass.name,
-                params: [for (_ in baseClass.params) TPType(macro:Dynamic)]
-            }, [{
-                pack: ['ale', 'hscript', 'macros'],
-                name: 'NativeExtensible'
-            }]),
-            fields: extensibleFields
-        }], Context.getLocalImports());
-
-        return Context.getBuildFields();
     }
     #end
 }

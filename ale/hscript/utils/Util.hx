@@ -4,6 +4,7 @@ import ale.hscript.lexer.TokenType;
 
 import ale.hscript.interp.ScriptedInstance;
 import ale.hscript.interp.ScriptedClass;
+import ale.hscript.interp.IExtensible;
 
 import ale.hscript.macros.AbstractsMacro;
 import ale.hscript.macros.TypeListMacro;
@@ -15,6 +16,7 @@ import haxe.PosInfos;
 import haxe.Log;
 
 @:publicFields
+@:allow(ale.hscript.interp.IExtensible)
 class Util
 {
     static function makeIterator(obj:Dynamic):Iterator<Dynamic>

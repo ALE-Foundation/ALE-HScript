@@ -31,20 +31,21 @@ class AbstractsMacro
 
                     final joinPack:String = pack.join('.');
 
-                    var shouldContinue:Bool = false;
-
-                    for (ignore in MacrosConfig.ABSTRACT_IGNORE_PACKAGES)
-                        if (joinPack.startsWith(ignore))
-                            shouldContinue = true;
-
-                    if (shouldContinue)
-                        continue;
-
                     final fullPath:Array<String> = abs.module.split('.').concat([abs.name]);
 
                     final joinPath:String = fullPath.join('.');
 
-                    if (MacrosConfig.ABSTRACT_IGNORE.contains(joinPath))
+                    var shouldContinue:Bool = false;
+
+                    for (ignore in MacrosConfig.ABSTRACTS_IGNORE)
+                        if (joinPath.startsWith(ignore))
+                        {
+                            shouldContinue = true;
+
+                            break;
+                        }
+
+                    if (shouldContinue)
                         continue;
 
                     final pos:Position = Context.currentPos();

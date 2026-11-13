@@ -1,8 +1,12 @@
 package ale.hscript.interp;
 
+import ale.hscript.macros.ExtensibleMacro;
+
 import ale.hscript.errors.ErrorType;
 
 import ale.hscript.parser.Expr;
+
+import ale.hscript.utils.Util;
 
 class ScriptedInstance extends Interp
 {
@@ -11,12 +15,12 @@ class ScriptedInstance extends Interp
 
     var allowMethodToString:Bool = true;
     
-    function toString()
+    public function toString()
         return (allowMethodToString && methods.exists('toString')) ? call('toString') : type.toString();
 
     public var methods:Map<String, Scope> = [];
 
-    var _this(default, set):Dynamic;
+    public var _this(default, set):Dynamic;
     function set__this(val:Dynamic):Dynamic
     {
         if (superType is ScriptedClass)
@@ -29,6 +33,9 @@ class ScriptedInstance extends Interp
         
     public function new(type:ScriptedClass, body:Array<Expr>, ?superType:Extensible, ?imports:Map<String, Dynamic>)
     {
+        if (!(superType is ScriptedClass) && !(Type.createEmptyInstance(superType) is IExtensible))
+            superType = cast Type.resolveClass(Type.getClassName(superType) + ExtensibleMacro.SUFFIX);
+
         this.type = type;
         this.superType = superType;
 
@@ -47,7 +54,8 @@ class ScriptedInstance extends Interp
             methods = sup.methods;
         }
 
-        _this = this;
+        if (superType == null || superType is ScriptedClass)
+            _this = this;
 
         if (imports != null)
             this.imports = imports;
@@ -70,8 +78,11 @@ class ScriptedInstance extends Interp
         }
     }
 
-    public function initPreConstructor(args:Array<Dynamic>)
+    public function preConstructor(?args:Array<Dynamic>)
     {
+        if (_constructor == null)
+            return;
+
         enterScope(variables);
 
         for (i => arg in _constructor.funcArgs)
@@ -80,11 +91,14 @@ class ScriptedInstance extends Interp
         eval(_constructor.pre);
     }
 
-    public function getConstructorArgs():Array<Dynamic>
-        return evalArray(_constructor.superArgs);
+    public function constructorArgs():Array<Dynamic>
+        return _constructor == null ? null : evalArray(_constructor.superArgs);
 
-    public function initPostConstructor()
+    public function postConstructor()
     {
+        if (_constructor == null)
+            return;
+
         eval(_constructor.post);
 
         exitScope();
@@ -95,7 +109,10 @@ class ScriptedInstance extends Interp
         if (args != null)
             if (_constructor == null)
             {
-                Reflect.callMethod(null, get('new'), args);
+                if (superType != null && !(superType is ScriptedClass))
+                    return Type.createInstance(superType, [this, args]);
+                else
+                    Reflect.callMethod(null, get('new'), args);
             } else {
                 if (superType is ScriptedClass)
                 {
@@ -103,13 +120,13 @@ class ScriptedInstance extends Interp
                     
                     try
                     {
-                        initPreConstructor(args);
+                        preConstructor(args);
 
                         removeScope = true;
 
-                        (superInstance : ScriptedInstance).callConstructor(getConstructorArgs());
+                        (superInstance : ScriptedInstance).callConstructor(constructorArgs());
 
-                        initPostConstructor();
+                        postConstructor();
                     } catch(e:Dynamic) {
                         if (removeScope)
                             exitScope();
@@ -165,6 +182,9 @@ class ScriptedInstance extends Interp
         {
             case EThis:
                 _this;
+
+            case ESuperFieldCall(id, args):
+                Reflect.callMethod(null, Util.resolveField(superInstance, superInstance is IExtensible ? id + ExtensibleMacro.SUPER_SUFFIX : id), evalArray(args));
 
             default:
                 super.eval(expr);
