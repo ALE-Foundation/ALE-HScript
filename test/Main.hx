@@ -4,19 +4,15 @@ import ale.hscript.interp.Scope;
 import ale.hscript.Script;
 import ale.hscript.Config;
 
-class Test
+class Child
 {
-	@:isVar
-	var oso(get, set):Float = -1;
-
-	function get_oso():Float
-		return oso;
-
-	function set_oso(val:Float):Float
-		return oso = val;
-
 	public function new() {}
+
+    function test(_:TransformType):Void {}
 }
+
+private enum TransformType {}
+
 
 class Main
 {

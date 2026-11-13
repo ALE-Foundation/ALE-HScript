@@ -29,7 +29,7 @@ class ExtensibleMacro
                 case TClassDecl(clsRef):
                     final type:ClassType = clsRef.get();
 
-                    if (type.isExtern || type.isAbstract || type.isFinal || type.isInterface || type.isPrivate || type.name.endsWith(AbstractsMacro.SUFFIX) || type.name.endsWith(EnumsMacro.SUFFIX) || type.name.endsWith(SUFFIX) || type.params.length > 0)
+                    if (type.isExtern || type.isAbstract || type.isFinal || type.isInterface || type.isPrivate || type.meta.has(':nativeGen') || type.meta.has(':include') || type.meta.has(':structInit') || type.name.endsWith(AbstractsMacro.SUFFIX) || type.name.endsWith(EnumsMacro.SUFFIX) || type.name.endsWith(SUFFIX))
                         continue;
                     
                     final path:Array<String> = type.pack.concat([type.name]);
@@ -53,12 +53,24 @@ class ExtensibleMacro
 
                     var curClass:ClassType = type;
 
+                    var shouldContinue:Bool = false;
+
                     while (curClass != null)
                     {
+                        if (curClass.params.length > 0 || curClass.isPrivate)
+                        {
+                            shouldContinue = true;
+
+                            break;
+                        }
+
                         classes.push(curClass);
                         
                         curClass = curClass.superClass?.t?.get();
                     }
+
+                    if (shouldContinue)
+                        continue;
 
                     var constructor:ClassField = null;
 
@@ -172,12 +184,6 @@ class ExtensibleMacro
                                     }
                                 ],
                                 expr: macro {
-                                    instance.superInstance = this;
-                                    instance._this = this;
-
-                                    for (id in std.Type.getInstanceFields(std.Type.getSuperClass(std.Type.getClass(this))))
-                                        $i{LIST}[id] = true;
-
                                     $i{INSTANCE} = instance;
 
                                     instance.preConstructor(args);
@@ -185,6 +191,19 @@ class ExtensibleMacro
                                     var localArgs = instance.constructorArgs() ?? args;
 
                                     super($a{superArgs});
+
+                                    var cls:Class<Dynamic> = std.Type.getClass(this);
+
+                                    while (cls != null)
+                                    {
+                                        for (id in std.Type.getInstanceFields(cls))
+                                            $i{LIST}[id] = true;
+
+                                        cls = std.Type.getSuperClass(cls);
+                                    }
+
+                                    instance.superInstance = this;
+                                    instance._this = this;
 
                                     instance.postConstructor();
                                 }
@@ -223,14 +242,14 @@ class ExtensibleMacro
                     for (fieldsClass in classes)
                         for (field in fieldsClass.fields.get())
                         {
-                            if (field.params.length > 0 || field.isFinal || fieldsList.contains(field.name))
+                            if (field.params.length > 0 || field.isFinal || field.meta.has(':inline') || fieldsList.contains(field.name))
                                 continue;
 
                             fieldsList.push(field.name);
 
                             switch (field.kind)
                             {
-                                case FMethod(MethNormal | MethDynamic):
+                                case FMethod(MethNormal):
 
                                 default:
                                     continue;
@@ -253,7 +272,7 @@ class ExtensibleMacro
                                     {
                                         case TFunction(func):
                                             for (i => arg in func.args)
-                                                defaults[i] = arg.value == null ? null : Context.getTypedExpr(arg.value);
+                                                defaults[i] = arg.value == null ? null : macro cast ${Context.getTypedExpr(arg.value)};
 
                                         default:
                                     }
@@ -267,21 +286,74 @@ class ExtensibleMacro
                                             false;
                                     }
 
+                                    function exists(path:TypePath):Bool
+                                    {
+                                        final fullPath:String = path.pack.concat([path.name]).join('.') + (path.sub == null ? '' : '.' + path.sub);
+
+                                        try
+                                        {
+                                            return !Macros.isPrivate(Context.getType(fullPath));
+                                        } catch(_:Dynamic) {
+                                            return false;
+                                        }
+                                    }
+
+                                    var shouldContinue:Bool = false;
+
+                                    function makeComplex(t:Type):ComplexType
+                                    {
+                                        if (t == null)
+                                            return null;
+
+                                        final complex:ComplexType = Context.toComplexType(t);
+
+                                        if (complex == null)
+                                            return null;
+
+                                        switch (complex)
+                                        {
+                                            case TPath(path):
+                                                if (exists(path))
+                                                    return complex;
+
+                                                final nPath:TypePath = {
+                                                    pack: fieldsClass.pack,
+                                                    name: fieldsClass.module.split('.').pop(),
+                                                    sub: path.sub ?? path.name
+                                                }
+
+                                                if (exists(nPath))
+                                                    return TPath(nPath);
+
+                                                shouldContinue = true;
+
+                                                return null;
+
+                                            default:
+                                                return complex;
+                                        }
+                                    }
+
                                     final arguments = [
                                         for (i => arg in args)
                                             {
-                                                type: Context.toComplexType(arg.t),
+                                                type: makeComplex(arg.t),
                                                 name: 'a' + i,
                                                 opt: arg.opt && defaults[i] == null,
                                                 value: defaults[i]
                                             }
                                     ];
 
+                                    final retType = makeComplex(ret);
+
+                                    if (shouldContinue)
+                                        continue;
+
                                     fields.push({
                                         pos: Context.currentPos(),
                                         name: name + SUPER_SUFFIX,
                                         kind: FFun({
-                                            ret: Context.toComplexType(ret),
+                                            ret: retType,
                                             args: arguments,
                                             expr: isVoid ? macro {
                                                 $p{['super', name]}($a{callArgs});
@@ -301,12 +373,12 @@ class ExtensibleMacro
                                         name: name,
                                         access: [AOverride],
                                         kind: FFun({
-                                            ret: Context.toComplexType(ret),
+                                            ret: retType,
                                             args: arguments,
                                             expr: getter != null ? macro {
                                                 if ($i{INSTANCE}.methods.exists($v{name}))
                                                 {
-                                                    if ($i{ACCESORS}[$v{name}])
+                                                    if ($i{ACCESORS}[$v{name}] ?? false)
                                                     {
                                                         return $i{getter};
                                                     } else {
@@ -324,7 +396,7 @@ class ExtensibleMacro
                                             } : setter != null ? macro {
                                                 if ($i{INSTANCE}.methods.exists($v{name}))
                                                 {
-                                                    if ($i{ACCESORS}[$v{name}])
+                                                    if ($i{ACCESORS}[$v{name}] ?? false)
                                                     {
                                                         return $i{setter} = $e{valueExpr};
                                                     } else {

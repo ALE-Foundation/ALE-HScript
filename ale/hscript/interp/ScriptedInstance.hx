@@ -34,7 +34,14 @@ class ScriptedInstance extends Interp
     public function new(type:ScriptedClass, body:Array<Expr>, ?superType:Extensible, ?imports:Map<String, Dynamic>)
     {
         if (!(superType is ScriptedClass) && !(Type.createEmptyInstance(superType) is IExtensible))
+        {
+            final saved = superType;
+            
             superType = cast Type.resolveClass(Type.getClassName(superType) + ExtensibleMacro.SUFFIX);
+
+            if (superType == null)
+                throw ECannotExtend(Type.getClassName(saved));
+        }
 
         this.type = type;
         this.superType = superType;

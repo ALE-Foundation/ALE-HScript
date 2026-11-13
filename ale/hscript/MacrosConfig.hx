@@ -12,6 +12,6 @@ class MacrosConfig
     public static final CLASSES_IGNORE:Array<String> = [
         'String',
         'Date',
-        'Xml'
+        'Xml',
     ];
 }
