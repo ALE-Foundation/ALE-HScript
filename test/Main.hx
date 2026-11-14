@@ -4,29 +4,26 @@ import ale.hscript.interp.Scope;
 import ale.hscript.Script;
 import ale.hscript.Config;
 
-class Oso
+class PutoAccessor
 {
-    public var nativeValue:Int = 10;
-    public var nativeCalls:Int = 0;
-    public var nativeLabel:String = "default";
+    public function new() {}
 
-    public function new()
+    var zoom(default, set):Float = 0;
+
+    function set_zoom(val:Float):Float
     {
-        nativeCalls++;
+        trace('super oso');
+
+        return val;
     }
 
-    public function nativeMethod(value:Int):Int
+    function update()
     {
-        return nativeValue + value;
-    }
-
-    public function nativeToString():String
-    {
-        return nativeLabel + ":" + nativeValue;
+        trace(zoom = 67);
     }
 }
 
-class Extensible extends Oso {}
+class Extensible extends PutoAccessor {}
 
 class Main
 {
@@ -34,6 +31,11 @@ class Main
 	{
 		final context = new Scope();
 
-		new Script('script', context).execute();
+		final scr = new Script('script', context);
+        scr.execute();
+
+        scr.call('new');
+
+        trace('ahh');
 	}
 }

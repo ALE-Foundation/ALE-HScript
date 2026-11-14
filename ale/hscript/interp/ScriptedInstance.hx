@@ -29,6 +29,15 @@ class ScriptedInstance extends Interp
         return _this = val;
     }
 
+    public var _scriptedThis(default, set):ScriptedInstance;
+    function set__scriptedThis(val:ScriptedInstance):ScriptedInstance
+    {
+        if (superType is ScriptedClass)
+            (superInstance : ScriptedInstance)._scriptedThis = val;
+
+        return _scriptedThis = val;
+    }
+
     var _constructor:Constructor;
     public var nativeInstance:IExtensible;
         
@@ -59,7 +68,7 @@ class ScriptedInstance extends Interp
             methods = superInstance.methods;
         }
 
-        _this = this;
+        _this = _scriptedThis = this;
 
         if (imports != null)
             this.imports = imports;
@@ -69,11 +78,11 @@ class ScriptedInstance extends Interp
         if (!methods.exists('toString'))
         {
             define('toString', () -> {
-                _this.allowMethodToString = false;
+                _scriptedThis.allowMethodToString = false;
 
-                final res:String = _this.toString();
+                final res:String = _scriptedThis.toString();
 
-                _this.allowMethodToString = true;
+                _scriptedThis.allowMethodToString = true;
 
                 return res;
             }, [], PDefault, PNever, true);
@@ -128,7 +137,7 @@ class ScriptedInstance extends Interp
                         {
                             _this = nativeInstance = superInstance.nativeInstance;
 
-                            _this._ALE_HScript_Scripted = this;
+                            nativeInstance._ALE_HScript_Scripted = this;
                         }
                     } else {
                         Type.createInstance(superType, [this, args]);
@@ -147,13 +156,14 @@ class ScriptedInstance extends Interp
 
                         _this._ALE_HScript_Scripted = this;
                     }
-                    
                     postConstructor();
                 } else {
                     Type.createInstance(superType, [this, args]);
                 }
             }
         }
+
+        _scriptedThis = this;
 
         return _this;
     }
@@ -208,7 +218,7 @@ class ScriptedInstance extends Interp
                     Reflect.callMethod(null, Util.resolveField(superInstance, superInstance is IExtensible ? id + ExtensibleMacro.SUPER_SUFFIX : id), resArgs);
                 } catch(e:Dynamic) {
                     if (nativeInstance != null && nativeInstance._ALE_HScript_Fields.exists(id + ExtensibleMacro.SUPER_SUFFIX))
-                        Reflect.callMethod(null, Reflect.getProperty(nativeInstance, id + ExtensibleMacro.SUPER_SUFFIX), resArgs);
+                        Reflect.callMethod(nativeInstance, Reflect.getProperty(nativeInstance, id + ExtensibleMacro.SUPER_SUFFIX), resArgs);
                     else
                         throw e;
                 }

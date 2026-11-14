@@ -162,7 +162,7 @@ class ExtensibleMacro
                                     }
                                 ],
                                 expr: macro {
-                                    return $i{INSTANCE}.get(id);
+                                    return $i{INSTANCE}?.get(id) ?? Reflect.getProperty(this, id);
                                 }
                             })
                         },
@@ -183,7 +183,12 @@ class ExtensibleMacro
                                     }
                                 ],
                                 expr: macro {
-                                    return $i{INSTANCE}.set(id, value);
+                                    return $i{INSTANCE}?.set(id, value) ?? {
+                                        Reflect.setProperty(this, id, value);
+
+
+                                        value;
+                                    };
                                 }
                             })
                         },
@@ -204,14 +209,13 @@ class ExtensibleMacro
                                 expr: macro {
                                     $i{INSTANCE} = instance;
 
+                                    instance.nativeInstance = instance._this = this;
+
                                     instance.preConstructor(args);
 
                                     var localArgs = instance.constructorArgs() ?? args;
 
                                     super($a{superArgs});
-
-                                    instance.nativeInstance = this;
-                                    instance._this = this;
 
                                     instance.postConstructor();
                                 }
@@ -358,7 +362,7 @@ class ExtensibleMacro
                                             ret: retType,
                                             args: arguments,
                                             expr: getter != null ? macro {
-                                                if ($i{INSTANCE}.methods.exists($v{name}))
+                                                if ($i{INSTANCE}?.methods.exists($v{name}) ?? false)
                                                 {
                                                     if ($i{ACCESORS}[$v{name}] ?? false)
                                                     {
@@ -376,7 +380,7 @@ class ExtensibleMacro
                                                     return $p{['super', name]}($a{callArgs});
                                                 }
                                             } : setter != null ? macro {
-                                                if ($i{INSTANCE}.methods.exists($v{name}))
+                                                if ($i{INSTANCE}?.methods.exists($v{name}) ?? false)
                                                 {
                                                     if ($i{ACCESORS}[$v{name}] ?? false)
                                                     {
@@ -394,12 +398,12 @@ class ExtensibleMacro
                                                     return $p{['super', name]}($a{callArgs});
                                                 }
                                             } : isVoid ? macro {
-                                                if ($i{INSTANCE}.methods.exists($v{name}))
+                                                if ($i{INSTANCE}?.methods.exists($v{name}) ?? false)
                                                     $i{INSTANCE}.call($v{name}, [$a{callArgs}]);
                                                 else
                                                     $p{['super', name]}($a{callArgs});
                                             } : macro {
-                                                if ($i{INSTANCE}.methods.exists($v{name}))
+                                                if ($i{INSTANCE}?.methods.exists($v{name}) ?? false)
                                                     return $i{INSTANCE}.call($v{name}, [$a{callArgs}]);
 
                                                 return $p{['super', name]}($a{callArgs});

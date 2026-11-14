@@ -743,9 +743,7 @@ class Interp
             exitScope();
 
             return res;
-        }
-        catch (e:Dynamic)
-        {
+        } catch (e:Dynamic) {
             exitScope();
             
             throw e;
