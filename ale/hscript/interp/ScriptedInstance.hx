@@ -8,6 +8,8 @@ import ale.hscript.parser.Expr;
 
 import ale.hscript.utils.Util;
 
+import ale.hscript.Config;
+
 class ScriptedInstance extends Interp
 {
     var type:ScriptedClass;
@@ -98,10 +100,17 @@ class ScriptedInstance extends Interp
 
         enterScope(variables);
 
-        for (i => arg in _constructor.funcArgs)
-            scope.define(arg.id, args[i] ?? eval(arg.value));
+        try
+        {
+            for (i => arg in _constructor.funcArgs)
+                scope.define(arg.id, args[i] ?? eval(arg.value));
 
-        eval(_constructor.pre);
+            eval(_constructor.pre);
+        } catch(e:Dynamic) {
+            exitScope();
+
+            throw e;
+        }
     }
 
     public function constructorArgs():Array<Dynamic>
@@ -250,7 +259,17 @@ class ScriptedInstance extends Interp
     }
     
     public function call(id:String, ?args:Array<Dynamic>):Dynamic
-        return Reflect.callMethod(null, methods[id].get(id), args ?? []);
+        return try
+        {
+            errorHandled(() -> Reflect.callMethod(null, methods[id].get(id), args ?? []));
+        } catch(e:Dynamic) {
+            if (Config.HANDLE_ERRORS)
+                Config.ERROR_HANDLER(name, e);
+            else
+                throw e;
+
+            null;
+        }
 
     public function get(id:String, ?allowNative:Bool = true):Dynamic
         return try

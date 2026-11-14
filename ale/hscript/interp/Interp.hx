@@ -70,32 +70,46 @@ class Interp
 
     var lastExpr:Expr;
 
-    inline function error(type:ErrorType, expr:Expr)
+    public function error(e:Dynamic):Error
     {
-        throw new Error(type, expr.line, expr.column);
+        if (e is Error)
+            return e;
 
-        return null;
+        final line:Int = lastExpr?.line ?? -1;
+        final column:Int = lastExpr?.column ?? -1;
+
+        return new Error(switch (Type.typeof(e))
+        {
+            case TEnum(en) if (en == ErrorType):
+                e;
+
+            default:
+                ENative(e is Exception ? (e : Exception).message : Std.string(e));
+        }, line, column);
     }
 
-    function errorHandled<Dynamic>(call:Void -> Dynamic):Dynamic
+    function errorHandled<T>(call:Void -> T):T
         return try
         {
             call();
-        } catch(e:Error) {
-            throw e;
-        } catch(e:ErrorType) {
-            error(e, lastExpr);
-        } catch (e:Exception) {
-            throw new Exception(lastExpr.line + ':' + lastExpr.column + ': ' + e.message);
         } catch(ctrl:ControlSignal) {
-            switch (ctrl)
+            switch (Type.typeof(ctrl))
             {
-                case CReturn(val):
-                    return val;
+                case TEnum(en) if (en == ControlSignal):
+                    switch (ctrl)
+                    {
+                        case CReturn(val):
+                            return val;
+
+                        default:
+                            throw error(EInvalidControl(ctrl));
+                    }
 
                 default:
-                    error(EInvalidControl(ctrl), lastExpr);
+                    throw error(ctrl);
             }
+        } catch(e:Dynamic) {
+            throw error(e);
         }
 
     public function execute(exprs:Array<Expr>):Dynamic

@@ -12,7 +12,6 @@ import haxe.io.Bytes;
 import haxe.Exception;
 import haxe.Log;
 
-@:unreflective
 @:noPrivateAccess
 @:allow(ale.hscript.Config)
 class Defaults
@@ -52,5 +51,6 @@ class Defaults
 
     static final SCRIPT_TRACE:Dynamic = (name, line, args) -> Log.trace(name + ':' + line + ': ' + args.join(', '), null);
 
-    static final ERROR_HANDLER:(String, Dynamic) -> Void = (name, error) -> Log.trace('[ ERROR ] ' + name + ': ' + error?.toString() ?? error, null);
+    static final ERROR_HANDLER:(String, Dynamic) -> Void = (name, error) -> Log.trace('[ ERROR ] ' + name + ': ' + Std.string(error), null);
+    static final HANDLE_ERRORS:Bool = true;
 }

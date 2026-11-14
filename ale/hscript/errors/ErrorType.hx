@@ -41,4 +41,6 @@ enum ErrorType
     ECannotExtend(id:String);
 
     EMissingSuper;
+
+    ENative(msg:String);
 }

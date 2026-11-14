@@ -24,6 +24,7 @@ class Config
     public static var SCRIPT_TRACE:(String, Int, Array<Dynamic>) -> Void = Defaults.SCRIPT_TRACE;
 
     public static var ERROR_HANDLER:(String, Dynamic) -> Void = Defaults.ERROR_HANDLER;
+    public static var HANDLE_ERRORS:Bool = Defaults.HANDLE_ERRORS;
     
     public static function reset()
     {
@@ -47,5 +48,6 @@ class Config
         SCRIPT_TRACE = Defaults.SCRIPT_TRACE;
 
         ERROR_HANDLER = Defaults.ERROR_HANDLER;
+        HANDLE_ERRORS = Defaults.HANDLE_ERRORS;
     }
 }

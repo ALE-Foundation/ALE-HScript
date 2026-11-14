@@ -35,7 +35,5 @@ class Main
         scr.execute();
 
         scr.call('new');
-
-        trace('ahh');
 	}
 }

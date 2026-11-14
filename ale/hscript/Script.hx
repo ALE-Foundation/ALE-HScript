@@ -33,14 +33,8 @@ class Script
         data = Util.resolveSourceData(script, name);
     }
 
-    var safe:Bool = false;
-
-    public function execute(?safe:Bool = true):Dynamic
-    {
-        this.safe = safe;
-
+    public function execute():Dynamic
         return errorHandled(() -> interp.execute(new Parser(new Lexer(data.source).tokenize()).parse()));
-    }
 
     public function set(id:String, value:Dynamic):Void
         return errorHandled(() -> interp.variables.define(id, value));
@@ -59,17 +53,19 @@ class Script
     public var failedExecution(default, null):Bool = false;
 
     function errorHandled<T>(call:Void -> T):T
-        try
+        return try
         {
-            return call();
+            call();
         } catch(error:Dynamic) {
             failedExecution = true;
 
-            if (safe)
-                Config.ERROR_HANDLER(data.name, error);
+            final wrapped = interp.error(error);
+
+            if (Config.HANDLE_ERRORS)
+                Config.ERROR_HANDLER(data.name, wrapped);
             else
                 throw error;
 
-            return null;
+            null;
         }
 }

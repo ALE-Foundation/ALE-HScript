@@ -22,7 +22,7 @@ class Error extends Exception
     }
 
     override function toString():String
-        return '$line:$column: $message';
+        return line > -1 && column > -1 ? '$line:$column: $message' : message;
 
     static function format(type:ErrorType):String
         return switch (type)
@@ -105,6 +105,9 @@ class Error extends Exception
 
             case EMissingSuper:
                 'Missing super constructor call';
+
+            case ENative(msg):
+                msg;
 
             default:
                 Std.string(type);
