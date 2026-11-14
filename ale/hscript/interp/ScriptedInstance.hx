@@ -30,10 +30,12 @@ class ScriptedInstance extends Interp
     }
 
     var _constructor:Constructor;
+
+    public var nativeInstance:IExtensible;
         
     public function new(type:ScriptedClass, body:Array<Expr>, ?superType:Extensible, ?imports:Map<String, Dynamic>)
     {
-        if (!(superType is ScriptedClass) && !(Type.createEmptyInstance(superType) is IExtensible))
+        if (superType != null && !(superType is ScriptedClass) && !(Type.createEmptyInstance(superType) is IExtensible))
         {
             final saved = superType;
             
@@ -61,8 +63,7 @@ class ScriptedInstance extends Interp
             methods = sup.methods;
         }
 
-        if (superType == null || superType is ScriptedClass)
-            _this = this;
+        _this = this;
 
         if (imports != null)
             this.imports = imports;
@@ -117,7 +118,7 @@ class ScriptedInstance extends Interp
             if (_constructor == null)
             {
                 if (superType != null && !(superType is ScriptedClass))
-                    return Type.createInstance(superType, [this, args]);
+                    Type.createInstance(superType, [this, args]);
                 else
                     Reflect.callMethod(null, get('new'), args);
             } else {
@@ -133,6 +134,9 @@ class ScriptedInstance extends Interp
 
                         (superInstance : ScriptedInstance).callConstructor(constructorArgs());
 
+                        if (superInstance.nativeInstance != null)
+                            nativeInstance = superInstance.nativeInstance;
+
                         postConstructor();
                     } catch(e:Dynamic) {
                         if (removeScope)
@@ -141,11 +145,11 @@ class ScriptedInstance extends Interp
                         throw e;
                     }
                 } else {
-                    return Type.createInstance((superType : Class<IExtensible>), [this, args]);
+                    Type.createInstance((superType : Class<IExtensible>), [this, args]);
                 }
             }
 
-        return this;
+        return _this;
     }
 
     public function executeBody(body:Array<Expr>)
@@ -191,7 +195,17 @@ class ScriptedInstance extends Interp
                 _this;
 
             case ESuperFieldCall(id, args):
-                Reflect.callMethod(null, Util.resolveField(superInstance, superInstance is IExtensible ? id + ExtensibleMacro.SUPER_SUFFIX : id), evalArray(args));
+                final resArgs:Array<Dynamic> = evalArray(args);
+
+                try
+                {
+                    Reflect.callMethod(null, Util.resolveField(superInstance, superInstance is IExtensible ? id + ExtensibleMacro.SUPER_SUFFIX : id), resArgs);
+                } catch(e:Dynamic) {
+                    if (nativeInstance != null && nativeInstance._ALE_HScript_Fields.exists(id + ExtensibleMacro.SUPER_SUFFIX))
+                        Reflect.callMethod(null, Reflect.getProperty(nativeInstance, id + ExtensibleMacro.SUPER_SUFFIX), resArgs);
+                    else
+                        throw e;
+                }
 
             default:
                 super.eval(expr);
@@ -211,7 +225,7 @@ class ScriptedInstance extends Interp
     override function defaultAssign(id:String, value:Dynamic):Dynamic
     {
         if (scope.exists(id, variables))
-            return scope.set(id, value);
+            return scope.set(id, value, methods['get_' + id], variables);
 
         if (methods.exists(id))
             return methods[id].variables[id].value = value;
@@ -222,9 +236,31 @@ class ScriptedInstance extends Interp
     public function call(id:String, ?args:Array<Dynamic>):Dynamic
         return Reflect.callMethod(null, methods[id].get(id), args ?? []);
 
-    public function get(id:String):Dynamic
-        return variables.get(id, methods['get_' + id]);
+    public function get(id:String, ?allowNative:Bool = true):Dynamic
+        return try
+        {
+            variables.get(id, methods['get_' + id]);
+        } catch(e:Dynamic) {
+            if (allowNative && nativeInstance != null && nativeInstance._ALE_HScript_Fields.exists(id))
+                Reflect.getProperty(nativeInstance, id);
+            else
+                throw e;
+        }
 
-    public function set(id:String, value:Dynamic):Dynamic
-        return variables.set(id, value, methods['set_' + id]);
+    public function set(id:String, value:Dynamic, ?allowNative:Bool = true):Dynamic
+    {
+        return try
+        {
+            variables.set(id, value, methods['set_' + id]);
+        } catch(e:Dynamic) {
+            if (allowNative && nativeInstance != null && nativeInstance._ALE_HScript_Fields.exists(id))
+            {
+                Reflect.setProperty(nativeInstance, id, value);
+
+                value;
+            } else {
+                throw e;
+            }
+        }
+    }
 }

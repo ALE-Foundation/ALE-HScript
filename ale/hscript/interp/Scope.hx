@@ -63,9 +63,9 @@ class Scope
     public function call(scope:Scope, id:String, ?args:Array<Dynamic>):Dynamic
         return Reflect.callMethod(null, scope.variables[id].value, args ?? []);
 
-    public function set(id:String, value:Dynamic, ?accessorScope:Scope):Dynamic
+    public function set(id:String, value:Dynamic, ?accessorScope:Scope, ?until:Scope):Dynamic
     {
-        final scope:Scope = resolve(id);
+        final scope:Scope = resolve(id, this, until);
 
         final data:Variable = scope.variables[id];
 

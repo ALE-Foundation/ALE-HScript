@@ -92,12 +92,50 @@ class ExtensibleMacro
 
                     var superArgs:Array<Expr> = [for (i in 0...constructorArgs) macro cast localArgs[$v{i}]];
 
+                    final list:Map<String, Bool> = [];
+
+                    final getters:Map<String, String> = [];
+                    final setters:Map<String, String> = [];
+
+                    for (fieldsClass in classes)
+                        for (field in fieldsClass.fields.get())
+                        {
+                            if (list.exists(field.name))
+                                continue;
+
+                            list[field.name] = true;
+
+                            switch (field.kind)
+                            {
+                                case FVar(get, set):
+                                    switch ([get, set])
+                                    {
+                                        case [AccCall | AccNever, AccCall | AccNever]:
+                                            if (!field.meta.has(':isVar'))
+                                                continue;
+
+                                        default:
+                                    }
+
+                                    if (get == AccCall)
+                                        getters['get_' + field.name] = field.name;
+
+                                    if (set == AccCall)
+                                        setters['set_' + field.name] = field.name;
+
+                                case FMethod(MethNormal):
+                                    list[field.name + SUPER_SUFFIX] = true;
+
+                                default:
+                            }
+                        }
+
                     final fields:Array<Field> = [
                         {
                             pos: Context.currentPos(),
                             name: LIST,
                             access: [AFinal, APublic],
-                            kind: FVar(macro : Map<String, Bool>, macro [])
+                            kind: FVar(macro : Map<String, Bool>, macro $v{list})
                         },
                         {
                             pos: Context.currentPos(),
@@ -124,15 +162,7 @@ class ExtensibleMacro
                                     }
                                 ],
                                 expr: macro {
-                                    return try
-                                    {
-                                        $i{INSTANCE}.get(id);
-                                    } catch(e:Dynamic) {
-                                        if ($i{LIST}.exists(id))
-                                            Reflect.getProperty(this, id);
-                                        else
-                                            throw e;
-                                    }
+                                    return $i{INSTANCE}.get(id);
                                 }
                             })
                         },
@@ -153,19 +183,7 @@ class ExtensibleMacro
                                     }
                                 ],
                                 expr: macro {
-                                    return try
-                                    {
-                                        $i{INSTANCE}.set(id, value);
-                                    } catch(e:Dynamic) {
-                                        if ($i{LIST}.exists(id))
-                                        {
-                                            Reflect.setProperty(this, id, value);
-
-                                            value;
-                                        } else {
-                                            throw e;
-                                        }
-                                    }
+                                    return $i{INSTANCE}.set(id, value);
                                 }
                             })
                         },
@@ -192,17 +210,7 @@ class ExtensibleMacro
 
                                     super($a{superArgs});
 
-                                    var cls:Class<Dynamic> = std.Type.getClass(this);
-
-                                    while (cls != null)
-                                    {
-                                        for (id in std.Type.getInstanceFields(cls))
-                                            $i{LIST}[id] = true;
-
-                                        cls = std.Type.getSuperClass(cls);
-                                    }
-
-                                    instance.superInstance = this;
+                                    instance.nativeInstance = this;
                                     instance._this = this;
 
                                     instance.postConstructor();
@@ -210,32 +218,6 @@ class ExtensibleMacro
                             })
                         }
                     ];
-
-                    final getters:Map<String, String> = [];
-                    final setters:Map<String, String> = [];
-
-                    for (fieldsClass in classes)
-                        for (field in fieldsClass.fields.get())
-                            switch (field.kind)
-                            {
-                                case FVar(get, set):
-                                    switch ([get, set])
-                                    {
-                                        case [AccCall | AccNever, AccCall | AccNever]:
-                                            if (!field.meta.has(':isVar'))
-                                                continue;
-
-                                        default:
-                                    }
-
-                                    if (get == AccCall)
-                                        getters['get_' + field.name] = field.name;
-
-                                    if (set == AccCall)
-                                        setters['set_' + field.name] = field.name;
-
-                                default:
-                            }
 
                     final fieldsList:Array<String> = ['new'];
 

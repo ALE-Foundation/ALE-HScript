@@ -189,7 +189,7 @@ class Lexer
                     );
                 }
 
-                if (res.length > 0)
+                if (res.length > 0 || !initInterp)
                     result.push({
                         type: TString(res.toString()),
                         line: tokenLine,
