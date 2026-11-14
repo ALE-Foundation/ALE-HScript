@@ -30,7 +30,6 @@ class ScriptedInstance extends Interp
     }
 
     var _constructor:Constructor;
-
     public var nativeInstance:IExtensible;
         
     public function new(type:ScriptedClass, body:Array<Expr>, ?superType:Extensible, ?imports:Map<String, Dynamic>)
@@ -52,15 +51,12 @@ class ScriptedInstance extends Interp
 
         name = type.toString();
 
-        if (superType != null && superType is ScriptedClass)
+        if (superType is ScriptedClass)
         {
-            superInstance = (superType : ScriptedClass).instance();
-
-            final sup:ScriptedInstance = cast superInstance;
-
-            scope = variables = new Scope(sup.variables);
-
-            methods = sup.methods;
+            superInstance = (superType : ScriptedClass).instance(null, imports);
+         
+            scope = variables = new Scope(superInstance.variables);
+            methods = superInstance.methods;
         }
 
         _this = this;
@@ -115,39 +111,49 @@ class ScriptedInstance extends Interp
     public function callConstructor(?args:Array<Dynamic>):Dynamic
     {
         if (args != null)
+        {
+            _this = this;
+
             if (_constructor == null)
             {
-                if (superType != null && !(superType is ScriptedClass))
-                    Type.createInstance(superType, [this, args]);
-                else
-                    Reflect.callMethod(null, get('new'), args);
+                if (superType == null)
+                {
+                    Reflect.callMethod(null, variables.get('new'), args);
+                } else {
+                    if (superType is ScriptedClass)
+                    {
+                        superInstance.callConstructor(args);
+
+                        if (superInstance.nativeInstance != null)
+                        {
+                            _this = nativeInstance = superInstance.nativeInstance;
+
+                            _this._ALE_HScript_Scripted = this;
+                        }
+                    } else {
+                        Type.createInstance(superType, [this, args]);
+                    }
+                }
             } else {
                 if (superType is ScriptedClass)
                 {
-                    var removeScope:Bool = false;
-                    
-                    try
+                    preConstructor(args);
+
+                    superInstance.callConstructor(constructorArgs());
+
+                    if (superInstance.nativeInstance != null)
                     {
-                        preConstructor(args);
+                        _this = nativeInstance = superInstance.nativeInstance;
 
-                        removeScope = true;
-
-                        (superInstance : ScriptedInstance).callConstructor(constructorArgs());
-
-                        if (superInstance.nativeInstance != null)
-                            nativeInstance = superInstance.nativeInstance;
-
-                        postConstructor();
-                    } catch(e:Dynamic) {
-                        if (removeScope)
-                            exitScope();
-
-                        throw e;
+                        _this._ALE_HScript_Scripted = this;
                     }
+                    
+                    postConstructor();
                 } else {
-                    Type.createInstance((superType : Class<IExtensible>), [this, args]);
+                    Type.createInstance(superType, [this, args]);
                 }
             }
+        }
 
         return _this;
     }

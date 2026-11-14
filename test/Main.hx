@@ -6,26 +6,24 @@ import ale.hscript.Config;
 
 class Oso
 {
-	public function new() {}
+    public var nativeValue:Int = 10;
+    public var nativeCalls:Int = 0;
+    public var nativeLabel:String = "default";
 
-	var zoom(default, set):Float = 50;
+    public function new()
+    {
+        nativeCalls++;
+    }
 
-	function set_zoom(val:Float):Float
-		return zoom = val;
+    public function nativeMethod(value:Int):Int
+    {
+        return nativeValue + value;
+    }
 
-	@:isVar
-	var donde(get, set):Float = 60;
-	function get_donde():Float
-		return donde;
-	function set_donde(val:Float):Float
-		return donde = val;
-
-	var _tuta:Float = 0;
-	var tuta(get, set):Float;
-	function get_tuta():Float
-		return _tuta;
-	function set_tuta(val:Float):Float
-		return _tuta = val;
+    public function nativeToString():String
+    {
+        return nativeLabel + ":" + nativeValue;
+    }
 }
 
 class Extensible extends Oso {}

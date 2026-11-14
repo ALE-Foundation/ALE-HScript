@@ -110,7 +110,10 @@ class Interp
     var usings:Array<Dynamic>;
 
     public function eval(expr:Expr):Dynamic
-        return switch ((lastExpr = expr)?.type)
+    {
+        lastExpr = expr;
+
+        return switch (expr?.type)
         {
             case EClassDecl(id, body, parent, implem):
                 imports[id] = new ScriptedClass(id, body, eval(parent));
@@ -587,6 +590,7 @@ class Interp
             default:
                 throw EInvalidExpression(expr.type);
         }
+    }
 
     function define(id:String, val:Dynamic, access:Array<TokenType>, getter:Property, setter:Property, isFinal:Bool = false):Void
         if (context != null && access != null)

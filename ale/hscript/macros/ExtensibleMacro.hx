@@ -146,7 +146,7 @@ class ExtensibleMacro
                         {
                             pos: Context.currentPos(),
                             name: INSTANCE,
-                            access: [AFinal, APublic],
+                            access: [APublic],
                             kind: FVar(macro : ale.hscript.interp.ScriptedInstance)
                         },
                         {
