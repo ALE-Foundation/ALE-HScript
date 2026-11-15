@@ -90,7 +90,22 @@ class ExtensibleMacro
                             -1;
                     }
 
-                    var superArgs:Array<Expr> = [for (i in 0...constructorArgs) macro cast localArgs[$v{i}]];
+                    final constructorDefaults:Array<Null<Expr>> = [for (_ in 0...constructorArgs) null];
+
+                    switch (constructor.expr()?.expr)
+                    {
+                        case TFunction(func):
+                            for (i => arg in func.args)
+                                if (arg.value != null)
+                                    constructorDefaults[i] = Context.getTypedExpr(arg.value);
+
+                        default:
+                    }
+
+                    final superArgs:Array<Expr> = [
+                        for (i => def in constructorDefaults)
+                            def == null ? macro cast localArgs[$v{i}]: macro cast (localArgs[$v{i}] ?? $e{def})
+                    ];
 
                     final list:Map<String, Bool> = [];
 
@@ -207,6 +222,8 @@ class ExtensibleMacro
                                     }
                                 ],
                                 expr: macro {
+                                    args ??= [];
+
                                     $i{INSTANCE} = instance;
 
                                     instance.nativeInstance = instance._this = this;

@@ -40,7 +40,9 @@ class Defaults
     ];
     static final ABSTRACTS:Array<String> = [];
     static final ENUMS:Array<String> = [];
-    static final TYPEDEFS:Map<String, Class<Dynamic>> = [];
+    static final TYPEDEFS:Map<String, Class<Dynamic>> = [
+        'Map' => haxe.ds.ObjectMap
+    ];
     static final VARIABLES:Map<String, Dynamic> = [];
 
     static final SCRIPT_EXTENSION:String = '.hx';
