@@ -32,8 +32,12 @@ class Util
     {
         final path:String = Config.MODULE_PATH + module.replace('.', '/') + Config.MODULE_EXTENSION;
 
+        if (Config.MODULE_IMPORT_CALLBACK != null)
+            Config.MODULE_IMPORT_CALLBACK(path);
+
         final mod:Array<String> = module.split('.');
-        mod.pop();
+
+        final modId:String = mod.pop();
 
         if (!Config.FILE_CHECKER(path))
             return null;
@@ -49,6 +53,10 @@ class Util
             else
                 throw error;
         }
+
+        for (type in result)
+            if (type.id == modId && alias != null)
+                type.id = alias;
 
         return result;
     }

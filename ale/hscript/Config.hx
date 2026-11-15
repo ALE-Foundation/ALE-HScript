@@ -4,6 +4,8 @@ import ale.hscript.Defaults;
 
 class Config
 {
+    public static var MODULE_IMPORT_CALLBACK:String -> Void = Defaults.MODULE_IMPORT_CALLBACK;
+
     public static var FILE_CHECKER:String -> Bool = Defaults.FILE_CHECKER;
     public static var FILE_READER:String -> String = Defaults.FILE_READER;
 
@@ -28,6 +30,8 @@ class Config
     
     public static function reset()
     {
+        MODULE_IMPORT_CALLBACK = Defaults.MODULE_IMPORT_CALLBACK;
+
         FILE_CHECKER = Defaults.FILE_CHECKER;
         FILE_READER = Defaults.FILE_READER;
 

@@ -16,6 +16,8 @@ import haxe.Log;
 @:allow(ale.hscript.Config)
 class Defaults
 {
+    static final MODULE_IMPORT_CALLBACK:String -> Void = Defaults.MODULE_IMPORT_CALLBACK;
+
     static final FILE_CHECKER:String -> Bool = #if sys FileSystem.exists #else null #end ;
     static final FILE_READER:String -> String = #if sys File.getContent #else null #end ;
 
