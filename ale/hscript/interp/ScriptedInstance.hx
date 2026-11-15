@@ -100,88 +100,88 @@ class ScriptedInstance extends Interp
     }
 
     public function preConstructor(?args:Array<Dynamic>)
-    {
-        if (_constructor == null)
-            return;
+        errorHandled(() -> {
+            if (_constructor == null)
+                return;
 
-        enterScope(variables);
+            enterScope(variables);
 
-        try
-        {
-            for (i => arg in _constructor.funcArgs)
-                scope.define(arg.id, args[i] ?? eval(arg.value));
+            try
+            {
+                for (i => arg in _constructor.funcArgs)
+                    scope.define(arg.id, args[i] ?? eval(arg.value));
 
-            eval(_constructor.pre);
-        } catch(e:Dynamic) {
-            exitScope();
+                eval(_constructor.pre);
+            } catch(e:Dynamic) {
+                exitScope();
 
-            throw e;
-        }
-    }
+                throw e;
+            }
+        });
 
     public function constructorArgs():Array<Dynamic>
-        return _constructor == null ? null : evalArray(_constructor.superArgs);
+        return errorHandled(() -> _constructor == null ? null : evalArray(_constructor.superArgs));
 
     public function postConstructor()
-    {
-        if (_constructor == null)
-            return;
+        errorHandled(() -> {
+            if (_constructor == null)
+                return;
 
-        eval(_constructor.post);
+            eval(_constructor.post);
 
-        exitScope();
-    }
+            exitScope();
+        });
 
     public function callConstructor(?args:Array<Dynamic>):Dynamic
-    {
-        if (args != null)
-        {
-            _this = this;
-
-            if (_constructor == null)
+        return errorHandled(() -> {
+            if (args != null)
             {
-                if (superType == null)
+                _this = this;
+
+                if (_constructor == null)
                 {
-                    Reflect.callMethod(null, variables.get('new'), args);
+                    if (superType == null)
+                    {
+                        Reflect.callMethod(null, variables.get('new'), args);
+                    } else {
+                        if (superType is ScriptedClass)
+                        {
+                            superInstance.callConstructor(args);
+
+                            if (superInstance.nativeInstance != null)
+                            {
+                                _this = nativeInstance = superInstance.nativeInstance;
+
+                                nativeInstance._ALE_HScript_Scripted = this;
+                            }
+                        } else {
+                            Type.createInstance(superType, [this, args]);
+                        }
+                    }
                 } else {
                     if (superType is ScriptedClass)
                     {
-                        superInstance.callConstructor(args);
+                        preConstructor(args);
+
+                        superInstance.callConstructor(constructorArgs());
 
                         if (superInstance.nativeInstance != null)
                         {
                             _this = nativeInstance = superInstance.nativeInstance;
 
-                            nativeInstance._ALE_HScript_Scripted = this;
+                            _this._ALE_HScript_Scripted = this;
                         }
+                        postConstructor();
                     } else {
                         Type.createInstance(superType, [this, args]);
                     }
                 }
-            } else {
-                if (superType is ScriptedClass)
-                {
-                    preConstructor(args);
-
-                    superInstance.callConstructor(constructorArgs());
-
-                    if (superInstance.nativeInstance != null)
-                    {
-                        _this = nativeInstance = superInstance.nativeInstance;
-
-                        _this._ALE_HScript_Scripted = this;
-                    }
-                    postConstructor();
-                } else {
-                    Type.createInstance(superType, [this, args]);
-                }
             }
-        }
 
-        _scriptedThis = this;
+            _scriptedThis = this;
 
-        return _this;
-    }
+            return _this;
+        });
 
     public function executeBody(body:Array<Expr>)
         errorHandled(() -> {

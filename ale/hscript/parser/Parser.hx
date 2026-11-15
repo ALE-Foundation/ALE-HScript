@@ -427,6 +427,8 @@ class Parser
 
                                 switch (peek().type)
                                 {
+                                    case TRBrace:
+
                                     default:
                                         if (superCall == null)
                                             pre.push(parseSemicolonStatement());

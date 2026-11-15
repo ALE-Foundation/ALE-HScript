@@ -1,25 +1,16 @@
 import pack.OsoModule;
 
-class Masha
-{
-    public function new() 
-    {
-        trace('oso');
-    }
-
-    function superMethod()
-        return 'donde';
-}
-
-class Matrioshka extends Masha
+class Errored extends Extensible
 {
     public function new()
     {
-        super();
+        trace(donde);
 
-        super.superMethod();
+        super();
     }
 }
+
+new Errored();
 
 final a = new Oso();
 
