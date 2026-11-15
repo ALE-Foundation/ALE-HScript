@@ -404,15 +404,29 @@ class Parser
                         {
                             while (!end() && !check(TRBrace))
                             {
+                                final i:Int = index;
+
                                 switch (peek().type)
                                 {
                                     case TSuper:
                                         advance();
 
-                                        superCall = parseCallArguments();
+                                        switch (peek().type)
+                                        {
+                                            case TLParen if (superCall == null):
+                                                superCall = parseCallArguments();
 
-                                        expect(TSemicolon);
+                                                expect(TSemicolon);
 
+                                            default:
+                                                index = i;
+                                        }
+
+                                    default:
+                                }
+
+                                switch (peek().type)
+                                {
                                     default:
                                         if (superCall == null)
                                             pre.push(parseSemicolonStatement());

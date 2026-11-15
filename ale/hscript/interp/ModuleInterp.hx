@@ -43,7 +43,7 @@ class ModuleInterp extends Interp
                 null;
          
             case EPackage(mod):
-                if (expectedPackage != mod)
+                if (expectedPackage != (mod ?? ''))
                     throw EInvalidPackage(mod, expectedPackage);
                 else
                     eval(expr);

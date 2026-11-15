@@ -58,13 +58,16 @@ class ScriptedInstance extends Interp
         this.type = type;
         this.superType = superType;
 
+        super();
+
         if (imports != null)
             this.imports = imports;
 
         if (usings != null)
             this.usings = usings;
-
-        super();
+        
+        if (pack != null)
+            _package = pack;
 
         name = type.toString();
 
@@ -77,9 +80,6 @@ class ScriptedInstance extends Interp
         }
 
         _this = _scriptedThis = this;
-        
-        if (pack != null)
-            _package = pack;
 
         executeBody(body);
 
