@@ -50,7 +50,7 @@ enum ExprType
     EPostfix(op:TokenType, right:Expr);
 
 
-    EIf(condition:Expr, expr:Expr, ?elseExpr:Expr);
+    EIf(condition:Expr, expr:Expr, ?elseExpr:Expr, ?colon:Bool);
 
     EWhile(condition:Expr, expr:Expr);
     EDoWhile(condition:Expr, expr:Expr);

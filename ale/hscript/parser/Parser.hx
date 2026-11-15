@@ -46,7 +46,7 @@ class Parser
     function requiresSemicolon(expr:ExprType):Null<Bool>
         return switch (expr)
         {
-            case EExtendedConstructor(_, _, _), EClassDecl(_, _, _), EInterfaceDecl(_, _), EEof, ETypedef(_, _), EMetadata(_, _), ESwitch(_, _, _), EIf(_, _, _), EWhile(_, _), EFor(_), EStructure(_), ETry(_, _), EBlock(_), EFunctionDecl(_, _):
+            case EExtendedConstructor(_, _, _), EClassDecl(_, _, _), EInterfaceDecl(_, _), EEof, ETypedef(_, _), EMetadata(_, _), ESwitch(_, _, _), EIf(_, _, _, false), EWhile(_, _), EFor(_), EStructure(_), ETry(_, _), EBlock(_), EFunctionDecl(_, _):
                 false;
 
             case EReturn(val), EVarDecl(_, val, _, _, _), EAssign(_, val), EFunction(_, val):
@@ -561,7 +561,7 @@ class Parser
 
                 expect(TColon);
 
-                left = fastExprFromExpr(EIf(left, ifTrue, parseBinary(info.value)), left);
+                left = fastExprFromExpr(EIf(left, ifTrue, parseBinary(info.value), true), left);
 
                 continue;
             }
@@ -1159,7 +1159,7 @@ class Parser
         if (match(TElse))
             elseBody = parseBody(stmt);
 
-        return fastExpr(EIf(condition, body, elseBody), cur);
+        return fastExpr(EIf(condition, body, elseBody, false), cur);
     }
 
     function parseSwitch(cur:Token):Expr
