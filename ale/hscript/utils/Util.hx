@@ -1,10 +1,15 @@
 package ale.hscript.utils;
 
 import ale.hscript.lexer.TokenType;
+import ale.hscript.lexer.Lexer;
+
+import ale.hscript.parser.ModuleParser;
 
 import ale.hscript.interp.ScriptedInstance;
 import ale.hscript.interp.ScriptedClass;
+import ale.hscript.interp.ModuleInterp;
 import ale.hscript.interp.IExtensible;
+import ale.hscript.interp.ModuleType;
 
 import ale.hscript.macros.AbstractsMacro;
 import ale.hscript.macros.TypeListMacro;
@@ -12,13 +17,42 @@ import ale.hscript.macros.EnumsMacro;
 
 import ale.hscript.errors.ErrorType;
 
+import ale.hscript.Config;
+
 import haxe.PosInfos;
 import haxe.Log;
+
+using StringTools;
 
 @:publicFields
 @:allow(ale.hscript.interp.IExtensible)
 class Util
 {
+    static function checkModule(module:String, ?alias:String):Null<Array<ModuleType>>
+    {
+        final path:String = Config.MODULE_PATH + module.replace('.', '/') + Config.MODULE_EXTENSION;
+
+        final mod:Array<String> = module.split('.');
+        mod.pop();
+
+        if (!Config.FILE_CHECKER(path))
+            return null;
+
+        var result:Array<ModuleType> = null;
+
+        try
+        {
+            result = new ModuleInterp(mod.join('.'), new ModuleParser(new Lexer(Config.FILE_READER(path)).tokenize()).parseModule()).executeModule();
+        } catch(error:Dynamic) {
+            if (Config.HANDLE_ERRORS)
+                Config.ERROR_HANDLER(module, error);
+            else
+                throw error;
+        }
+
+        return result;
+    }
+
     static function makeIterator(obj:Dynamic):Iterator<Dynamic>
     {
         #if js
@@ -77,8 +111,8 @@ class Util
             value;
         }
 
-    static function createInstance(obj:Dynamic, ?args:Array<Dynamic>, ?imports:Map<String, Dynamic>):Dynamic
-        return obj is ScriptedClass ? obj.instance(args, imports) : Type.createInstance(obj, args ?? []);
+    static function createInstance(obj:Dynamic, ?args:Array<Dynamic>, ?imports:Map<String, Dynamic>, ?usings:Array<Dynamic>, ?pack:String):Dynamic
+        return obj is ScriptedClass ? obj.instance(args ?? []) : Type.createInstance(obj, args ?? []);
 
     static function resolveClass(module:String):Dynamic
     {

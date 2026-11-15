@@ -42,5 +42,7 @@ enum ErrorType
 
     EMissingSuper;
 
+    EInvalidPackage(got:String, expected:String);
+
     ENative(msg:String);
 }

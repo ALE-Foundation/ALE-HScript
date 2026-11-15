@@ -106,6 +106,9 @@ class Error extends Exception
             case EMissingSuper:
                 'Missing super constructor call';
 
+            case EInvalidPackage(got, expected):
+                'Package "$got" should be $expected';
+
             case ENative(msg):
                 msg;
 

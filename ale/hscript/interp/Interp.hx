@@ -130,7 +130,7 @@ class Interp
         return switch (expr?.type)
         {
             case EClassDecl(id, body, parent, implem):
-                imports[id] = new ScriptedClass(id, body, eval(parent));
+                imports[id] = new ScriptedClass(id, body, eval(parent), imports, usings);
 
                 null;
 
@@ -140,7 +140,15 @@ class Interp
                 null;
 
             case EImport(module, alias):
-                imports[alias ?? module.split('.').pop()] = Util.resolveClass(module);
+                final mod:Null<Array<ModuleType>> = Util.checkModule(module, alias);
+
+                if (mod != null)
+                {
+                    for (type in mod)
+                        imports[type.id] = type.value;
+                } else {
+                    imports[alias ?? module.split('.').pop()] = Util.resolveClass(module);
+                }
 
                 null;
 
@@ -183,7 +191,7 @@ class Interp
                 }
 
             case ENew(type, args):
-                Util.createInstance(eval(type), evalArray(args), imports);
+                Util.createInstance(eval(type), evalArray(args), imports, usings, _package);
 
             case EInterpolatedString(parts):
                 final buf:StringBuf = new StringBuf();

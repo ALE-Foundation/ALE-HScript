@@ -1,12 +1,6 @@
-class Invalid
-{
-    function new()
-    {
-        trace(ass);
-    }
-}
+import pack.OsoModule;
 
-function new()
-{
-    new Invalid();
-}
+final a = new Oso();
+
+final b = new Donde();
+trace(b.osoMethod());

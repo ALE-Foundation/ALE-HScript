@@ -42,14 +42,14 @@ class Defaults
     static final VARIABLES:Map<String, Dynamic> = [];
 
     static final SCRIPT_EXTENSION:String = '.hx';
-    static final MODULE_EXTENSION:String = '.hxc';
+    static final MODULE_EXTENSION:String = '.hx';
 
     static final SCRIPT_PATH:String = 'scripts/';
-    static final MODULE_PATH:String = 'classes/';
+    static final MODULE_PATH:String = 'modules/';
 
     static final SCRIPT_NAME:String = 'ale_hscript';
 
-    static final SCRIPT_TRACE:Dynamic = (name, line, args) -> Log.trace(name + ':' + line + ': ' + args.join(', '), null);
+    static final SCRIPT_TRACE:(String, Int, Array<Dynamic>) -> Void = (name, line, args) -> Log.trace(name + ':' + line + ': ' + args.join(', '), null);
 
     static final ERROR_HANDLER:(String, Dynamic) -> Void = (name, error) -> Log.trace('[ ERROR ] ' + name + ': ' + Std.string(error), null);
     static final HANDLE_ERRORS:Bool = true;

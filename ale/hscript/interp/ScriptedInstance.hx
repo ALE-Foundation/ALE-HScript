@@ -43,7 +43,7 @@ class ScriptedInstance extends Interp
     var _constructor:Constructor;
     public var nativeInstance:IExtensible;
         
-    public function new(type:ScriptedClass, body:Array<Expr>, ?superType:Extensible, ?imports:Map<String, Dynamic>)
+    public function new(type:ScriptedClass, body:Array<Expr>, ?superType:Extensible, ?imports:Map<String, Dynamic>, ?usings:Array<Dynamic>, ?pack:String)
     {
         if (superType != null && !(superType is ScriptedClass) && !(Type.createEmptyInstance(superType) is IExtensible))
         {
@@ -58,22 +58,28 @@ class ScriptedInstance extends Interp
         this.type = type;
         this.superType = superType;
 
+        if (imports != null)
+            this.imports = imports;
+
+        if (usings != null)
+            this.usings = usings;
+
         super();
 
         name = type.toString();
 
         if (superType is ScriptedClass)
         {
-            superInstance = (superType : ScriptedClass).instance(null, imports);
+            superInstance = (superType : ScriptedClass).instance();
          
             scope = variables = new Scope(superInstance.variables);
             methods = superInstance.methods;
         }
 
         _this = _scriptedThis = this;
-
-        if (imports != null)
-            this.imports = imports;
+        
+        if (pack != null)
+            _package = pack;
 
         executeBody(body);
 
