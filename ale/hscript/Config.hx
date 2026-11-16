@@ -6,6 +6,7 @@ class Config
 {
     public static var MODULE_IMPORT_CALLBACK:String -> Void = Defaults.MODULE_IMPORT_CALLBACK;
 
+    public static var FILE_TIME:String -> Float = Defaults.FILE_TIME;
     public static var FILE_CHECKER:String -> Bool = Defaults.FILE_CHECKER;
     public static var FILE_READER:String -> String = Defaults.FILE_READER;
 
@@ -32,6 +33,7 @@ class Config
     {
         MODULE_IMPORT_CALLBACK = Defaults.MODULE_IMPORT_CALLBACK;
 
+        FILE_TIME = Defaults.FILE_TIME;
         FILE_CHECKER = Defaults.FILE_CHECKER;
         FILE_READER = Defaults.FILE_READER;
 

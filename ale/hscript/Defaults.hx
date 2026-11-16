@@ -18,6 +18,7 @@ class Defaults
 {
     static final MODULE_IMPORT_CALLBACK:String -> Void = Defaults.MODULE_IMPORT_CALLBACK;
 
+    static final FILE_TIME:String -> Float = #if sys path -> FileSystem.stat(path).mtime.getTime() #else null #end ;
     static final FILE_CHECKER:String -> Bool = #if sys FileSystem.exists #else null #end ;
     static final FILE_READER:String -> String = #if sys File.getContent #else null #end ;
 
@@ -48,8 +49,8 @@ class Defaults
     static final SCRIPT_EXTENSION:String = '.hx';
     static final MODULE_EXTENSION:String = '.hx';
 
-    static final SCRIPT_PATH:String = 'scripts/';
-    static final MODULE_PATH:String = 'modules/';
+    static final SCRIPT_PATH:String = '';
+    static final MODULE_PATH:String = '';
 
     static final SCRIPT_NAME:String = 'ale_hscript';
 

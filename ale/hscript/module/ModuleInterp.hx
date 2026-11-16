@@ -1,6 +1,9 @@
-package ale.hscript.interp;
+package ale.hscript.module;
 
 import ale.hscript.errors.ErrorType;
+
+import ale.hscript.interp.ScriptedClass;
+import ale.hscript.interp.Interp;
 
 import ale.hscript.parser.Expr;
 
@@ -39,8 +42,6 @@ class ModuleInterp extends Interp
         {
             case EImport(_), EUsing(_), ETypedef(_, _), EInterfaceDecl(_, _):
                 eval(expr);
-            
-                null;
          
             case EPackage(mod):
                 if (expectedPackage != (mod ?? ''))
@@ -51,13 +52,13 @@ class ModuleInterp extends Interp
                 null;
                 
             case EClassDecl(id, body, parent, implem):
-                final cls:ScriptedClass = new ScriptedClass(id, body, eval(parent), imports, usings);
+                final cls:ModuleClass = new ModuleClass(id, body, eval(parent), imports, usings);
 
                 imports[id] = cls;
 
                 {
                     id: id,
-                    value: cls
+                    type: cls
                 }
 
             case EAlias(id, type):
@@ -67,7 +68,7 @@ class ModuleInterp extends Interp
                 
                 {
                     id: id,
-                    value: ty
+                    type: ty
                 }
 
             case EEof, null:

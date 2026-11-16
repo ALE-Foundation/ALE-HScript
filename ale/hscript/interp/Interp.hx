@@ -16,6 +16,9 @@ import ale.hscript.macros.AbstractsMacro;
 import ale.hscript.macros.TypeListMacro;
 import ale.hscript.macros.EnumsMacro;
 
+import ale.hscript.module.ModuleType;
+import ale.hscript.module.Module;
+
 import ale.hscript.utils.Util;
 
 import haxe.ds.GenericStack;
@@ -24,6 +27,8 @@ import haxe.ds.ObjectMap;
 import haxe.Constraints.IMap;
 import haxe.Exception;
 import haxe.Log;
+
+using StringTools;
 
 class Interp
 {
@@ -140,12 +145,14 @@ class Interp
                 null;
 
             case EImport(module, alias):
-                final mod:Null<Array<ModuleType>> = Util.checkModule(module, alias);
+                final mod:Null<Array<ModuleType>> = Module.check(module, alias);
 
                 if (mod != null)
                 {
+                    final modId:String = module.split('.').pop();
+
                     for (type in mod)
-                        imports[type.id] = type.value;
+                        imports[type.id == modId && (alias ?? '').trim().length > 0 ? alias : type.id] = type.type;
                 } else {
                     imports[alias ?? module.split('.').pop()] = Util.resolveClass(module);
                 }
@@ -617,6 +624,8 @@ class Interp
     function define(id:String, val:Dynamic, access:Array<TokenType>, getter:Property, setter:Property, isFinal:Bool = false):Void
         if (context != null && access != null)
         {
+            if (access.contains(TStatic))
+                throw EUnsupportedStatic;
             if (access.contains(TPublic))
                 context.define(id, val, getter, setter, isFinal);
             else

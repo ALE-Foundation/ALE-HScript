@@ -30,6 +30,8 @@ enum ErrorType
     ENeverRead(id:String);
     EUnknownVariable(id:String);
 
+    EUnsupportedStatic;
+
     EInvalidExpression(expr:ExprType);
     EInvalidOp(op:TokenType);
 

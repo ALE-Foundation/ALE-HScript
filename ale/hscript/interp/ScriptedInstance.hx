@@ -6,6 +6,8 @@ import ale.hscript.errors.ErrorType;
 
 import ale.hscript.parser.Expr;
 
+import ale.hscript.module.ModuleClass;
+
 import ale.hscript.utils.Util;
 
 import ale.hscript.Config;
@@ -193,13 +195,19 @@ class ScriptedInstance extends Interp
 
                         null;
 
-                    case EVarDecl(id, _, _, _, _, _):
+                    case EVarDecl(id, _, access, _, _, _):
+                        if (access != null && access.contains(TStatic))
+                            continue;
+
                         if (variables.exists(id))
                             throw EDuplicated(id);
                         else
                             eval(expr);
 
                     case EFunctionDecl(id, access, value, overr):
+                        if (access != null && access.contains(TStatic))
+                            continue;
+
                         if (methods.exists(id) && !overr)
                         {
                             throw EDuplicated(id);
@@ -250,6 +258,9 @@ class ScriptedInstance extends Interp
         if (methods.exists(id))
             return methods[id].variables[id].value;
 
+        if (type is ModuleClass && cast(type, ModuleClass).statics.exists(id))
+            return cast(type, ModuleClass).statics.get(id);
+
         return get(id);
     }
 
@@ -260,6 +271,9 @@ class ScriptedInstance extends Interp
 
         if (methods.exists(id))
             return methods[id].variables[id].value = value;
+
+        if (type is ModuleClass && cast(type, ModuleClass).statics.exists(id))
+            return cast(type, ModuleClass).statics.set(id, value);
 
         return set(id, value);
     }

@@ -263,7 +263,7 @@ class Parser
 
                         switch (cur.type)
                         {
-                            case TVar, TFinal, TFunction, TPrivate, TPublic, TOverride:
+                            case TVar, TFinal, TFunction, TPrivate, TPublic, TStatic, TOverride:
                                 body.push(parseSemicolonStatement());
 
                             default:
@@ -698,7 +698,7 @@ class Parser
 
                 fastExpr(EThis, cur);
 
-            case TPublic, TPrivate, TOverride:
+            case TPublic, TStatic, TPrivate, TOverride:
                 final access:Array<TokenType> = [];
 
                 var over:Bool = false;
@@ -711,6 +711,11 @@ class Parser
                             advance();
 
                             access.push(TPublic);
+
+                        case TStatic if (!access.contains(TStatic)):
+                            advance();
+
+                            access.push(TStatic);
 
                         case TPrivate if (!access.contains(TPrivate)):
                             advance();

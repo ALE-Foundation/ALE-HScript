@@ -1,19 +1,16 @@
 package ale.hscript.utils;
 
 import ale.hscript.lexer.TokenType;
-import ale.hscript.lexer.Lexer;
-
-import ale.hscript.parser.ModuleParser;
 
 import ale.hscript.interp.ScriptedInstance;
 import ale.hscript.interp.ScriptedClass;
-import ale.hscript.interp.ModuleInterp;
 import ale.hscript.interp.IExtensible;
-import ale.hscript.interp.ModuleType;
 
 import ale.hscript.macros.AbstractsMacro;
 import ale.hscript.macros.TypeListMacro;
 import ale.hscript.macros.EnumsMacro;
+
+import ale.hscript.module.ModuleClass;
 
 import ale.hscript.errors.ErrorType;
 
@@ -22,45 +19,10 @@ import ale.hscript.Config;
 import haxe.PosInfos;
 import haxe.Log;
 
-using StringTools;
-
 @:publicFields
 @:allow(ale.hscript.interp.IExtensible)
 class Util
 {
-    static function checkModule(module:String, ?alias:String):Null<Array<ModuleType>>
-    {
-        final path:String = Config.MODULE_PATH + module.replace('.', '/') + Config.MODULE_EXTENSION;
-
-        if (Config.MODULE_IMPORT_CALLBACK != null)
-            Config.MODULE_IMPORT_CALLBACK(path);
-
-        final mod:Array<String> = module.split('.');
-
-        final modId:String = mod.pop();
-
-        if (!Config.FILE_CHECKER(path))
-            return null;
-
-        var result:Array<ModuleType> = null;
-
-        try
-        {
-            result = new ModuleInterp(mod.join('.'), new ModuleParser(new Lexer(Config.FILE_READER(path)).tokenize()).parseModule()).executeModule();
-        } catch(error:Dynamic) {
-            if (Config.HANDLE_ERRORS)
-                Config.ERROR_HANDLER(module, error);
-            else
-                throw error;
-        }
-
-        for (type in result)
-            if (type.id == modId && alias != null)
-                type.id = alias;
-
-        return result;
-    }
-
     static function makeIterator(obj:Dynamic):Iterator<Dynamic>
     {
         #if js
@@ -105,12 +67,16 @@ class Util
     }
 
     static function resolveField(obj:Dynamic, id:String):Dynamic
-        return obj is IExtensible ? obj._ALE_HSCRIPT_ResolveField(id) : obj is ScriptedInstance ? obj.get(id) : Reflect.getProperty(obj, id);
+        return obj is ModuleClass ? obj.statics.get(id) : obj is IExtensible ? obj._ALE_HSCRIPT_ResolveField(id) : obj is ScriptedInstance ? obj.get(id) : Reflect.getProperty(obj, id);
 
     static function assignField(obj:Dynamic, id:String, value:Dynamic):Dynamic
-        return if (obj is IExtensible)
+        return if (obj is ModuleClass)
         {
-            return obj._ALE_HSCRIPT_SetField(id, value);
+            obj.statics.set(id, value);
+
+            value;
+        } else if (obj is IExtensible) {
+            obj._ALE_HSCRIPT_SetField(id, value);
         } else if (obj is ScriptedInstance) {
             obj.set(id, value);
         } else {

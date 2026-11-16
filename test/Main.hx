@@ -19,8 +19,8 @@ class Main
 		final context = new Scope();
 
 		final scr = new Script('script', context);
-        scr.execute();
+		scr.execute();
 
-        scr.call('new');
+		scr.call('new');
 	}
 }

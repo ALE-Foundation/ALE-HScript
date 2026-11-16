@@ -75,6 +75,9 @@ class Error extends Exception
             case EUnknownVariable(id):
                 'Unknown variable "$id"';
 
+            case EUnsupportedStatic:
+                'Static fields are exclusive for module classes';
+
             case EInvalidOp(op):
                 'Invalid operation "$op"';
 
