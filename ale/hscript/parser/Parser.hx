@@ -46,7 +46,7 @@ class Parser
     function requiresSemicolon(expr:ExprType):Null<Bool>
         return switch (expr)
         {
-            case EExtendedConstructor(_, _, _), EClassDecl(_, _, _), EInterfaceDecl(_, _), EEof, ETypedef(_, _), EMetadata(_, _), ESwitch(_, _, _), EIf(_, _, _, false), EWhile(_, _), EFor(_), EStructure(_), ETry(_, _), EBlock(_), EFunctionDecl(_, _):
+            case EExtendedConstructor(_, _, _), EClassDecl(_, _, _), EInterfaceDecl(_, _), EEof, ETypedef(_, _), EAlias(_, _), EMetadata(_, _), ESwitch(_, _, _), EIf(_, _, _, false), EWhile(_, _), EFor(_), EStructure(_), ETry(_, _), EBlock(_), EFunctionDecl(_, _):
                 false;
 
             case EReturn(val), EVarDecl(_, val, _, _, _), EAssign(_, val), EFunction(_, val):
@@ -158,7 +158,11 @@ class Parser
                     {
                         allowTypes = true;
 
-                        return fastExpr(EAlias(id, parseType()), cur);
+                        final type = parseType();
+
+                        expect(TSemicolon);
+
+                        return fastExpr(EAlias(id, type), cur);
                     } catch(_:Dynamic) {
                         try
                         {
