@@ -19,6 +19,9 @@ class Module
     {
         final path:String = Config.MODULE_PATH + module.replace('.', '/') + Config.MODULE_EXTENSION;
 
+        if (Config.FILE_CHECKER != null && !Config.FILE_CHECKER(path))
+            return null;
+        
         if (Config.MODULE_IMPORT_CALLBACK != null)
             Config.MODULE_IMPORT_CALLBACK(path);
         
@@ -27,16 +30,13 @@ class Module
             final data:ModuleCache = cache[module];
 
             if (data.path == path)
-                if (Config.FILE_TIME != null && data.time == Config.FILE_TIME(path))
+                if (Config.FILE_TIME == null || data.time == Config.FILE_TIME(path))
                     return data.module;
         }
 
         final mod:Array<String> = module.split('.');
 
         final modId:String = mod.pop();
-
-        if (!Config.FILE_CHECKER(path))
-            return null;
 
         var result:Array<ModuleType> = null;
 
