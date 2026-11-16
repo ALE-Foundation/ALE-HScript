@@ -13,5 +13,6 @@ class MacrosConfig
         'String',
         'Date',
         'Xml',
+        'Array'
     ];
 }
