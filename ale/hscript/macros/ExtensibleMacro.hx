@@ -3,6 +3,7 @@ package ale.hscript.macros;
 
 import ale.hscript.MacrosConfig;
 
+import haxe.macro.TypeTools;
 import haxe.macro.Compiler;
 import haxe.macro.Context;
 import haxe.macro.Expr;
@@ -29,7 +30,22 @@ class ExtensibleMacro
                 case TClassDecl(clsRef):
                     final type:ClassType = clsRef.get();
 
-                    if (type.isExtern || type.isAbstract || type.isFinal || type.isInterface || type.isPrivate || type.meta.has(':nativeGen') || type.meta.has(':include') || type.meta.has(':structInit') || type.name.endsWith(AbstractsMacro.SUFFIX) || type.name.endsWith(EnumsMacro.SUFFIX) || type.name.endsWith(SUFFIX))
+                    if ((type.params.length > 0 && (type.meta.has(':genericBuild') || type.meta.has(':generic'))) || type.isExtern || type.isAbstract || type.isFinal || type.isInterface || type.isPrivate || type.meta.has(':nativeGen') || type.meta.has(':include') || type.meta.has(':structInit') || type.name.endsWith(AbstractsMacro.SUFFIX) || type.name.endsWith(EnumsMacro.SUFFIX) || type.name.endsWith(SUFFIX))
+                        continue;
+
+                    var shouldContinue:Bool = false;
+
+                    for (par in type.params)
+                        switch(par.t)
+                        {
+                            case TInst(ref, _):
+                                if (par.name == 'Const' || ref.get().meta.has(':const'))
+                                    shouldContinue = true;
+
+                            default:
+                        }
+
+                    if (shouldContinue)
                         continue;
                     
                     final path:Array<String> = type.pack.concat([type.name]);
@@ -57,7 +73,7 @@ class ExtensibleMacro
 
                     while (curClass != null)
                     {
-                        if (curClass.params.length > 0 || curClass.isPrivate)
+                        if (curClass.isPrivate)
                         {
                             shouldContinue = true;
 
@@ -303,12 +319,27 @@ class ExtensibleMacro
 
                                     var shouldContinue:Bool = false;
 
+                                    function checkDynamic(t:Type):Type
+                                    {
+                                        if (t == null)
+                                            return t;
+
+                                        return switch (t)
+                                        {
+                                            case TInst(ref, _) if (switch (ref.get().kind) { case KTypeParameter(_): true; default: false; }):
+                                                TDynamic(null);
+
+                                            default:
+                                                TypeTools.map(t, checkDynamic);
+                                        }
+                                    }
+
                                     function makeComplex(t:Type):ComplexType
                                     {
                                         if (t == null)
                                             return null;
 
-                                        final complex:ComplexType = Context.toComplexType(t);
+                                        final complex:ComplexType = Context.toComplexType(checkDynamic(t));
 
                                         if (complex == null)
                                             return null;
@@ -442,7 +473,8 @@ class ExtensibleMacro
                         kind: TDClass({
                             pack: type.pack,
                             name: moduleName,
-                            sub: moduleName == type.name ? null : type.name
+                            sub: moduleName == type.name ? null : type.name,
+                            params: [for (par in type.params) TPType(macro : Dynamic)]
                         }, [{
                             pack: ['ale', 'hscript', 'interp'],
                             name: 'IExtensible'

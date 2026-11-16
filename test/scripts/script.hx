@@ -1,3 +1,4 @@
-class Extended extends Text {}
+class T extends Typed<Dynamic> {}
 
-trace(new Extended());
+final oso = new T();
+trace(oso.oso());
