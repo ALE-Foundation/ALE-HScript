@@ -2,8 +2,6 @@ package ale.hscript.module;
 
 import ale.hscript.interp.ScriptedClass;
 
-import ale.hscript.parser.ModuleParser;
-
 import ale.hscript.lexer.Lexer;
 
 import ale.hscript.Config;

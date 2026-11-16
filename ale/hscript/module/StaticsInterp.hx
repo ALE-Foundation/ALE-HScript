@@ -24,6 +24,23 @@ class StaticsInterp extends Interp
         execute(body);
     }
 
+    override function execute(exprs:Array<Expr>):Dynamic
+        return errorHandled(() -> {
+            for (expr in exprs)
+                evalStatic(expr);
+
+            return null;
+        });
+
+    function evalStatic(expr:Expr):Void
+        switch ((lastExpr = expr)?.type)
+        {
+            case EVarDecl(_, _, access, _, _, _), EFunctionDecl(_, access, _, _) if (access != null && access.contains(TStatic)):
+                eval(expr);
+            
+            default:
+        }
+
     override function define(id:String, val:Dynamic, access:Array<TokenType>, getter:Property, setter:Property, isFinal:Bool = false):Void
         if (access != null && access.contains(TStatic))
             scope.define(id, val, getter, setter, isFinal);

@@ -1,6 +1,9 @@
-package ale.hscript.parser;
+package ale.hscript.module;
 
 import ale.hscript.interp.ScriptedClass;
+
+import ale.hscript.parser.Parser;
+import ale.hscript.parser.Expr;
 
 import ale.hscript.lexer.Token;
 
