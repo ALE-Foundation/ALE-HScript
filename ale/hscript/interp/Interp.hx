@@ -623,6 +623,7 @@ class Interp
             default:
                 throw EInvalidExpression(expr.type);
         }
+
     }
 
     function define(id:String, val:Dynamic, access:Array<TokenType>, getter:Property, setter:Property, isFinal:Bool = false):Void
@@ -689,7 +690,7 @@ class Interp
         return switch (obj.type)
         {
             case EVar(id):
-                return variableAssign(id, value);
+                variableAssign(id, value);
 
             case EArrayAccess(arr, key):
                 final id:Dynamic = eval(key);

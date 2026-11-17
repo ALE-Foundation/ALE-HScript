@@ -69,7 +69,7 @@ class Util
     }
 
     static function resolveField(obj:Dynamic, id:String):Dynamic
-        return #if ALE_HS_MODULES obj is ModuleClass ? obj.statics.get(id) : #end #if ALE_HS_CLASSES obj is IExtensible ? obj._ALE_HSCRIPT_ResolveField(id) :  obj is ScriptedInstance ? obj.get(id) : #end Reflect.getProperty(obj, id);
+        return #if ALE_HS_MODULES obj is ModuleClass ? obj.statics.get(id) : #end #if ALE_HS_CLASSES obj is IExtensible ? obj._ALE_HSCRIPT_ResolveField(id) : obj is ScriptedInstance ? obj.get(id) : #end Reflect.getProperty(obj, id);
 
     static function assignField(obj:Dynamic, id:String, value:Dynamic):Dynamic
         return #if ALE_HS_MODULES if (obj is ModuleClass)

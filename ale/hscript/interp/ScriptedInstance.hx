@@ -267,13 +267,15 @@ class ScriptedInstance extends Interp
         if (scp != null)
             return Scope.read(scp, id);
 
+        #if ALE_HS_MODULES
         if (type is ModuleClass)
         {
-            final scp:Scope = cast(type, ModuleClass).statics.resolve(id);
+            final scp:Scope = cast(type, ModuleClass).statics.variables.resolve(id);
 
             if (scp != null)
                 return Scope.read(scp, id);
         }
+        #end
 
         final meth:Scope = methods[id];
 
@@ -306,13 +308,15 @@ class ScriptedInstance extends Interp
         if (scp != null)
             return Scope.write(scp, id, value);
 
+        #if ALE_HS_MODULES
         if (type is ModuleClass)
         {
-            final scp:Scope = cast(type, ModuleClass).statics.resolve(id);
+            final scp:Scope = cast(type, ModuleClass).statics.variables.resolve(id);
 
             if (scp != null)
                 return Scope.write(scp, id, value);
         }
+        #end
 
         final meth:Scope = methods[id];
 
@@ -320,12 +324,16 @@ class ScriptedInstance extends Interp
             return meth.variables[id].value = value;
 
         if (nativeInstance != null && nativeInstance._ALE_HScript_Fields.exists(id))
-            return Reflect.getProperty(nativeInstance, id);
+        {
+            Reflect.setProperty(nativeInstance, id, value);
+
+            return value;
+        }
 
         final varScope:Scope = variables.resolve(id);
 
         if (varScope != null)
-            return Scope.write(varScope, id, value, methods['get_' + id]);
+            return Scope.write(varScope, id, value, methods['set_' + id]);
 
         if (superInstance != null)
             return Util.assignField(superInstance, id, value);
@@ -335,12 +343,12 @@ class ScriptedInstance extends Interp
     
     public function call(id:String, ?args:Array<Dynamic>):Dynamic
         return errorHandled(() -> {
-            final scp:Scope = methods[id].resolve(id);
+            final scp:Scope = methods[id];
 
             if (scp == null)
                 throw EUnknownVariable(id);
 
-            return Reflect.callMethod(null, Scope.read(scp, id), args ?? []);
+            return Reflect.callMethod(null, scp.variables[id].value, args ?? []);
         });
 
     public function get(id:String, ?allowNative:Bool = true):Dynamic
@@ -349,6 +357,9 @@ class ScriptedInstance extends Interp
 
         if (scp != null)
             return Scope.read(scp, id, methods['get_' + id]);
+
+        if (allowNative && nativeInstance != null && nativeInstance._ALE_HScript_Fields.exists(id))
+            return Reflect.getProperty(nativeInstance, id);
 
         throw EUnknownVariable(id);
     }

@@ -218,7 +218,6 @@ class ExtensibleMacro
                                     return $i{INSTANCE}?.set(id, value) ?? {
                                         Reflect.setProperty(this, id, value);
 
-
                                         value;
                                     };
                                 }
