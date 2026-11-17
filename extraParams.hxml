@@ -1,2 +1,3 @@
 --macro ale.hscript.macros.Macros.init()
 -D ALE_HS_CLASSES
+-D ALE_HS_MODULES

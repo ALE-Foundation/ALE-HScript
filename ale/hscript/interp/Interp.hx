@@ -147,7 +147,7 @@ class Interp
                 null;
 
             case EImport(module, alias):
-                #if ALE_HS_SCRIPTED_MODULES
+                #if ALE_HS_MODULES
                 final mod:Null<Array<ModuleType>> = Module.check(module, alias);
 
                 if (mod != null)
@@ -638,12 +638,26 @@ class Interp
             scope.define(id, val, getter, setter, isFinal);
         }
 
-    function resolve(id:String)
+    function scopeResolve(scp:Scope, id:String):Dynamic
+        return scp.resolve(id);
+
+    function scopeRead(scp:Scope, id:String):Dynamic
+        return Scope.read(scp, id);
+
+    function postResolve(_:String):Dynamic
+        return null;
+
+    function resolve(id:String):Dynamic
     {
-        final scp:Scope = scope.resolve(id);
+        final scp:Scope = scopeResolve(scope, id);
 
         if (scp != null)
-            return Scope.read(scp, id);
+            return scopeRead(scp, id);
+
+        final post:Dynamic = postResolve(id);
+
+        if (post != null)
+            return post;
 
         if (context != null)
         {
@@ -664,14 +678,25 @@ class Interp
         throw EUnknownVariable(id);
     }
 
+    function scopeWrite(scp:Scope, id:String, value:Dynamic):Dynamic
+        return Scope.write(scp, id, value);
+
+    function postAssign(_:String, _:Dynamic):Dynamic
+        return null;
+
     function assign(obj:Expr, value:Dynamic):Dynamic
         return switch (obj.type)
         {
             case EVar(id):
-                final scp:Scope = scope.resolve(id);
+                final scp:Scope = scopeResolve(scope, id);
 
                 if (scp != null)
-                    return Scope.write(scp, id, value);
+                    return scopeWrite(scp, id, value);
+
+                final post:Dynamic = postAssign(id, value);
+
+                if (post != null)
+                    return post;
 
                 if (context != null)
                 {

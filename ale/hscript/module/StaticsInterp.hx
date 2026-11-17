@@ -46,9 +46,6 @@ class StaticsInterp extends Interp
         if (access != null && access.contains(TStatic))
             scope.define(id, val, getter, setter, isFinal);
 
-    public function exists(id:String):Bool
-        return variables.exists(id);
-
     public function get(id:String):Dynamic
         return variables.get(id);
 

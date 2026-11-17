@@ -260,33 +260,40 @@ class ScriptedInstance extends Interp
                 super.eval(expr);
         }
 
-    override function defaultResolve(id:String):Dynamic
+    override function scopeResolve(scp:Scope, id:String):Dynamic
+        return scp.resolve(id, variables);
+
+    override function scopeRead(scp:Scope, id:String):Dynamic
+        return Scope.read(scp, id, methods['get_' + id]);
+
+    override function postResolve(id:String):Dynamic
     {
-        if (scope.exists(id, variables))
-            return scope.get(id, methods['get_' + id], variables);
-
-        if (methods.exists(id))
-            return methods[id].variables[id].value;
-
         #if ALE_HS_MODULES
-        if (type is ModuleClass && cast(type, ModuleClass).statics.exists(id))
-            return cast(type, ModuleClass).statics.get(id);
+        if (type is ModuleClass)
+        {
+            final scp:Scope = cast(type, ModuleClass).statics.resolve(id);
+
+            if (scp != null)
+                return Scope.read(scp, id);
+        }
         #end
 
         return get(id);
     }
 
-    override function defaultAssign(id:String, value:Dynamic):Dynamic
+    override function scopeWrite(scp:Scope, id:String, value:Dynamic):Dynamic
+        return Scope.write(scp, id, value, methods['set_' + id]);
+
+    override function postAssign(id:String, value:Dynamic):Dynamic
     {
-        if (scope.exists(id, variables))
-            return scope.set(id, value, methods['get_' + id], variables);
-
-        if (methods.exists(id))
-            return methods[id].variables[id].value = value;
-
         #if ALE_HS_MODULES
-        if (type is ModuleClass && cast(type, ModuleClass).statics.exists(id))
-            return cast(type, ModuleClass).statics.set(id, value);
+        if (type is ModuleClass)
+        {
+            final scp:Scope = cast(type, ModuleClass).statics.resolve(id);
+
+            if (scp != null)
+                return Scope.write(scp, id, value);
+        }
         #end
 
         return set(id, value);
@@ -303,31 +310,33 @@ class ScriptedInstance extends Interp
         });
 
     public function get(id:String, ?allowNative:Bool = true):Dynamic
-        return try
-        {
-            variables.get(id, methods['get_' + id]);
-        } catch(e:Dynamic) {
-            if (allowNative && nativeInstance != null && nativeInstance._ALE_HScript_Fields.exists(id))
-                Reflect.getProperty(nativeInstance, id);
-            else
-                throw e;
-        }
+    {
+        final scp:Scope = variables.resolve(id);
+
+        if (scp != null)
+            return Scope.read(scp, id, methods['get_' + id]);
+
+        if (allowNative && nativeInstance != null && nativeInstance._ALE_HScript_Fields.exists(id))
+            return Reflect.getProperty(nativeInstance, id);
+
+        throw EUnknownVariable(id);
+    }
 
     public function set(id:String, value:Dynamic, ?allowNative:Bool = true):Dynamic
     {
-        return try
-        {
-            variables.set(id, value, methods['set_' + id]);
-        } catch(e:Dynamic) {
-            if (allowNative && nativeInstance != null && nativeInstance._ALE_HScript_Fields.exists(id))
-            {
-                Reflect.setProperty(nativeInstance, id, value);
+        final scp:Scope = variables.resolve(id);
 
-                value;
-            } else {
-                throw e;
-            }
+        if (scp != null)
+            return Scope.write(scp, id, value, methods['set_' + id]);
+
+        if (allowNative && nativeInstance != null && nativeInstance._ALE_HScript_Fields.exists(id))
+        {
+            Reflect.setProperty(nativeInstance, id, value);
+
+            return value;
         }
+
+        throw EUnknownVariable(id);
     }
 }
 #end

@@ -25,9 +25,9 @@ class Scope
             isFinal: isFinal
         }
 
-    public function resolve(id:String, ?scp:Scope, ?until:Scope):Scope
+    public function resolve(id:String, ?until:Scope):Scope
     {
-        var scope:Scope = scp ?? this;
+        var scope:Scope = this;
 
         while (scope != null && scope != until)
             if (scope.variables.exists(id))
@@ -111,5 +111,25 @@ class Scope
             default:
                 null;
         }
+    }
+
+    public function get(id:String):Dynamic
+    {
+        final scp:Scope = resolve(id);
+
+        if (scp == null)
+            throw EUnknownVariable(id);
+
+        return Scope.read(scp, id);
+    }
+
+    public function set(id:String, value:Dynamic):Dynamic
+    {
+        final scp:Scope = resolve(id);
+
+        if (scp == null)
+            throw EUnknownVariable(id);
+
+        return Scope.write(scp, id, value);
     }
 }
