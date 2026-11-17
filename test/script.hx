@@ -1,7 +1,20 @@
-import Module;
+var oso = new Map();
 
-Module.traceOso();
+function osoFunc()
+{
+    trace(oso);
+}
 
-Module.oso = 'donde';
+{
+    {
+        {
+            {
+                oso = 'donde';
 
-new Module();
+                {
+                    osoFunc();
+                }
+            }
+        }
+    }
+}

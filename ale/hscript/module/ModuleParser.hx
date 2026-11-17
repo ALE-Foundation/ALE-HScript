@@ -7,6 +7,7 @@ import ale.hscript.parser.Expr;
 
 import ale.hscript.lexer.Token;
 
+#if ALE_HS_MODULES
 class ModuleParser extends Parser
 {
     public function parseModule():Array<Expr>
@@ -45,3 +46,4 @@ class ModuleParser extends Parser
         return res;
     }
 }
+#end

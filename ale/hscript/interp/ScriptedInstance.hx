@@ -6,12 +6,15 @@ import ale.hscript.errors.ErrorType;
 
 import ale.hscript.parser.Expr;
 
+#if ALE_HS_MODULES
 import ale.hscript.module.ModuleClass;
+#end
 
 import ale.hscript.utils.Util;
 
 import ale.hscript.Config;
 
+#if ALE_HS_CLASSES
 class ScriptedInstance extends Interp
 {
     var type:ScriptedClass;
@@ -144,7 +147,12 @@ class ScriptedInstance extends Interp
                 {
                     if (superType == null)
                     {
-                        Reflect.callMethod(null, variables.get('new'), args);
+                        final scp:Scope = variables.resolve('new');
+
+                        if (scp == null)
+                            throw EUnknownVariable('new');
+
+                        Reflect.callMethod(null, Scope.read(scp, 'new'), args);
                     } else {
                         if (superType is ScriptedClass)
                         {
@@ -199,10 +207,12 @@ class ScriptedInstance extends Interp
                         if (access != null && access.contains(TStatic))
                             continue;
 
-                        if (variables.exists(id))
+                        final scp:Scope = variables.resolve(id);
+
+                        if (scp != null)
                             throw EDuplicated(id);
-                        else
-                            eval(expr);
+
+                        eval(expr);
 
                     case EFunctionDecl(id, access, value, overr):
                         if (access != null && access.contains(TStatic))
@@ -220,7 +230,7 @@ class ScriptedInstance extends Interp
                                 methods[id] = scope;
                         }
 
-                    case null:
+                    case null, EEof:
 
                     default:
                         throw EInvalidExpression(expr.type);
@@ -258,8 +268,10 @@ class ScriptedInstance extends Interp
         if (methods.exists(id))
             return methods[id].variables[id].value;
 
+        #if ALE_HS_MODULES
         if (type is ModuleClass && cast(type, ModuleClass).statics.exists(id))
             return cast(type, ModuleClass).statics.get(id);
+        #end
 
         return get(id);
     }
@@ -272,24 +284,23 @@ class ScriptedInstance extends Interp
         if (methods.exists(id))
             return methods[id].variables[id].value = value;
 
+        #if ALE_HS_MODULES
         if (type is ModuleClass && cast(type, ModuleClass).statics.exists(id))
             return cast(type, ModuleClass).statics.set(id, value);
+        #end
 
         return set(id, value);
     }
     
     public function call(id:String, ?args:Array<Dynamic>):Dynamic
-        return try
-        {
-            errorHandled(() -> Reflect.callMethod(null, methods[id].get(id), args ?? []));
-        } catch(e:Dynamic) {
-            if (Config.HANDLE_ERRORS)
-                Config.ERROR_HANDLER(name, e);
-            else
-                throw e;
+        return errorHandled(() -> {
+            final scp:Scope = methods[id].resolve(id);
 
-            null;
-        }
+            if (scp == null)
+                throw EUnknownVariable(id);
+
+            return Reflect.callMethod(null, Scope.read(scp, id), args ?? []);
+        });
 
     public function get(id:String, ?allowNative:Bool = true):Dynamic
         return try
@@ -319,3 +330,4 @@ class ScriptedInstance extends Interp
         }
     }
 }
+#end

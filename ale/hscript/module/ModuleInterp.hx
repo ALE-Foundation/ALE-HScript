@@ -7,6 +7,7 @@ import ale.hscript.interp.Interp;
 
 import ale.hscript.parser.Expr;
 
+#if ALE_HS_MODULES
 class ModuleInterp extends Interp
 {
     final expectedPackage:String;
@@ -78,3 +79,4 @@ class ModuleInterp extends Interp
                 throw EInvalidExpression(expr.type);
         }
 }
+#end

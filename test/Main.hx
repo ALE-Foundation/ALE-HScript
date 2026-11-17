@@ -4,14 +4,6 @@ import ale.hscript.interp.Scope;
 import ale.hscript.Script;
 import ale.hscript.Config;
 
-class Typed<T>
-{
-	public function new() {}
-
-	public function oso()
-		return 'donde';
-}
-
 class Main
 {
 	static function main()
@@ -20,7 +12,5 @@ class Main
 
 		final scr = new Script('script', context);
 		scr.execute();
-
-		scr.call('new');
 	}
 }

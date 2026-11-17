@@ -11,7 +11,10 @@ class Macros
         Context.onAfterTyping(moduleTypes -> {
             AbstractsMacro.onAfterTyping(moduleTypes);
             EnumsMacro.onAfterTyping(moduleTypes);
+
+            #if ALE_HS_CLASSES
             ExtensibleMacro.onAfterTyping(moduleTypes);
+            #end
         });
 
         Context.onGenerate(types -> {

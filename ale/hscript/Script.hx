@@ -40,15 +40,20 @@ class Script
         return errorHandled(() -> interp.variables.define(id, value));
 
     public function get(id:String):Dynamic
-        return errorHandled(() -> interp.variables.get(id));
+    {
+        return errorHandled(() -> {
+            final scp:Scope = interp.variables.resolve(id);
+
+            return scp == null ? null : Scope.read(scp, id);
+        });
+    }
     
     public function call(id:String, ?args:Array<Dynamic>):Dynamic
-    {
-        if (!interp.variables.exists(id))
-            return null;
+        return errorHandled(() -> {
+            final variable:Dynamic = get(id);
 
-        return errorHandled(() -> Reflect.callMethod(null, get(id), args ?? []));
-    }
+            return variable == null ? null : Reflect.callMethod(null, variable, args);
+        });
 
     public var failedExecution(default, null):Bool = false;
 
