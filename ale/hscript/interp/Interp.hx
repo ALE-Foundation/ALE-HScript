@@ -90,7 +90,7 @@ class Interp
 
             default:
                 ENative(e is Exception ? (e : Exception).message : Std.string(e));
-        }, line, column);
+        }, line, column, name);
     }
 
     function errorHandled<T>(call:Void -> T):T
@@ -638,26 +638,12 @@ class Interp
             scope.define(id, val, getter, setter, isFinal);
         }
 
-    function scopeResolve(scp:Scope, id:String):Dynamic
-        return scp.resolve(id);
-
-    function scopeRead(scp:Scope, id:String):Dynamic
-        return Scope.read(scp, id);
-
-    function postResolve(_:String):Dynamic
-        return null;
-
     function resolve(id:String):Dynamic
     {
-        final scp:Scope = scopeResolve(scope, id);
+        final scp:Scope = scope.resolve(id);
 
         if (scp != null)
-            return scopeRead(scp, id);
-
-        final post:Dynamic = postResolve(id);
-
-        if (post != null)
-            return post;
+            return Scope.read(scp, id);
 
         if (context != null)
         {
@@ -678,38 +664,32 @@ class Interp
         throw EUnknownVariable(id);
     }
 
-    function scopeWrite(scp:Scope, id:String, value:Dynamic):Dynamic
-        return Scope.write(scp, id, value);
+    function variableAssign(id:String, value:Dynamic):Dynamic
+    {
+        final scp:Scope = scope.resolve(id);
 
-    function postAssign(_:String, _:Dynamic):Dynamic
-        return null;
+        if (scp != null)
+            return Scope.write(scp, id, value);
+
+        if (context != null)
+        {
+            final ctxt:Scope = context.resolve(id);
+
+            if (ctxt != null)
+                return Scope.write(ctxt, id, value);
+        }
+
+        if (superInstance != null)
+            return Util.assignField(superInstance, id, value);
+
+        throw EUnknownVariable(id);
+    }
 
     function assign(obj:Expr, value:Dynamic):Dynamic
         return switch (obj.type)
         {
             case EVar(id):
-                final scp:Scope = scopeResolve(scope, id);
-
-                if (scp != null)
-                    return scopeWrite(scp, id, value);
-
-                final post:Dynamic = postAssign(id, value);
-
-                if (post != null)
-                    return post;
-
-                if (context != null)
-                {
-                    final ctxt:Scope = context.resolve(id);
-
-                    if (ctxt != null)
-                        return Scope.write(ctxt, id, value);
-                }
-
-                if (superInstance != null)
-                    return Util.assignField(superInstance, id, value);
-
-                throw EUnknownVariable(id);
+                return variableAssign(id, value);
 
             case EArrayAccess(arr, key):
                 final id:Dynamic = eval(key);

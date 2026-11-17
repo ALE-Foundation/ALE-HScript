@@ -67,7 +67,7 @@ class Script
             final wrapped = interp.error(error);
 
             if (Config.HANDLE_ERRORS)
-                Config.ERROR_HANDLER(data.name, wrapped);
+                Config.ERROR_HANDLER(wrapped.name ?? data.name, wrapped);
             else
                 throw error;
 
