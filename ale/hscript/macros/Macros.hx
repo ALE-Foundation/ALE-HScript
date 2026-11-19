@@ -1,5 +1,6 @@
 package ale.hscript.macros;
 
+import haxe.macro.TypeTools;
 import haxe.macro.Context;
 import haxe.macro.Expr;
 import haxe.macro.Type;
@@ -44,9 +45,9 @@ class Macros
             sub: name
         };
     }
-
+    
     public static function isPrivate(type:Type):Bool
-        return (switch (type)
+        return switch (type)
         {
             case TMono(ref):
                 isPrivate(ref?.get());
@@ -75,7 +76,9 @@ class Macros
             case TLazy(_):
                 false;
 
-        }) ?? false;
+            case null:
+                false;
+        };
 
     public static function privateParams(params:Array<Type>):Bool
     {
