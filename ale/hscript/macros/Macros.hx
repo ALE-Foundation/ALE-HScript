@@ -47,7 +47,7 @@ class Macros
     }
     
     public static function isPrivate(type:Type):Bool
-        return switch (type)
+        return (switch (type)
         {
             case TMono(ref):
                 isPrivate(ref?.get());
@@ -76,9 +76,7 @@ class Macros
             case TLazy(_):
                 false;
 
-            case null:
-                false;
-        };
+        }) ?? false;
 
     public static function privateParams(params:Array<Type>):Bool
     {

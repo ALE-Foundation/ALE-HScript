@@ -13,8 +13,6 @@ class MacrosConfig
         'String',
         'Date',
         'Xml',
-        'Array',
-
-        'flixel.path'
+        'Array'
     ];
 }
