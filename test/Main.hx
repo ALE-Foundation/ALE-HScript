@@ -4,12 +4,11 @@ import ale.hscript.interp.Scope;
 import ale.hscript.Script;
 import ale.hscript.Config;
 
-class Typed<T>
+class Extensible
 {
 	public function new() {}
 
-	public function oso()
-		return 'donde';
+	var oso:String = 'donde';
 }
 
 class Main
@@ -18,9 +17,7 @@ class Main
 	{
 		final context = new Scope();
 
-		final scr = new Script('script', context);
+		final scr = new Script('script', context, new Extensible());
 		scr.execute();
-
-		scr.call('new');
 	}
 }

@@ -25,12 +25,29 @@ class Scope
             isFinal: isFinal
         }
 
-    public function get(id:String, ?accessorScope:Scope, ?until:Scope):Dynamic
+    public function resolve(id:String, ?until:Scope):Scope
     {
-        final scope:Scope = resolve(id, this, until);
+        var scope:Scope = this;
 
-        final data:Variable = scope.variables[id];
+        while (scope != null && scope != until)
+            if (scope.variables.exists(id))
+                break;
+            else
+                scope = scope.parent;
 
+        if (scope == null || scope == until)
+            return null;
+
+        return scope;
+    }
+
+    public static function call(scope:Scope, id:String, ?args:Array<Dynamic>):Dynamic
+        return Reflect.callMethod(null, scope.variables[id].value, args ?? []);
+
+    public static function read(scp:Scope, id:String, ?accScp:Scope):Dynamic
+    {
+        final data:Variable = scp.variables[id];
+        
         return switch (data.getter)
         {
             case PDefault, PNull, null:
@@ -45,7 +62,7 @@ class Scope
 
                     data.bypassGetter = true;
 
-                    final res:Dynamic = call(accessorScope ?? scope, 'get_' + id);
+                    final res:Dynamic = call(accScp ?? scp, 'get_' + id);
 
                     data.bypassGetter = oldBypass;
 
@@ -60,14 +77,9 @@ class Scope
         }
     }
 
-    public function call(scope:Scope, id:String, ?args:Array<Dynamic>):Dynamic
-        return Reflect.callMethod(null, scope.variables[id].value, args ?? []);
-
-    public function set(id:String, value:Dynamic, ?accessorScope:Scope, ?until:Scope):Dynamic
+    public static function write(scp:Scope, id:String, value:Dynamic, ?accScp:Scope):Dynamic
     {
-        final scope:Scope = resolve(id, this, until);
-
-        final data:Variable = scope.variables[id];
+        final data:Variable = scp.variables[id];
 
         if (data.isFinal && data.value != null)
             throw EFinalAssign(id);
@@ -86,7 +98,7 @@ class Scope
 
                     data.bypassSetter = true;
 
-                    final res:Dynamic = call(accessorScope ?? scope, 'set_' + id, [value]);
+                    final res:Dynamic = call(accScp ?? scp, 'set_' + id, [value]);
 
                     data.bypassSetter = oldBypass;
 
@@ -101,29 +113,23 @@ class Scope
         }
     }
 
-    public function exists(id:String, ?until:Scope):Bool
-        return try
-        {
-            resolve(id, this, until);
-
-            true;
-        } catch(_) {
-            false;
-        }
-
-    function resolve(id:String, ?scp:Scope, ?until:Scope):Scope
+    public function get(id:String):Dynamic
     {
-        var scope:Scope = scp ?? this;
+        final scp:Scope = resolve(id);
 
-        while (scope != null && scope != until)
-            if (scope.variables.exists(id))
-                break;
-            else
-                scope = scope.parent;
-
-        if (scope == null || scope == until)
+        if (scp == null)
             throw EUnknownVariable(id);
 
-        return scope;
+        return Scope.read(scp, id);
+    }
+
+    public function set(id:String, value:Dynamic):Dynamic
+    {
+        final scp:Scope = resolve(id);
+
+        if (scp == null)
+            throw EUnknownVariable(id);
+
+        return Scope.write(scp, id, value);
     }
 }

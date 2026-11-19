@@ -11,7 +11,9 @@ class Error extends Exception
     public final line:Int;
     public final column:Int;
 
-    public function new(type:ErrorType, line:Int, column:Int)
+    public final name:String;
+
+    public function new(type:ErrorType, line:Int, column:Int, ?name:String)
     {
         super(format(type));
 
@@ -19,6 +21,8 @@ class Error extends Exception
 
         this.line = line;
         this.column = column;
+
+        this.name = name;
     }
 
     override function toString():String

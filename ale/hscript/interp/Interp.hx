@@ -90,7 +90,7 @@ class Interp
 
             default:
                 ENative(e is Exception ? (e : Exception).message : Std.string(e));
-        }, line, column);
+        }, line, column, name);
     }
 
     function errorHandled<T>(call:Void -> T):T
@@ -134,10 +134,12 @@ class Interp
 
         return switch (expr?.type)
         {
+            #if ALE_HS_CLASSES
             case EClassDecl(id, body, parent, implem):
                 imports[id] = new ScriptedClass(id, body, eval(parent), imports, usings);
 
                 null;
+            #end
 
             case EPackage(module):
                 _package = module;
@@ -145,6 +147,7 @@ class Interp
                 null;
 
             case EImport(module, alias):
+                #if ALE_HS_MODULES
                 final mod:Null<Array<ModuleType>> = Module.check(module, alias);
 
                 if (mod != null)
@@ -153,9 +156,9 @@ class Interp
 
                     for (type in mod)
                         imports[type.id == modId && (alias ?? '').trim().length > 0 ? alias : type.id] = type.type;
-                } else {
+                } else
+                #end
                     imports[alias ?? module.split('.').pop()] = Util.resolveClass(module);
-                }
 
                 null;
 
@@ -291,10 +294,11 @@ class Interp
                     case EField(target, id):
                         final obj:Dynamic = eval(target);
 
+                        #if ALE_HS_CLASSES
                         if (obj is ScriptedInstance)
                         {
                             return obj.call(id, resArgs);
-                        } else {
+                        } else #end {
                             try
                             {
                                 final method:Dynamic = Util.resolveField(obj, id);
@@ -619,6 +623,7 @@ class Interp
             default:
                 throw EInvalidExpression(expr.type);
         }
+
     }
 
     function define(id:String, val:Dynamic, access:Array<TokenType>, getter:Property, setter:Property, isFinal:Bool = false):Void
@@ -634,40 +639,58 @@ class Interp
             scope.define(id, val, getter, setter, isFinal);
         }
 
-    function defaultAssign(id:String, value:Dynamic):Dynamic
-        return scope.set(id, value);
+    function resolve(id:String):Dynamic
+    {
+        final scp:Scope = scope.resolve(id);
+
+        if (scp != null)
+            return Scope.read(scp, id);
+
+        if (context != null)
+        {
+            final ctxt:Scope = context.resolve(id);
+
+            if (ctxt != null)
+                return Scope.read(ctxt, id);
+        }
+
+        final imp:Dynamic = imports[id];
+
+        if (imp != null)
+            return imp;
+
+        if (superInstance != null)
+            return Util.resolveField(superInstance, id);
+
+        throw EUnknownVariable(id);
+    }
+
+    function variableAssign(id:String, value:Dynamic):Dynamic
+    {
+        final scp:Scope = scope.resolve(id);
+
+        if (scp != null)
+            return Scope.write(scp, id, value);
+
+        if (context != null)
+        {
+            final ctxt:Scope = context.resolve(id);
+
+            if (ctxt != null)
+                return Scope.write(ctxt, id, value);
+        }
+
+        if (superInstance != null)
+            return Util.assignField(superInstance, id, value);
+
+        throw EUnknownVariable(id);
+    }
 
     function assign(obj:Expr, value:Dynamic):Dynamic
         return switch (obj.type)
         {
             case EVar(id):
-                try
-                {
-                    defaultAssign(id, value);
-                } catch(e:ErrorType) {
-                    var done:Bool = false;
-
-                    var res = null;
-                    
-                    if (context != null)
-                        try
-                        {
-                            res = context.set(id, value);
-
-                            done = true;
-                        } catch(_) {}
-
-                    if (!done)
-                        if (superInstance == null)
-                            throw e;
-                        else {
-                            Util.assignField(superInstance, id, value);
-
-                            res = value;
-                        }
-
-                    res;
-                }
+                variableAssign(id, value);
 
             case EArrayAccess(arr, key):
                 final id:Dynamic = eval(key);
@@ -689,60 +712,11 @@ class Interp
                 throw EInvalidAssignment;
         }
 
-    function defaultResolve(id:String):Dynamic
-        return scope.get(id);
-
-    function resolve(id:String)
-        return try
-        {
-            defaultResolve(id);
-        } catch(e:ErrorType) {
-            switch (e)
-            {
-                case EUnknownVariable(_):
-                    var done:Bool = false;
-
-                    var res = null;
-
-                    if (context != null)
-                        try
-                        {
-                            res = context.get(id);
-
-                            done = true;
-                        } catch(_) {}
-
-                    if (done)
-                        return res;
-                    
-                    res ??= imports[id];
-
-                    if (res == null && superInstance != null)
-                        res = Util.resolveField(superInstance, id);
-
-                    if (res == null)
-                        throw e;
-
-                    res;
-
-                default:
-                    throw e;
-
-                    null;
-            }
-        }
-
     function resolveType(module:String):Dynamic
     {
         var res:Dynamic = imports[module];
 
-        try
-        {
-            res ??= Util.resolveClass(module);
-        } catch(e:ErrorType) {}
-
-        if (res == null)
-            throw ETypeNotFound(module);
+        res ??= Util.resolveClass(module);
 
         return res;
     }

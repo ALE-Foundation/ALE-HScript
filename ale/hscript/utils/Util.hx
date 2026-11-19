@@ -10,7 +10,9 @@ import ale.hscript.macros.AbstractsMacro;
 import ale.hscript.macros.TypeListMacro;
 import ale.hscript.macros.EnumsMacro;
 
+#if ALE_HS_MODULES
 import ale.hscript.module.ModuleClass;
+#end
 
 import ale.hscript.errors.ErrorType;
 
@@ -67,26 +69,26 @@ class Util
     }
 
     static function resolveField(obj:Dynamic, id:String):Dynamic
-        return obj is ModuleClass ? obj.statics.get(id) : obj is IExtensible ? obj._ALE_HSCRIPT_ResolveField(id) : obj is ScriptedInstance ? obj.get(id) : Reflect.getProperty(obj, id);
+        return #if ALE_HS_MODULES obj is ModuleClass ? obj.statics.get(id) : #end #if ALE_HS_CLASSES obj is IExtensible ? obj._ALE_HSCRIPT_ResolveField(id) : obj is ScriptedInstance ? obj.get(id) : #end Reflect.getProperty(obj, id);
 
     static function assignField(obj:Dynamic, id:String, value:Dynamic):Dynamic
-        return if (obj is ModuleClass)
+        return #if ALE_HS_MODULES if (obj is ModuleClass)
         {
             obj.statics.set(id, value);
 
             value;
-        } else if (obj is IExtensible) {
+        } else #end #if ALE_HS_CLASSES if (obj is IExtensible) {
             obj._ALE_HSCRIPT_SetField(id, value);
         } else if (obj is ScriptedInstance) {
             obj.set(id, value);
-        } else {
+        } else #end {
             Reflect.setProperty(obj, id, value);
 
             value;
         }
 
     static function createInstance(obj:Dynamic, ?args:Array<Dynamic>, ?imports:Map<String, Dynamic>, ?usings:Array<Dynamic>, ?pack:String):Dynamic
-        return obj is ScriptedClass ? obj.instance(args ?? []) : Type.createInstance(obj, args ?? []);
+        return #if ALE_HS_CLASSES obj is ScriptedClass ? obj.instance(args ?? []) : #end Type.createInstance(obj, args ?? []);
 
     static function resolveClass(module:String):Dynamic
     {

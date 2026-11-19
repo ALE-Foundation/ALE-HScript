@@ -6,12 +6,15 @@ import ale.hscript.errors.ErrorType;
 
 import ale.hscript.parser.Expr;
 
+#if ALE_HS_MODULES
 import ale.hscript.module.ModuleClass;
+#end
 
 import ale.hscript.utils.Util;
 
 import ale.hscript.Config;
 
+#if ALE_HS_CLASSES
 class ScriptedInstance extends Interp
 {
     var type:ScriptedClass;
@@ -144,7 +147,12 @@ class ScriptedInstance extends Interp
                 {
                     if (superType == null)
                     {
-                        Reflect.callMethod(null, variables.get('new'), args);
+                        final scp:Scope = variables.resolve('new');
+
+                        if (scp == null)
+                            throw EUnknownVariable('new');
+
+                        Reflect.callMethod(null, Scope.read(scp, 'new'), args);
                     } else {
                         if (superType is ScriptedClass)
                         {
@@ -199,10 +207,12 @@ class ScriptedInstance extends Interp
                         if (access != null && access.contains(TStatic))
                             continue;
 
-                        if (variables.exists(id))
+                        final scp:Scope = variables.resolve(id);
+
+                        if (scp != null)
                             throw EDuplicated(id);
-                        else
-                            eval(expr);
+
+                        eval(expr);
 
                     case EFunctionDecl(id, access, value, overr):
                         if (access != null && access.contains(TStatic))
@@ -220,7 +230,7 @@ class ScriptedInstance extends Interp
                                 methods[id] = scope;
                         }
 
-                    case null:
+                    case null, EEof:
 
                     default:
                         throw EInvalidExpression(expr.type);
@@ -250,72 +260,125 @@ class ScriptedInstance extends Interp
                 super.eval(expr);
         }
 
-    override function defaultResolve(id:String):Dynamic
+    override function resolve(id:String):Dynamic
     {
-        if (scope.exists(id, variables))
-            return scope.get(id, methods['get_' + id], variables);
+        final scp:Scope = scope.resolve(id, variables);
 
-        if (methods.exists(id))
-            return methods[id].variables[id].value;
+        if (scp != null)
+            return Scope.read(scp, id);
 
-        if (type is ModuleClass && cast(type, ModuleClass).statics.exists(id))
-            return cast(type, ModuleClass).statics.get(id);
+        #if ALE_HS_MODULES
+        if (type is ModuleClass)
+        {
+            final scp:Scope = cast(type, ModuleClass).statics.variables.resolve(id);
 
-        return get(id);
+            if (scp != null)
+                return Scope.read(scp, id);
+        }
+        #end
+
+        final meth:Scope = methods[id];
+
+        if (meth != null)
+            return meth.variables[id].value;
+
+        if (nativeInstance != null && nativeInstance._ALE_HScript_Fields.exists(id))
+            return Reflect.getProperty(nativeInstance, id);
+
+        final varScope:Scope = variables.resolve(id);
+
+        if (varScope != null)
+            return Scope.read(varScope, id, methods['get_' + id]);
+
+        final imp:Dynamic = imports[id];
+
+        if (imp != null)
+            return imp;
+
+        if (superInstance != null)
+            return Util.resolveField(superInstance, id);
+
+        throw EUnknownVariable(id);
     }
 
-    override function defaultAssign(id:String, value:Dynamic):Dynamic
+    override function variableAssign(id:String, value:Dynamic):Dynamic
     {
-        if (scope.exists(id, variables))
-            return scope.set(id, value, methods['get_' + id], variables);
+        final scp:Scope = scope.resolve(id, variables);
 
-        if (methods.exists(id))
-            return methods[id].variables[id].value = value;
+        if (scp != null)
+            return Scope.write(scp, id, value);
 
-        if (type is ModuleClass && cast(type, ModuleClass).statics.exists(id))
-            return cast(type, ModuleClass).statics.set(id, value);
+        #if ALE_HS_MODULES
+        if (type is ModuleClass)
+        {
+            final scp:Scope = cast(type, ModuleClass).statics.variables.resolve(id);
 
-        return set(id, value);
+            if (scp != null)
+                return Scope.write(scp, id, value);
+        }
+        #end
+
+        final meth:Scope = methods[id];
+
+        if (meth != null)
+            return meth.variables[id].value = value;
+
+        if (nativeInstance != null && nativeInstance._ALE_HScript_Fields.exists(id))
+        {
+            Reflect.setProperty(nativeInstance, id, value);
+
+            return value;
+        }
+
+        final varScope:Scope = variables.resolve(id);
+
+        if (varScope != null)
+            return Scope.write(varScope, id, value, methods['set_' + id]);
+
+        if (superInstance != null)
+            return Util.assignField(superInstance, id, value);
+
+        throw EUnknownVariable(id);
     }
     
     public function call(id:String, ?args:Array<Dynamic>):Dynamic
-        return try
-        {
-            errorHandled(() -> Reflect.callMethod(null, methods[id].get(id), args ?? []));
-        } catch(e:Dynamic) {
-            if (Config.HANDLE_ERRORS)
-                Config.ERROR_HANDLER(name, e);
-            else
-                throw e;
+        return errorHandled(() -> {
+            final scp:Scope = methods[id];
 
-            null;
-        }
+            if (scp == null)
+                throw EUnknownVariable(id);
+
+            return Reflect.callMethod(null, scp.variables[id].value, args ?? []);
+        });
 
     public function get(id:String, ?allowNative:Bool = true):Dynamic
-        return try
-        {
-            variables.get(id, methods['get_' + id]);
-        } catch(e:Dynamic) {
-            if (allowNative && nativeInstance != null && nativeInstance._ALE_HScript_Fields.exists(id))
-                Reflect.getProperty(nativeInstance, id);
-            else
-                throw e;
-        }
+    {
+        final scp:Scope = variables.resolve(id);
+
+        if (scp != null)
+            return Scope.read(scp, id, methods['get_' + id]);
+
+        if (allowNative && nativeInstance != null && nativeInstance._ALE_HScript_Fields.exists(id))
+            return Reflect.getProperty(nativeInstance, id);
+
+        throw EUnknownVariable(id);
+    }
 
     public function set(id:String, value:Dynamic, ?allowNative:Bool = true):Dynamic
     {
-        return try
-        {
-            variables.set(id, value, methods['set_' + id]);
-        } catch(e:Dynamic) {
-            if (allowNative && nativeInstance != null && nativeInstance._ALE_HScript_Fields.exists(id))
-            {
-                Reflect.setProperty(nativeInstance, id, value);
+        final scp:Scope = variables.resolve(id);
 
-                value;
-            } else {
-                throw e;
-            }
+        if (scp != null)
+            return Scope.write(scp, id, value, methods['set_' + id]);
+
+        if (allowNative && nativeInstance != null && nativeInstance._ALE_HScript_Fields.exists(id))
+        {
+            Reflect.setProperty(nativeInstance, id, value);
+
+            return value;
         }
+
+        throw EUnknownVariable(id);
     }
 }
+#end

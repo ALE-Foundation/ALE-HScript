@@ -7,6 +7,7 @@ import ale.hscript.parser.Expr;
 
 import ale.hscript.Config;
 
+#if ALE_HS_MODULES
 class ModuleClass extends ScriptedClass
 {
     public final statics:StaticsInterp;
@@ -26,3 +27,4 @@ class ModuleClass extends ScriptedClass
         }
     }
 }
+#end

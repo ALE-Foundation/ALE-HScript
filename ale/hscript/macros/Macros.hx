@@ -1,5 +1,6 @@
 package ale.hscript.macros;
 
+import haxe.macro.TypeTools;
 import haxe.macro.Context;
 import haxe.macro.Expr;
 import haxe.macro.Type;
@@ -11,7 +12,10 @@ class Macros
         Context.onAfterTyping(moduleTypes -> {
             AbstractsMacro.onAfterTyping(moduleTypes);
             EnumsMacro.onAfterTyping(moduleTypes);
+
+            #if ALE_HS_CLASSES
             ExtensibleMacro.onAfterTyping(moduleTypes);
+            #end
         });
 
         Context.onGenerate(types -> {
@@ -41,7 +45,7 @@ class Macros
             sub: name
         };
     }
-
+    
     public static function isPrivate(type:Type):Bool
         return (switch (type)
         {

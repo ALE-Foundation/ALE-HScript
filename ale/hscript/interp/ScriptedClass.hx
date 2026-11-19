@@ -4,6 +4,7 @@ import ale.hscript.errors.ErrorType;
 
 import ale.hscript.parser.Expr;
 
+#if ALE_HS_CLASSES
 class ScriptedClass
 {
     public final id:String;
@@ -30,3 +31,4 @@ class ScriptedClass
     public function instance(?args:Array<Dynamic>):Dynamic
         return new ScriptedInstance(this, body, parent, imports, usings).callConstructor(args);
 }
+#end

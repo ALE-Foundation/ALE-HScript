@@ -1,5 +1,6 @@
 package ale.hscript.interp;
 
+#if ALE_HS_CLASSES
 interface IExtensible
 {
     final _ALE_HSCRIPT_AccessorsBypass:Map<String, Bool>;
@@ -9,3 +10,4 @@ interface IExtensible
     function _ALE_HSCRIPT_ResolveField(id:String):Dynamic;
     function _ALE_HSCRIPT_SetField(id:String, value:Dynamic):Dynamic;
 }
+#end

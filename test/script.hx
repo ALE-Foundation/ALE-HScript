@@ -1,7 +1,11 @@
-import Module;
+class Donde extends Extensible
+{
+    public function new()
+    {
+        super();
 
-Module.traceOso();
+        trace(oso = 'donde');
+    }
+}
 
-Module.oso = 'donde';
-
-new Module();
+new Donde();

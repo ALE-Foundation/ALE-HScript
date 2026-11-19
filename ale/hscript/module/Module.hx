@@ -8,6 +8,7 @@ import ale.hscript.Config;
 
 using StringTools;
 
+#if ALE_HS_MODULES
 @:publicFields
 class Module
 {
@@ -65,3 +66,4 @@ class Module
     static function reset()
         cache = [];
 }
+#end

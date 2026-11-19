@@ -3,6 +3,7 @@ package ale.hscript.interp;
 import ale.hscript.parser.FunctionArgument;
 import ale.hscript.parser.Expr;
 
+#if ALE_HS_CLASSES
 class Constructor
 {
     public final pre:Expr;
@@ -20,3 +21,4 @@ class Constructor
         this.funcArgs = funcArgs;
     }
 }
+#end
