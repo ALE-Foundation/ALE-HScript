@@ -454,6 +454,9 @@ class Parser
                         if (superCall == null)
                             error(EMissingSuper, cur);
 
+                        nextOverride = false;
+                        nextAccess = [];
+
                         return fastExpr(EExtendedConstructor(fastExpr(EBlock(pre), cur), superCall, fastExpr(EBlock(post), cur), args), cur);
 
                     default:
@@ -745,7 +748,7 @@ class Parser
                 {
                     case TVar | TFinal if (!over):
 
-                    case TFunction:
+                    case TFunction if (!over || allowSuper):
 
                     default:
                         error(EUnexpected(token.type), token);
@@ -844,6 +847,7 @@ class Parser
 
                 parseOptionalType();
 
+                nextOverride = false;
                 nextAccess = [];
 
                 fastExpr(EFunction(args, parseBody(false)), cur);
