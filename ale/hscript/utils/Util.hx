@@ -22,7 +22,6 @@ import haxe.PosInfos;
 import haxe.Log;
 
 @:publicFields
-@:allow(ale.hscript.interp.IExtensible)
 class Util
 {
     static function makeIterator(obj:Dynamic):Iterator<Dynamic>

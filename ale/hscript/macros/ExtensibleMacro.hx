@@ -16,22 +16,41 @@ class ExtensibleMacro
 {
     public static final SUFFIX:String = '_ALE_HScript_Extensible';
     public static final SUPER_SUFFIX:String = '_ALE_HScript_super';
-    static final INSTANCE:String = '_ALE_HScript_Scripted';
-    static final LIST:String = '_ALE_HScript_Fields';
     static final RESOLVE:String = '_ALE_HSCRIPT_ResolveField';
     static final SET:String = '_ALE_HSCRIPT_SetField';
-    static final ACCESORS:String = '_ALE_HSCRIPT_AccessorsBypass';
+    static final LIST:String = '_ALE_HScript_Fields';
 
     #if macro
+    static final ACCESORS:String = '_ALE_HSCRIPT_AccessorsBypass';
+    static final INSTANCE:String = '_ALE_HScript_Scripted';
+    static final ARGUMENT:String = '_ALE_HSCRIPT_ARGUMENT';
+
+    public static function init()
+        Compiler.addGlobalMetadata(
+            '',
+            '@:build(ale.hscript.macros.ExtensibleMacro.saveImports())',
+            true,
+            true
+        );
+
+    static final imports:Map<String, Array<ImportExpr>> = [];
+
+    public static function saveImports():Array<Field>
+    {
+        imports[Context.getLocalModule()] = Context.getLocalImports();
+
+        return null;
+    }
+
     public static function onAfterTyping(types:Array<ModuleType>)
     {
         for (moduleType in types)
             switch (moduleType)
             {
-                case TClassDecl(clsRef):
+                case TClassDecl(clsRef):                    
                     final type:ClassType = clsRef.get();
 
-                    if ((type.params.length > 0 && (type.meta.has(':genericBuild') || type.meta.has(':generic'))) || type.isExtern || type.isAbstract || type.isFinal || type.isInterface || type.isPrivate || type.meta.has(':nativeGen') || type.meta.has(':include') || type.meta.has(':structInit') || type.name.endsWith(AbstractsMacro.SUFFIX) || type.name.endsWith(EnumsMacro.SUFFIX) || type.name.endsWith(SUFFIX))
+                    if (type.meta.has(':ALE_HS_IGNORE') || (type.params.length > 0 && (type.meta.has(':genericBuild') || type.meta.has(':generic'))) || type.isExtern || type.isAbstract || type.isFinal || type.isInterface || type.isPrivate || type.meta.has(':nativeGen') || type.meta.has(':native') || type.meta.has(':include') || type.meta.has(':structInit') || type.name.endsWith(AbstractsMacro.SUFFIX) || type.name.endsWith(EnumsMacro.SUFFIX) || type.name.endsWith(SUFFIX))
                         continue;
 
                     var shouldContinue:Bool = false;
@@ -72,6 +91,8 @@ class ExtensibleMacro
 
                     var shouldContinue:Bool = false;
 
+                    var typeImports:Array<ImportExpr> = [];
+
                     while (curClass != null)
                     {
                         if (curClass.isPrivate)
@@ -82,6 +103,8 @@ class ExtensibleMacro
                         }
 
                         classes.push(curClass);
+
+                        typeImports = typeImports.concat(imports[curClass.module] ?? []);
                         
                         curClass = curClass.superClass?.t?.get();
                     }
@@ -97,6 +120,54 @@ class ExtensibleMacro
 
                     if (constructor == null)
                         continue;
+
+                    final typeParamMap:Map<String, Type> = [];
+
+                    function applyParams(t:Type):Type
+                        return switch (t)
+                        {
+                            case TInst(ref, _):
+                                final c:ClassType = ref.get();
+
+                                switch (c.kind)
+                                {
+                                    case KTypeParameter(constraints):
+                                        typeParamMap.get(ref.toString()) ?? (constraints.length > 0 ? applyParams(constraints[0]) : TDynamic(null));
+
+                                    default:
+                                        TypeTools.map(t, applyParams);
+                                }
+
+                            case null:
+                                null;
+
+                            default:
+                                TypeTools.map(t, applyParams);
+                        }
+
+                    for (p in type.params)
+                        switch (p.t)
+                        {
+                            case TInst(ref, _):
+                                typeParamMap.set(ref.toString(), TDynamic(null));
+
+                            default:
+                        }
+
+                    for (i in 0...classes.length - 1)
+                    {
+                        final sup = classes[i].superClass;
+                        final declared = sup.t.get().params;
+
+                        for (j => concrete in sup.params)
+                            switch (declared[j].t)
+                            {
+                                case TInst(ref, _):
+                                    typeParamMap.set(ref.toString(), applyParams(concrete));
+
+                                default:
+                            }
+                    }
 
                     final constructorArgs:Int = switch (constructor.type)
                     {
@@ -262,7 +333,7 @@ class ExtensibleMacro
                     for (fieldsClass in classes)
                         for (field in fieldsClass.fields.get())
                         {
-                            if (field.params.length > 0 || field.isFinal || field.meta.has(':inline') || fieldsList.contains(field.name))
+                            if (field.params.length > 0 || field.isFinal || field.meta.has(':ALE_HS_IGNORE') || field.meta.has(':generic') || field.meta.has(':inline') || fieldsList.contains(field.name))
                                 continue;
 
                             fieldsList.push(field.name);
@@ -284,18 +355,6 @@ class ExtensibleMacro
                             {
                                 case TFun(args, ret):
                                     final name:String = field.name;
-                                    final callArgs:Array<Expr> = [for (i in 0...args.length) macro $i{'a' + i}];
-
-                                    final defaults:Array<Null<Expr>> = [for (_ in args) null];
-
-                                    switch (typedExpr.expr)
-                                    {
-                                        case TFunction(func):
-                                            for (i => arg in func.args)
-                                                defaults[i] = arg.value == null ? null : macro cast ${Context.getTypedExpr(arg.value)};
-
-                                        default:
-                                    }
 
                                     final isVoid:Bool = switch (Context.follow(ret))
                                     {
@@ -306,78 +365,55 @@ class ExtensibleMacro
                                             false;
                                     }
 
-                                    function exists(path:TypePath):Bool
-                                    {
-                                        final fullPath:String = path.pack.concat([path.name]).join('.') + (path.sub == null ? '' : '.' + path.sub);
-
-                                        try
-                                        {
-                                            return !Macros.isPrivate(Context.getType(fullPath));
-                                        } catch(_:Dynamic) {
-                                            return false;
-                                        }
-                                    }
-
                                     var shouldContinue:Bool = false;
 
-                                    function checkDynamic(t:Type):Type
-                                    {
-                                        if (t == null)
-                                            return t;
-
-                                        return switch (t)
+                                    for (arg in args)
+                                        if (Macros.isPrivate(arg.t))
                                         {
-                                            case TInst(ref, _) if (switch (ref.get().kind) { case KTypeParameter(_): true; default: false; }):
-                                                TDynamic(null);
+                                            shouldContinue = true;
 
-                                            default:
-                                                TypeTools.map(t, checkDynamic);
+                                            break;
                                         }
-                                    }
+
+                                    if (Macros.isPrivate(ret))
+                                        shouldContinue = true;
 
                                     function makeComplex(t:Type):ComplexType
+                                        return t == null ? null : Context.toComplexType(applyParams(t));
+
+                                    final arguments = [];
+
+                                    switch (typedExpr.expr)
                                     {
-                                        if (t == null)
-                                            return null;
+                                        case TFunction(func):
+                                            for (i => arg in func.args)
+                                                arguments.push({
+                                                    name: arg.v.name + i + ARGUMENT,
+                                                    type: makeComplex(arg.v.t),
+                                                    opt: args[i].opt && arg.value == null,
+                                                    value: arg.value == null ? null : macro cast ${Context.getTypedExpr(arg.value)}
+                                                });
 
-                                        final complex:ComplexType = Context.toComplexType(checkDynamic(t));
-
-                                        if (complex == null)
-                                            return null;
-
-                                        switch (complex)
-                                        {
-                                            case TPath(path):
-                                                if (exists(path))
-                                                    return complex;
-
-                                                final nPath:TypePath = {
-                                                    pack: fieldsClass.pack,
-                                                    name: fieldsClass.module.split('.').pop(),
-                                                    sub: path.sub ?? path.name
-                                                }
-
-                                                if (exists(nPath))
-                                                    return TPath(nPath);
-
-                                                shouldContinue = true;
-
-                                                return null;
-
-                                            default:
-                                                return complex;
-                                        }
+                                        default:
                                     }
 
-                                    final arguments = [
-                                        for (i => arg in args)
-                                            {
-                                                type: makeComplex(arg.t),
-                                                name: 'a' + i,
-                                                opt: arg.opt && defaults[i] == null,
-                                                value: defaults[i]
-                                            }
+                                    final hasRest:Bool = arguments.length > 0 && switch (args[args.length - 1].t)
+                                    {
+                                        case TAbstract(_.get() => {pack: ['haxe'], name: 'Rest'}, _):
+                                            true;
+
+                                        default:
+                                            false;
+                                    }
+
+                                    final argIds:Array<Expr> = [for (arg in arguments) macro $i{arg.name}];
+
+                                    final callArgs:Array<Expr> = [
+                                        for (i => id in argIds)
+                                            (hasRest && i == argIds.length - 1) ? {expr: EUnop(OpSpread, false, id), pos: Context.currentPos()}: id
                                     ];
+
+                                    final scriptArgs:Expr = hasRest ? macro ([$a{argIds.slice(0, -1)}] : Array<Dynamic>).concat($e{argIds[argIds.length - 1]}.toArray()) : macro ([$a{argIds}] : Array<Dynamic>);
 
                                     final retType = makeComplex(ret);
 
@@ -419,7 +455,7 @@ class ExtensibleMacro
                                                     } else {
                                                         $i{ACCESORS}[$v{name}] = true;
 
-                                                        final res = $i{INSTANCE}.call($v{name}, [$a{callArgs}]);
+                                                        final res = $i{INSTANCE}.call($v{name}, ${scriptArgs});
 
                                                         $i{ACCESORS}[$v{name}] = false;
 
@@ -437,7 +473,7 @@ class ExtensibleMacro
                                                     } else {
                                                         $i{ACCESORS}[$v{name}] = true;
 
-                                                        final res = $i{INSTANCE}.call($v{name}, [$a{callArgs}]);
+                                                        final res = $i{INSTANCE}.call($v{name}, ${scriptArgs});
 
                                                         $i{ACCESORS}[$v{name}] = false;
 
@@ -448,12 +484,12 @@ class ExtensibleMacro
                                                 }
                                             } : isVoid ? macro {
                                                 if ($i{INSTANCE}?.methods.exists($v{name}) ?? false)
-                                                    $i{INSTANCE}.call($v{name}, [$a{callArgs}]);
+                                                    $i{INSTANCE}.call($v{name}, ${scriptArgs});
                                                 else
                                                     $p{['super', name]}($a{callArgs});
                                             } : macro {
                                                 if ($i{INSTANCE}?.methods.exists($v{name}) ?? false)
-                                                    return $i{INSTANCE}.call($v{name}, [$a{callArgs}]);
+                                                    return $i{INSTANCE}.call($v{name}, ${scriptArgs});
 
                                                 return $p{['super', name]}($a{callArgs});
                                             }
@@ -466,7 +502,7 @@ class ExtensibleMacro
 
                     final moduleName:String = type.module.split('.').pop();
 
-                    Context.defineType({
+                    Context.defineModule(type.pack.concat([type.name + SUFFIX]).join('.'), [{
                         pos: Context.currentPos(),
                         pack: type.pack,
                         name: type.name + SUFFIX,
@@ -480,7 +516,7 @@ class ExtensibleMacro
                             pack: ['ale', 'hscript', 'interp'],
                             name: 'IExtensible'
                         }])
-                    });
+                    }], typeImports);
 
                 default:
             }

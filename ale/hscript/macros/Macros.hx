@@ -9,6 +9,12 @@ class Macros
 {
     public static function init()
     {
+        Context.onAfterInitMacros(() -> {
+            #if ALE_HS_CLASSES
+            ExtensibleMacro.init();
+            #end
+        });
+
         Context.onAfterTyping(moduleTypes -> {
             AbstractsMacro.onAfterTyping(moduleTypes);
             EnumsMacro.onAfterTyping(moduleTypes);
@@ -23,7 +29,7 @@ class Macros
         });
     }
 
-    public static function getPath(name:String, module:String):TypePath
+    public static function getPath(name:String, module:String):Array<String>
     {
         final parts = module.split('.');
 
@@ -31,19 +37,12 @@ class Macros
         {
             parts.pop();
 
-            return {
-                pack: parts,
-                name: name
-            };
+            return parts.concat([name]);
         }
 
         final moduleName = parts.pop();
 
-        return {
-            pack: parts,
-            name: moduleName,
-            sub: name
-        };
+        return parts.concat([moduleName, name]);
     }
     
     public static function isPrivate(type:Type):Bool
@@ -76,7 +75,9 @@ class Macros
             case TLazy(_):
                 false;
 
-        }) ?? false;
+            case null:
+                false;
+        });
 
     public static function privateParams(params:Array<Type>):Bool
     {
