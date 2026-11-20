@@ -52,7 +52,7 @@ class Script
         return errorHandled(() -> {
             final variable:Dynamic = get(id);
 
-            return variable == null ? null : Reflect.callMethod(null, variable, args);
+            return variable == null ? null : Reflect.callMethod(null, variable, args ?? []);
         });
 
     public var failedExecution(default, null):Bool = false;
