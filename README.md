@@ -1,15 +1,7 @@
 # ALE HScript
 
-**ALE HScript** is a *rewrite of HScript* designed to allow you to write Haxe code in scripts (what a surprise), with the ability to easily configure the library to add or restrict certain aspects of its behavior
+ALE HScript is a rewrite of HScript (more specifically, [RuleScript](https://github.com/Kriptel/RuleScript/tree/dev)) designed to support type declarations, fix design and performance issues in RuleScript, and improve its usability (which is usually somewhat complex)
 
+At the moment, it supports essentially the same types as RuleScript (except for enums and abstract classes, though these will likely be added later), addresses some parity issues with Haxe (particularly regarding setters and access to null variables), and provides default support for static variables that function similarly to those in Haxe (exclusive to module classes)
 
-It uses a interpreter that follows this process:
-
-`Tokenizer -> Parser -> AST Walker`
-
-For now, the project is in what you might call an early stage of development; it doesn’t really support much at the moment-
-
-
-Contributions, issues, etc., are welcome!
-
-I’m always grateful when people test the library and help identify its weaknesses so I can improve it more easily :D
+The project borrows some of RuleScript’s code for macros, so part of the credit goes to [Kriptel](https://github.com/Kriptel), who was also an inspiration

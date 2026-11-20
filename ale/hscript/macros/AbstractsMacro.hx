@@ -105,7 +105,6 @@ class AbstractsMacro
                     Context.defineType({
                         pack: pack,
                         name: abs.name + SUFFIX,
-                        meta: [{name: ':keep', pos: pos}],
                         kind: TDClass(null, [], false, false, false),
                         fields: fields,
                         pos: pos
