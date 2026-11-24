@@ -22,7 +22,6 @@ import ale.hscript.module.Module;
 import ale.hscript.utils.Util;
 
 import haxe.ds.GenericStack;
-import haxe.ds.ObjectMap;
 
 import haxe.Constraints.IMap;
 import haxe.Exception;
@@ -576,7 +575,7 @@ class Interp
                 evalArray(exprs);
 
             case EMap(members):
-                final res = new ObjectMap();
+                final res:Map<Dynamic, Dynamic> = new Map<Dynamic, Dynamic>();
 
                 for (key => val in members)
                     res.set(eval(key), eval(val));

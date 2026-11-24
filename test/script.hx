@@ -1,11 +1,5 @@
-class Donde extends Extensible
-{
-    public function new()
-    {
-        super();
+final subs:Map<Int, Null<String>> = [
+    384 => 'Cáncer causa el cigarri- garri- rri-'
+];
 
-        trace(oso = 'donde');
-    }
-}
-
-new Donde();
+trace(subs[384]);
