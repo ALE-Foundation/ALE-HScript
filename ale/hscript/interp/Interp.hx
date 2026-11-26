@@ -35,7 +35,18 @@ class Interp
 
     public var scope:Scope;
 
-    public var superInstance:Dynamic;
+    var superFields(default, null):Null<Array<String>>;
+    
+    public var superInstance(default, set):Dynamic;
+    function set_superInstance(val:Dynamic):Dynamic
+    {
+        if (superInstance == val)
+            return superInstance;
+
+        superFields = val == null ? null : TypeListMacro.fields[Type.getClassName(Type.getClass(val))];
+
+        return superInstance = val;
+    }
 
     public var name:String = 'ale-hscript';
 
@@ -659,7 +670,12 @@ class Interp
             return imp;
 
         if (superInstance != null)
-            return Util.resolveField(superInstance, id);
+        {
+            final res:Dynamic = Util.resolveField(superInstance, id);
+
+            if (res != null || superFields.contains(id))
+                return res;
+        }
 
         throw EUnknownVariable(id);
     }

@@ -11,6 +11,30 @@ using StringTools;
 @:unreflective
 class TypeListMacro
 {
+    public static var fields(get, null):Map<String, Array<String>>;
+    static function get_fields():Map<String, Array<String>>
+    {
+        if (fields == null)
+        {
+            fields = [];
+
+            eachMetaList('fieldsList', entry -> {
+                final parts:Array<String> = entry.split('=');
+
+                final field:String = parts.pop();
+
+                final type:String = parts.join('.');
+
+                if (!fields.exists(type))
+                    fields[type] = [];
+
+                fields[type].push(field);
+            });
+        }
+
+        return fields;
+    }
+
     public static var list(get, null):Map<String, Array<String>>;
     static function get_list():Map<String, Array<String>>
     {
@@ -18,22 +42,18 @@ class TypeListMacro
         {
             list = [];
 
-            var raw:String = Meta.getType(TypeListMacro).typeList[0];
+            eachMetaList('typeList', entry -> {
+                final parts:Array<String> = entry.split('.');
 
-            for (entry in raw.split(';'))
-            {
-                if (entry == null || entry == '')
-                    continue;
+                final typeName:String = parts.pop();
 
-                var parts = entry.split('.');
-                var typeName = parts.pop();
-                var pack = parts.join('.');
+                final pack:String = parts.join('.');
 
                 if (!list.exists(pack))
                     list[pack] = [];
 
                 list[pack].push(typeName);
-            }
+            });
         }
 
         return list;
@@ -46,31 +66,37 @@ class TypeListMacro
         {
             typedefs = [];
 
-            var raw:String = Meta.getType(TypeListMacro).typedefList[0];
+            eachMetaList('typedefList', entry -> {
+                final parts:Array<String> = entry.split('=');
 
-            for (entry in raw.split(';'))
-            {
-                if (entry == null || entry == '')
-                    continue;
-
-                var parts = entry.split('=');
-
-                if (parts.length < 2)
-                    continue;
-
-                var resolved = std.Type.resolveClass(parts[1]);
+                final resolved = std.Type.resolveClass(parts[1]);
 
                 if (resolved != null)
                     typedefs[parts[0]] = resolved;
-            }
+            });
         }
 
         return typedefs;
     }
 
+    static function eachMetaList(id:String, call:String -> Void)
+    {
+        final raw:String = Reflect.getProperty(Meta.getType(TypeListMacro), id)[0];
+
+        if (raw == null)
+            return;
+
+        for (entry in raw.split(';'))
+        {
+            if (entry == null || entry.length <= 0)
+                continue;
+
+            call(entry);
+        }
+    }
+
     #if macro
     public static function onGenerate(types:Array<Type>)
-    {
         switch (Context.getType('ale.hscript.macros.TypeListMacro'))
         {
             case TInst(t, _):
@@ -81,6 +107,7 @@ class TypeListMacro
 
                 final entries:Array<String> = [];
                 final typedefEntries:Array<String> = [];
+                final fieldsEntries:Array<String> = [];
 
                 for (type in types)
                 {
@@ -94,11 +121,7 @@ class TypeListMacro
                                 case TInst(classRef, _):
                                     final concrete = classRef.get();
 
-                                    typedefEntries.push(
-                                        (td.pack.length > 0 ? td.pack.join('.') + '.' : '') + td.name
-                                        + '=' +
-                                        (concrete.pack.length > 0 ? concrete.pack.join('.') + '.' : '') + concrete.name
-                                    );
+                                    typedefEntries.push((td.pack.length > 0 ? td.pack.join('.') + '.' : '') + td.name + '=' + (concrete.pack.length > 0 ? concrete.pack.join('.') + '.' : '') + concrete.name);
 
                                 default:
                             }
@@ -106,20 +129,34 @@ class TypeListMacro
                         case TInst(ref, _):
                             final c = ref.get();
 
-                            final fullName = (c.pack.length > 0 ? c.pack.join('.') + '.' : '') + c.name;
+                            final className:String = (c.pack.length > 0 ? c.pack.join('.') + '.' : '') + c.name;
 
-                            if (!fullName.endsWith('_Fields_') && !fullName.endsWith('_Impl_'))
-                                entries.push(fullName);
+                            entries.push(className);
+
+                            var curClass = c;
+
+                            while (curClass != null)
+                            {
+                                for (field in curClass.fields.get())
+                                    fieldsEntries.push(className + '=' + field.name);
+
+                                curClass = curClass?.superClass?.t?.get();
+                            }
 
                         default:
                     }
                 }
 
-                cls.meta.add('typeList', [macro $v{entries.join(';')}], Context.currentPos());
-                cls.meta.add('typedefList', [macro $v{typedefEntries.join(';')}], Context.currentPos());
+                final lists:Array<Dynamic> = [
+                    ['typeList', entries],
+                    ['typedefList', typedefEntries],
+                    ['fieldsList', fieldsEntries]
+                ];
+
+                for (list in lists)
+                    cls.meta.add(list[0], [macro $v{list[1].join(';')}], Context.currentPos());
 
             default:
         }
-    }
     #end
 }
