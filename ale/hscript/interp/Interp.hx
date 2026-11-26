@@ -673,7 +673,7 @@ class Interp
         {
             final res:Dynamic = Util.resolveField(superInstance, id);
 
-            if (res != null || superFields.contains(id))
+            // if (res != null || superFields.contains(id))
                 return res;
         }
 
