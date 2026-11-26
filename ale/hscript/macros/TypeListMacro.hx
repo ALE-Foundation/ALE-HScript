@@ -18,6 +18,7 @@ class TypeListMacro
         {
             fields = [];
 
+            /*
             eachMetaList('fieldsList', entry -> {
                 final parts:Array<String> = entry.split('=');
 
@@ -30,6 +31,7 @@ class TypeListMacro
 
                 fields[type].push(field);
             });
+            */
         }
 
         return fields;
@@ -150,7 +152,9 @@ class TypeListMacro
                 final lists:Array<Dynamic> = [
                     ['typeList', entries],
                     ['typedefList', typedefEntries],
+                    /*
                     ['fieldsList', fieldsEntries]
+                    */
                 ];
 
                 for (list in lists)
