@@ -20,7 +20,7 @@ class Main
 	{
 		final context = new Scope();
 
-		final scr = new Script('script', (superInstance, context) -> new VirtualMachine(superInstance, context), context, new Inst());
+		final scr = new Script('script', /*superInstance, context) -> new VirtualMachine(superInstance, context),*/ context, new Inst());
 		scr.execute();
 	}
 }

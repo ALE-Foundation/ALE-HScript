@@ -61,6 +61,11 @@ class Interp
 
         scope = variables = new Scope(null);
 
+        init();
+    }
+
+    function init()
+    {
         imports = new Map();
 
         usings = [];
