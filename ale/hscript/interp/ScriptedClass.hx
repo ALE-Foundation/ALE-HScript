@@ -4,7 +4,7 @@ import ale.hscript.errors.ErrorType;
 
 import ale.hscript.parser.Expr;
 
-#if ALE_HS_CLASSES
+#if (ALE_HS_CLASSES == 'true')
 class ScriptedClass
 {
     public final id:String;

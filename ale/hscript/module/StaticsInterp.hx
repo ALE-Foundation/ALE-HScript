@@ -7,7 +7,7 @@ import ale.hscript.interp.Interp;
 import ale.hscript.parser.Property;
 import ale.hscript.parser.Expr;
 
-#if ALE_HS_MODULES
+#if (ALE_HS_MODULES == 'true')
 class StaticsInterp extends Interp
 {
     public function new(type:ModuleClass, body:Array<Expr>, ?imports:Map<String, Dynamic>, ?usings:Array<Dynamic>)

@@ -24,11 +24,11 @@ class Script
 
     public final interp:Interp;
 
-    public function new(script:String, ?name:String, ?interp:Interp, ?context:Scope, ?superInstance:Dynamic)
+    public function new(script:String, ?name:String, ?interp:Dynamic -> Scope -> Interp, ?context:Scope, ?superInstance:Dynamic)
     {
-        interp ??= cast new Interp(superInstance, context);
+        interp ??= (superInstance, context) -> new Interp(superInstance, context);
 
-        this.interp = interp;
+        this.interp = interp(superInstance, context);
 
         data = Util.resolveSourceData(script, name);
     }

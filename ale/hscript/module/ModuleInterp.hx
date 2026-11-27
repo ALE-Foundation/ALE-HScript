@@ -7,7 +7,7 @@ import ale.hscript.interp.Interp;
 
 import ale.hscript.parser.Expr;
 
-#if ALE_HS_MODULES
+#if (ALE_HS_MODULES == 'true')
 class ModuleInterp extends Interp
 {
     final expectedPackage:String;

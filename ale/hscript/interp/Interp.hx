@@ -138,13 +138,13 @@ class Interp
     var _package:String;
     var usings:Array<Dynamic>;
 
-    public function eval(expr:Expr):Dynamic
+    function eval(expr:Expr):Dynamic
     {
         lastExpr = expr;
 
         return switch (expr?.type)
         {
-            #if ALE_HS_CLASSES
+            #if (ALE_HS_CLASSES == 'true')
             case EClassDecl(id, body, parent, implem):
                 imports[id] = new ScriptedClass(id, body, eval(parent), imports, usings);
 
@@ -157,7 +157,7 @@ class Interp
                 null;
 
             case EImport(module, alias):
-                #if ALE_HS_MODULES
+                #if (ALE_HS_MODULES == 'true')
                 final mod:Null<Array<ModuleType>> = Module.check(module, alias);
 
                 if (mod != null)
@@ -304,7 +304,7 @@ class Interp
                     case EField(target, id):
                         final obj:Dynamic = eval(target);
 
-                        #if ALE_HS_CLASSES
+                        #if (ALE_HS_CLASSES == 'true')
                         if (obj is ScriptedInstance)
                         {
                             return obj.call(id, resArgs);

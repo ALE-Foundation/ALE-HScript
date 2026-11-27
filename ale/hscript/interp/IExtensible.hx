@@ -1,6 +1,6 @@
 package ale.hscript.interp;
 
-#if ALE_HS_CLASSES
+#if (ALE_HS_CLASSES == 'true')
 interface IExtensible
 {
     final _ALE_HSCRIPT_AccessorsBypass:Map<String, Bool>;

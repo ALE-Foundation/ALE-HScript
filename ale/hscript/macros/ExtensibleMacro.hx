@@ -11,7 +11,7 @@ import haxe.macro.Type;
 
 using StringTools;
 
-#if ALE_HS_CLASSES
+#if (ALE_HS_CLASSES == 'true')
 class ExtensibleMacro
 {
     public static final SUFFIX:String = '_ALE_HScript_Extensible';

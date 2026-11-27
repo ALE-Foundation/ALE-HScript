@@ -7,7 +7,7 @@ import ale.hscript.parser.Expr;
 
 import ale.hscript.lexer.Token;
 
-#if ALE_HS_MODULES
+#if (ALE_HS_MODULES == 'true')
 class ModuleParser extends Parser
 {
     public function parseModule():Array<Expr>

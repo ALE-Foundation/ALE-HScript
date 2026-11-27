@@ -8,7 +8,7 @@ import ale.hscript.Config;
 
 using StringTools;
 
-#if ALE_HS_MODULES
+#if (ALE_HS_MODULES == 'true')
 @:publicFields
 class Module
 {

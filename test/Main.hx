@@ -1,5 +1,6 @@
 package;
 
+import ale.hscript.bytecode.VirtualMachine;
 import ale.hscript.interp.Scope;
 import ale.hscript.Script;
 import ale.hscript.Config;
@@ -19,7 +20,7 @@ class Main
 	{
 		final context = new Scope();
 
-		final scr = new Script('script', context, new Inst());
+		final scr = new Script('script', (superInstance, context) -> new VirtualMachine(superInstance, context), context, new Inst());
 		scr.execute();
 	}
 }

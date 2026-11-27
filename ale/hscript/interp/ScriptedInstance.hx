@@ -6,7 +6,7 @@ import ale.hscript.errors.ErrorType;
 
 import ale.hscript.parser.Expr;
 
-#if ALE_HS_MODULES
+#if (ALE_HS_MODULES == 'true')
 import ale.hscript.module.ModuleClass;
 #end
 
@@ -14,7 +14,7 @@ import ale.hscript.utils.Util;
 
 import ale.hscript.Config;
 
-#if ALE_HS_CLASSES
+#if (ALE_HS_CLASSES == 'true')
 class ScriptedInstance extends Interp
 {
     var type:ScriptedClass;
@@ -267,7 +267,7 @@ class ScriptedInstance extends Interp
         if (scp != null)
             return Scope.read(scp, id);
 
-        #if ALE_HS_MODULES
+        #if (ALE_HS_MODULES == 'true')
         if (type is ModuleClass)
         {
             final scp:Scope = cast(type, ModuleClass).statics.variables.resolve(id);
@@ -308,7 +308,7 @@ class ScriptedInstance extends Interp
         if (scp != null)
             return Scope.write(scp, id, value);
 
-        #if ALE_HS_MODULES
+        #if (ALE_HS_MODULES == 'true')
         if (type is ModuleClass)
         {
             final scp:Scope = cast(type, ModuleClass).statics.variables.resolve(id);

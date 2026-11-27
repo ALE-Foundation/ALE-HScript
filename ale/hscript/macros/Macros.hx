@@ -10,16 +10,21 @@ class Macros
     public static function init()
     {
         Context.onAfterInitMacros(() -> {
-            #if ALE_HS_CLASSES
+            #if (ALE_HS_EXTEND_NATIVE_CLASSES == 'true')
             ExtensibleMacro.init();
             #end
         });
 
         Context.onAfterTyping(moduleTypes -> {
+            #if (ALE_HS_NATIVE_ABSTRACTS == 'true')
             AbstractsMacro.onAfterTyping(moduleTypes);
-            EnumsMacro.onAfterTyping(moduleTypes);
+            #end
 
-            #if ALE_HS_CLASSES
+            #if (ALE_HS_NATIVE_ENUMS == 'true')
+            EnumsMacro.onAfterTyping(moduleTypes);
+            #end
+
+            #if (ALE_HS_EXTEND_NATIVE_CLASSES == 'true')
             ExtensibleMacro.onAfterTyping(moduleTypes);
             #end
         });

@@ -1,3 +1,6 @@
 --macro ale.hscript.macros.Macros.init()
--D ALE_HS_CLASSES
--D ALE_HS_MODULES
+-D ALE_HS_CLASSES=true
+-D ALE_HS_MODULES=true
+-D ALE_HS_EXTEND_NATIVE_CLASSES=true
+-D ALE_HS_NATIVE_ENUMS=true
+-D ALE_HS_NATIVE_ABSTRACTS=true

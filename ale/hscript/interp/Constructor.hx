@@ -3,7 +3,7 @@ package ale.hscript.interp;
 import ale.hscript.parser.FunctionArgument;
 import ale.hscript.parser.Expr;
 
-#if ALE_HS_CLASSES
+#if (ALE_HS_CLASSES == 'true')
 class Constructor
 {
     public final pre:Expr;
