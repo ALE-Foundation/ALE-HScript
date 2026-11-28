@@ -144,504 +144,501 @@ class Interp
     var usings:Array<Dynamic>;
 
     function eval(expr:Expr):Dynamic
-    {
-        lastExpr = expr;
+        return errorHandled(function():Dynamic {
+            lastExpr = expr;
 
-        return switch (expr?.type)
-        {
-            #if (ALE_HS_CLASSES == 'true')
-            case EClassDecl(id, body, parent, implem):
-                imports[id] = new ScriptedClass(id, body, eval(parent), imports, usings);
+            return switch (expr?.type)
+            {
+                #if (ALE_HS_CLASSES == 'true')
+                case EClassDecl(id, body, parent, implem):
+                    imports[id] = new ScriptedClass(id, body, eval(parent), imports, usings);
 
-                null;
-            #end
-
-            case EPackage(module):
-                _package = module;
-
-                null;
-
-            case EImport(module, alias):
-                #if (ALE_HS_MODULES == 'true')
-                final mod:Null<Array<ModuleType>> = Module.check(module, alias);
-
-                if (mod != null)
-                {
-                    final modId:String = module.split('.').pop();
-
-                    for (type in mod)
-                        imports[type.id == modId && (alias ?? '').trim().length > 0 ? alias : type.id] = type.type;
-                } else
-                #end
-                    imports[alias ?? module.split('.').pop()] = Util.resolveClass(module);
-
-                null;
-
-            case EPackageImport(module):
-                for (type in TypeListMacro.list[module])
-                    imports[type] = Util.resolveClass(module + '.' + type);
-
-                null;
-
-            case EUsing(module):
-                usings.unshift(eval(module));
-
-                null;
-
-            case ETypedef(_, _):
-                null;
-
-            case EAlias(id, type):
-                imports[id] = eval(type);
-
-            case EField(obj, id):
-                Util.resolveField(eval(obj), id);
-
-            case ESafeField(obj, id):
-                final res:Dynamic = eval(obj);
-
-                res == null ? null : Util.resolveField(res, id);
-
-            case EArrayAccess(obj, key):
-                final res:Dynamic = eval(obj);
-
-                if (Std.isOfType(res, Array))
-                    res[eval(key)];
-                else if (Std.isOfType(res, IMap))
-                    cast(res, IMap<Dynamic, Dynamic>).get(eval(key));
-                else {
-                    throw EInvalidArrayAccess(Type.getClassName(Type.getClass(res)));
-                    
                     null;
-                }
+                #end
 
-            case ENew(type, args):
-                Util.createInstance(eval(type), evalArray(args), imports, usings, _package);
+                case EPackage(module):
+                    _package = module;
 
-            case EInterpolatedString(parts):
-                final buf:StringBuf = new StringBuf();
+                    null;
 
-                for (part in parts)
-                    buf.add(eval(part));
+                case EImport(module, alias):
+                    #if (ALE_HS_MODULES == 'true')
+                    final mod:Null<Array<ModuleType>> = Module.check(module, alias);
 
-                buf.toString();
+                    if (mod != null)
+                    {
+                        final modId:String = module.split('.').pop();
 
-            case EVarDecl(id, value, access, getter, setter, isFinal):
-                define(id, eval(value), access, getter, setter, isFinal);
+                        for (type in mod)
+                            imports[type.id == modId && (alias ?? '').trim().length > 0 ? alias : type.id] = type.type;
+                    } else
+                    #end
+                        imports[alias ?? module.split('.').pop()] = Util.resolveClass(module);
 
-                null;
+                    null;
 
-            case EFunctionDecl(id, access, value, _):
-                define(id, eval(value), access, PDefault, PNever, true);
+                case EPackageImport(module):
+                    for (type in TypeListMacro.list[module])
+                        imports[type] = Util.resolveClass(module + '.' + type);
 
-                null;
+                    null;
 
-            case EFunction(args, block, lambda):
-                final curScope:Scope = scope;
+                case EUsing(module):
+                    usings.unshift(eval(module));
 
-                Reflect.makeVarArgs(function(uArgs:Array<Dynamic>)
-                {
-                    return scoped(() -> {
-                        for (i => arg in args)
-                            scope.define(arg.id, uArgs[i] ?? eval(arg.value));
+                    null;
 
-                        var res:Dynamic = null;
+                case ETypedef(_, _):
+                    null;
 
-                        try
-                        {
-                            res = eval(block);
-                        } catch(ret:ControlSignal) {
-                            switch (ret)
-                            {
-                                case CReturn(val):
-                                    return val;
+                case EAlias(id, type):
+                    imports[id] = eval(type);
 
-                                default:
-                                    throw ret;
-                            }
-                        }
+                case EField(obj, id):
+                    Util.resolveField(eval(obj), id);
 
-                        return res;
-                    }, curScope);
-                });
+                case ESafeField(obj, id):
+                    final res:Dynamic = eval(obj);
 
-            case EBlock(exprs):
-                scoped(() -> {
-                    var res:Dynamic = null;
+                    res == null ? null : Util.resolveField(res, id);
 
-                    for (expr in exprs)
-                        res = eval(expr);
+                case EArrayAccess(obj, key):
+                    final res:Dynamic = eval(obj);
 
-                    return res;
-                });
-
-            case ENull:
-                null;
-
-            case ECall(obj, args):
-                final resArgs:Array<Dynamic> = evalArray(args);
-
-                switch (obj.type)
-                {
-                    case EVar(id) if (id == 'cast'):
-                        resArgs[0];
-
-                    case EVar(id) if (id == 'trace'):
-                        Config.SCRIPT_TRACE(name, expr.line, resArgs);
-
+                    if (Std.isOfType(res, Array))
+                        res[eval(key)];
+                    else if (Std.isOfType(res, IMap))
+                        cast(res, IMap<Dynamic, Dynamic>).get(eval(key));
+                    else {
+                        throw EInvalidArrayAccess(Type.getClassName(Type.getClass(res)));
+                        
                         null;
+                    }
 
-                    case ESafeField(target, id):
-                        final obj:Dynamic = eval(target);
+                case ENew(type, args):
+                    Util.createInstance(eval(type), evalArray(args), imports, usings, _package);
 
-                        if (obj == null)
-                        {
-                            null;
-                        } else {
-                            final method:Dynamic = Util.resolveField(obj, id);
+                case EInterpolatedString(parts):
+                    final buf:StringBuf = new StringBuf();
 
-                            if (method == null)
-                                null;
-                            else
-                                Reflect.callMethod(obj, method, resArgs);
-                        }
+                    for (part in parts)
+                        buf.add(eval(part));
 
-                    case EField(target, id):
-                        final obj:Dynamic = eval(target);
+                    buf.toString();
 
-                        #if (ALE_HS_CLASSES == 'true')
-                        if (obj is ScriptedInstance)
-                        {
-                            return obj.call(id, resArgs);
-                        } else #end {
+                case EVarDecl(id, value, access, getter, setter, isFinal):
+                    define(id, eval(value), access, getter, setter, isFinal);
+
+                    null;
+
+                case EFunctionDecl(id, access, value, _):
+                    define(id, eval(value), access, PDefault, PNever, true);
+
+                    null;
+
+                case EFunction(args, block, lambda):
+                    final curScope:Scope = scope;
+
+                    Reflect.makeVarArgs(function(uArgs:Array<Dynamic>)
+                    {
+                        return scoped(() -> {
+                            for (i => arg in args)
+                                scope.define(arg.id, uArgs[i] ?? eval(arg.value));
+
+                            var res:Dynamic = null;
+
                             try
                             {
+                                res = eval(block);
+                            } catch(ret:ControlSignal) {
+                                switch (ret)
+                                {
+                                    case CReturn(val):
+                                        return val;
+
+                                    default:
+                                        throw ret;
+                                }
+                            }
+
+                            return res;
+                        }, curScope);
+                    });
+
+                case EBlock(exprs):
+                    scoped(() -> {
+                        var res:Dynamic = null;
+
+                        for (expr in exprs)
+                            res = eval(expr);
+
+                        return res;
+                    });
+
+                case ENull:
+                    null;
+
+                case ECall(obj, args):
+                    final resArgs:Array<Dynamic> = evalArray(args);
+
+                    switch (obj.type)
+                    {
+                        case EVar(id) if (id == 'cast'):
+                            resArgs[0];
+
+                        case EVar(id) if (id == 'trace'):
+                            Config.SCRIPT_TRACE(name, expr.line, resArgs);
+
+                            null;
+
+                        case ESafeField(target, id):
+                            final obj:Dynamic = eval(target);
+
+                            if (obj == null)
+                            {
+                                null;
+                            } else {
+                                final method:Dynamic = Util.resolveField(obj, id);
+
+                                if (method == null)
+                                    null;
+                                else
+                                    Reflect.callMethod(obj, method, resArgs);
+                            }
+
+                        case EField(target, id):
+                            final obj:Dynamic = eval(target);
+
+                            #if (ALE_HS_CLASSES == 'true')
+                            if (obj is ScriptedInstance)
+                            {
+                                return obj.call(id, resArgs);
+                            } else #end {
                                 final method:Dynamic = Util.resolveField(obj, id);
 
                                 if (method != null)
                                     return Reflect.callMethod(obj, method, resArgs);
-                            } catch (_:Dynamic) {}
 
-                            for (usingClass in usings)
+                                for (usingClass in usings)
+                                {
+                                    final method:Dynamic = Reflect.field(usingClass, id);
+
+                                    if (method != null)
+                                        return Reflect.callMethod(usingClass, method, [obj].concat(resArgs));
+                                }
+                            }
+
+                            null;
+                        
+                        default:
+                            Reflect.callMethod(null, eval(obj), resArgs);
+                    }
+
+                case EVar(id):
+                    resolve(id);
+
+                case EAssign(obj, value):
+                    assign(obj, eval(value));
+
+                case EFor(indexId, iterId, iter, body):
+                    evalFor(indexId, iterId, iter, body);
+
+                case EWhile(condition, expr):
+                    evalWhile(condition, expr);
+
+                case EDoWhile(condition, expr):
+                    evalDoWhile(condition, expr);
+
+                case ESwitch(val, cases, defaultExpr):
+                    final key:Dynamic = eval(val);
+
+                    for (cas in cases)
+                        for (condition in cas.conditions)
+                            if (eval(condition) == key)
+                                return eval(cas.body);
+
+                    eval(defaultExpr);
+
+                case EArrayComprehension(expr):
+                    eval(expr);
+
+                case ETry(body, catches):
+                    try
+                    {
+                        eval(body);
+                    } catch(s:ControlSignal) {
+                        throw s;
+                    } catch(e:Dynamic) {
+                        var res:Dynamic = null;
+
+                        var error:Dynamic = e;
+
+                        var handled:Bool = false;
+
+                        for (catchy in catches)
+                        {
+                            try
                             {
-                                final method:Dynamic = Reflect.field(usingClass, id);
+                                res = scoped(() -> {
+                                    scope.define(catchy.argument, error);
 
-                                if (method != null)
-                                    return Reflect.callMethod(usingClass, method, [obj].concat(resArgs));
+                                    return eval(catchy.body);
+                                });
+
+                                handled = true;
+
+                                break;
+                            } catch(s:ControlSignal) {
+                                throw s;
+                            } catch(e:Dynamic) {
+                                error = e;
                             }
                         }
 
-                        null;
-                    
-                    default:
-                        Reflect.callMethod(null, eval(obj), resArgs);
-                }
+                        if (!handled)
+                            throw error;
 
-            case EVar(id):
-                resolve(id);
-
-            case EAssign(obj, value):
-                assign(obj, eval(value));
-
-            case EFor(indexId, iterId, iter, body):
-                evalFor(indexId, iterId, iter, body);
-
-            case EWhile(condition, expr):
-                evalWhile(condition, expr);
-
-            case EDoWhile(condition, expr):
-                evalDoWhile(condition, expr);
-
-            case ESwitch(val, cases, defaultExpr):
-                final key:Dynamic = eval(val);
-
-                for (cas in cases)
-                    for (condition in cas.conditions)
-                        if (eval(condition) == key)
-                            return eval(cas.body);
-
-                eval(defaultExpr);
-
-            case EArrayComprehension(expr):
-                eval(expr);
-
-            case ETry(body, catches):
-                try
-                {
-                    eval(body);
-                } catch(s:ControlSignal) {
-                    throw s;
-                } catch(e:Dynamic) {
-                    var res:Dynamic = null;
-
-                    var error:Dynamic = e;
-
-                    var handled:Bool = false;
-
-                    for (catchy in catches)
-                    {
-                        try
-                        {
-                            res = scoped(() -> {
-                                scope.define(catchy.argument, error);
-
-                                return eval(catchy.body);
-                            });
-
-                            handled = true;
-
-                            break;
-                        } catch(s:ControlSignal) {
-                            throw s;
-                        } catch(e:Dynamic) {
-                            error = e;
-                        }
+                        res;
                     }
 
-                    if (!handled)
-                        throw error;
+                case EThrow(val):
+                    throw eval(val);
+
+                case EBinOp(token, a, b):
+                    switch (token)
+                    {
+                        case TDoubleAmpersand:
+                            eval(a) && eval(b);
+
+                        case TDoublePipe:
+                            eval(a) || eval(b);
+
+                        case TDoubleQuestion:
+                            eval(a) ?? eval(b);
+                        
+                        case TDoubleQuestionEqual:
+                            eval(a) ?? assign(a, eval(b));
+
+                        default:
+                            final l:Dynamic = eval(a);
+                            final r:Dynamic = eval(b);
+
+                            switch (token)
+                            {
+                                case TIs:
+                                    Util.isOfType(l, r);
+
+                                case TTripleDot:
+                                    new IntIterator(l, r);
+
+                                case TDoubleEqual:
+                                    l == r;
+
+                                case TExclamationEqual:
+                                    l != r;
+
+                                case TLess:
+                                    l < r;
+
+                                case TGreater:
+                                    l > r;
+
+                                case TLessEqual:
+                                    l <= r;
+
+                                case TGreaterEqual:
+                                    l >= r;
+
+                                case TPercent:
+                                    l % r;
+
+                                case TStar:
+                                    l * r;
+
+                                case TSlash:
+                                    l / r;
+
+                                case TPlus:
+                                    l + r;
+
+                                case TMinus:
+                                    l - r;
+
+                                case TDoubleLess:
+                                    Std.int(l) << Std.int(r);
+
+                                case TDoubleGreater:
+                                    Std.int(l) >> Std.int(r);
+
+                                case TTripleGreater:
+                                    Std.int(l) >>> Std.int(r);
+
+                                case TAmpersand:
+                                    Std.int(l) & Std.int(r);
+
+                                case TPipe:
+                                    Std.int(l) | Std.int(r);
+
+                                case TCaret:
+                                    Std.int(l) ^ Std.int(r);
+
+                                case TPercentEqual:
+                                    assign(a, l % r);
+
+                                case TStarEqual:
+                                    assign(a, l * r);
+
+                                case TSlashEqual:
+                                    assign(a, l / r);
+
+                                case TPlusEqual:
+                                    assign(a, l + r);
+
+                                case TMinusEqual:
+                                    assign(a, l - r);
+
+                                case TDoubleLessEqual:
+                                    assign(a, Std.int(l) << Std.int(r));
+
+                                case TDoubleGreaterEqual:
+                                    assign(a, Std.int(l) >> Std.int(r));
+
+                                case TTripleGreaterEqual:
+                                    assign(a, Std.int(l) >>> Std.int(r));
+
+                                case TAmpersandEqual:
+                                    assign(a, Std.int(l) & Std.int(r));
+
+                                case TPipeEqual:
+                                    assign(a, Std.int(l) | Std.int(r));
+
+                                case TCaretEqual:
+                                    assign(a, Std.int(l) ^ Std.int(r));
+
+                                default:
+                                    throw EInvalidOp(token);
+                            }
+                    }
+
+                case EPrefix(token, a):
+                    final l:Dynamic = eval(a);
+
+                    switch (token)
+                    {
+                        case TTilde:
+                            ~l;
+
+                        case TExclamation:
+                            !l;
+
+                        case TMinus:
+                            -l;
+
+                        case TDoublePlus:
+                            assign(a, l + 1);
+
+                        case TDoubleMinus:
+                            assign(a, l - 1);
+
+                        default:
+                            throw EInvalidOp(token);
+                    }
+
+                case EPostfix(token, a):
+                    final l:Dynamic = eval(a);
+
+                    switch (token)
+                    {
+                        case TDoublePlus:
+                            assign(a, l + 1);
+
+                            l;
+
+                        case TDoubleMinus:
+                            assign(a, l - 1);
+
+                            l;
+
+                        default:
+                            throw EInvalidOp(token);
+                    }
+
+                case EIf(condition, a, b):
+                    eval(condition) ? eval(a) : eval(b);
+
+                case EString(str):
+                    str;
+
+                case ENumber(val):
+                    val;
+
+                case EMetadata(_, _):
+                    null;
+
+                case ERegex(reg):
+                    reg;
+
+                case EFalse:
+                    false;
+
+                case ETrue:
+                    true;
+
+                case EArray(exprs):
+                    evalArray(exprs);
+
+                case EMap(members):
+                    final res:Map<Dynamic, Dynamic> = new Map<Dynamic, Dynamic>();
+
+                    for (key => val in members)
+                        res.set(eval(key), eval(val));
 
                     res;
-                }
 
-            case EThrow(val):
-                throw eval(val);
+                case EStructure(values):
+                    final res:Dynamic = {};
 
-            case EBinOp(token, a, b):
-                switch (token)
-                {
-                    case TDoubleAmpersand:
-                        eval(a) && eval(b);
-
-                    case TDoublePipe:
-                        eval(a) || eval(b);
-
-                    case TDoubleQuestion:
-                        eval(a) ?? eval(b);
-                    
-                    case TDoubleQuestionEqual:
-                        eval(a) ?? assign(a, eval(b));
-
-                    default:
-                        final l:Dynamic = eval(a);
-                        final r:Dynamic = eval(b);
-
-                        switch (token)
-                        {
-                            case TIs:
-                                Util.isOfType(l, r);
-
-                            case TTripleDot:
-                                new IntIterator(l, r);
-
-                            case TDoubleEqual:
-                                l == r;
-
-                            case TExclamationEqual:
-                                l != r;
-
-                            case TLess:
-                                l < r;
-
-                            case TGreater:
-                                l > r;
-
-                            case TLessEqual:
-                                l <= r;
-
-                            case TGreaterEqual:
-                                l >= r;
-
-                            case TPercent:
-                                l % r;
-
-                            case TStar:
-                                l * r;
-
-                            case TSlash:
-                                l / r;
-
-                            case TPlus:
-                                l + r;
-
-                            case TMinus:
-                                l - r;
-
-                            case TDoubleLess:
-                                Std.int(l) << Std.int(r);
-
-                            case TDoubleGreater:
-                                Std.int(l) >> Std.int(r);
-
-                            case TTripleGreater:
-                                Std.int(l) >>> Std.int(r);
-
-                            case TAmpersand:
-                                Std.int(l) & Std.int(r);
-
-                            case TPipe:
-                                Std.int(l) | Std.int(r);
-
-                            case TCaret:
-                                Std.int(l) ^ Std.int(r);
-
-                            case TPercentEqual:
-                                assign(a, l % r);
-
-                            case TStarEqual:
-                                assign(a, l * r);
-
-                            case TSlashEqual:
-                                assign(a, l / r);
-
-                            case TPlusEqual:
-                                assign(a, l + r);
-
-                            case TMinusEqual:
-                                assign(a, l - r);
-
-                            case TDoubleLessEqual:
-                                assign(a, Std.int(l) << Std.int(r));
-
-                            case TDoubleGreaterEqual:
-                                assign(a, Std.int(l) >> Std.int(r));
-
-                            case TTripleGreaterEqual:
-                                assign(a, Std.int(l) >>> Std.int(r));
-
-                            case TAmpersandEqual:
-                                assign(a, Std.int(l) & Std.int(r));
-
-                            case TPipeEqual:
-                                assign(a, Std.int(l) | Std.int(r));
-
-                            case TCaretEqual:
-                                assign(a, Std.int(l) ^ Std.int(r));
-
-                            default:
-                                throw EInvalidOp(token);
-                        }
-                }
-
-            case EPrefix(token, a):
-                final l:Dynamic = eval(a);
-
-                switch (token)
-                {
-                    case TTilde:
-                        ~l;
-
-                    case TExclamation:
-                        !l;
-
-                    case TMinus:
-                        -l;
-
-                    case TDoublePlus:
-                        assign(a, l + 1);
-
-                    case TDoubleMinus:
-                        assign(a, l - 1);
-
-                    default:
-                        throw EInvalidOp(token);
-                }
-
-            case EPostfix(token, a):
-                final l:Dynamic = eval(a);
-
-                switch (token)
-                {
-                    case TDoublePlus:
-                        assign(a, l + 1);
-
-                        l;
-
-                    case TDoubleMinus:
-                        assign(a, l - 1);
-
-                        l;
-
-                    default:
-                        throw EInvalidOp(token);
-                }
-
-            case EIf(condition, a, b):
-                eval(condition) ? eval(a) : eval(b);
-
-            case EString(str):
-                str;
-
-            case ENumber(val):
-                val;
-
-            case EMetadata(_, _):
-                null;
-
-            case ERegex(reg):
-                reg;
-
-            case EFalse:
-                false;
-
-            case ETrue:
-                true;
-
-            case EArray(exprs):
-                evalArray(exprs);
-
-            case EMap(members):
-                final res:Map<Dynamic, Dynamic> = new Map<Dynamic, Dynamic>();
-
-                for (key => val in members)
-                    res.set(eval(key), eval(val));
-
-                res;
-
-            case EStructure(values):
-                final res:Dynamic = {};
-
-                for (key => val in values)
-                    Util.assignField(res, key, eval(val));
-
-                res;
-
-            case ECast(obj, type):
-                final resObj:Dynamic = eval(obj);
-
-                if (type == null)
-                    resObj;
-                else {
-                    final res:Dynamic = Std.downcast(resObj, eval(type));
-
-                    if (res == null && resObj != null)
-                        throw EInvalidCast;
+                    for (key => val in values)
+                        Util.assignField(res, key, eval(val));
 
                     res;
-                }
 
-            case EType(id):
-                resolveType(id);
+                case ECast(obj, type):
+                    final resObj:Dynamic = eval(obj);
 
-            case EReturn(val):
-                throw CReturn(eval(val));
+                    if (type == null)
+                        resObj;
+                    else {
+                        final res:Dynamic = Std.downcast(resObj, eval(type));
 
-            case EContinue:
-                throw CContinue;
+                        if (res == null && resObj != null)
+                            throw EInvalidCast;
 
-            case EBreak:
-                throw CBreak;
+                        res;
+                    }
 
-            case EEof, null:
-                null;
+                case EType(id):
+                    resolveType(id);
 
-            default:
-                throw EInvalidExpression(expr.type);
-        }
+                case EReturn(val):
+                    throw CReturn(eval(val));
 
-    }
+                case EContinue:
+                    throw CContinue;
+
+                case EBreak:
+                    throw CBreak;
+
+                case EEof, null:
+                    null;
+
+                default:
+                    throw EInvalidExpression(expr.type);
+            }
+        });
 
     function define(id:String, val:Dynamic, access:Array<TokenType>, getter:Property, setter:Property, isFinal:Bool = false):Void
+    {
         if (context != null && access != null)
         {
             if (access.contains(TStatic))
@@ -653,6 +650,7 @@ class Interp
         } else {
             scope.define(id, val, getter, setter, isFinal);
         }
+    }
 
     function resolve(id:String):Dynamic
     {

@@ -43,8 +43,7 @@ class StaticsInterp extends Interp
         }
 
     override function define(id:String, val:Dynamic, access:Array<TokenType>, getter:Property, setter:Property, isFinal:Bool = false):Void
-        if (access != null && access.contains(TStatic))
-            scope.define(id, val, getter, setter, isFinal);
+        scope.define(id, val, getter, setter, isFinal);
 
     public function get(id:String):Dynamic
         return variables.get(id);

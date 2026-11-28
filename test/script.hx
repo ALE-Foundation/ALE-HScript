@@ -1,4 +1,3 @@
-function oso(arg0, arg1)
-    trace(arg0, arg1);
+import Cls;
 
-oso('a', 'b');
+trace(Cls.getMetadata());
